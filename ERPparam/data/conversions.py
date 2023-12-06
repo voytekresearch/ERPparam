@@ -3,7 +3,7 @@
 import numpy as np
 
 from ERPparam import Bands
-from ERPparam.core.info import get_peak_indices, get_shape_indices_
+from ERPparam.core.info import get_peak_indices, get_shape_indices
 from ERPparam.core.modutils import safe_import, check_dependency
 from ERPparam.analysis.periodic import get_band_peak
 
@@ -37,8 +37,11 @@ def model_to_dict(fit_results, peak_org):
     shape_params = fit_results.shape_params
     peaks = np.hstack((peak_params, shape_params))
 
+    # get indices for peak and shape parameters
     peak_indices = get_peak_indices()
-    shape_indices = get_shape_indices_()
+    shape_indices = get_shape_indices()
+    for key in shape_indices.keys():
+        shape_indices[key] += 3
     indices = {**peak_indices, **shape_indices}
 
     if isinstance(peak_org, int):
