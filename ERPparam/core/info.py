@@ -95,6 +95,28 @@ def get_shape_indices():
 
     return indices
 
+def get_shape_indices_():
+    """Get a mapping from column labels to indices for rise-decay
+     symmetry parameters.
+
+    Returns
+    -------
+    indices : dict
+        Mapping of the column labels and indices for the peak parameters.
+    """
+
+    indices = {
+        'FWHM' : 3,
+        'rise_time' : 4,
+        'decay_time' : 5,
+        'symmetry' : 6,
+        'sharpness' : 7,
+        'sharpness_rise' : 8,
+        'sharpness_decay' : 9
+    }
+
+    return indices
+
 
 def get_indices(param_type='peak_params'):
     """Get a mapping from column labels to indices for all parameters.
