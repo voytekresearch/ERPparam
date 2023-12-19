@@ -1,4 +1,4 @@
-"""Settings for testing fooof."""
+"""Settings for testing ERPparam."""
 
 import os
 import pkg_resources as pkg

@@ -1,6 +1,6 @@
-"""Tests for fooof.core.info."""
+"""Tests for ERPparam.core.info."""
 
-from fooof.core.info import *
+from ERPparam.core.info import *
 
 ###################################################################################################
 ###################################################################################################
@@ -10,7 +10,7 @@ def test_get_description(tfm):
     desc = get_description()
     objs = dir(tfm)
 
-    # Test that everything in dict is a valid component of the fooof object
+    # Test that everything in dict is a valid component of the ERPparam object
     for ke, va in desc.items():
         for it in va:
             assert it in objs

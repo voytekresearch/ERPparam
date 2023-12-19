@@ -1,12 +1,12 @@
-"""Test functions for fooof.sim.params."""
+"""Test functions for ERPparam.sim.params."""
 
 from pytest import raises
 
 from numpy import array_equal
 
-from fooof.core.errors import InconsistentDataError
+from ERPparam.core.errors import InconsistentDataError
 
-from fooof.sim.params import *
+from ERPparam.sim.params import *
 
 ###################################################################################################
 ###################################################################################################

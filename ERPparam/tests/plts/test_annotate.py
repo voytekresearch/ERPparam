@@ -1,11 +1,11 @@
-"""Tests for fooof.plts.annotate."""
+"""Tests for ERPparam.plts.annotate."""
 
 import numpy as np
 
-from fooof.tests.tutils import plot_test
-from fooof.tests.settings import TEST_PLOTS_PATH
+from ERPparam.tests.tutils import plot_test
+from ERPparam.tests.settings import TEST_PLOTS_PATH
 
-from fooof.plts.annotate import *
+from ERPparam.plts.annotate import *
 
 ###################################################################################################
 ###################################################################################################

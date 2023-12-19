@@ -1,17 +1,17 @@
-"""Tests for the fooof.data.data.
+"""Tests for the ERPparam.data.data.
 
 For testing the data objects, the testing approach is to check that the object
 has the expected fields, given what is defined in the object description.
 """
 
-from fooof.core.items import OBJ_DESC
+from ERPparam.core.items import OBJ_DESC
 
-from fooof.data.data import *
+from ERPparam.data.data import *
 
 ###################################################################################################
 ###################################################################################################
 
-def test_fooof_settings():
+def test_ERPparam_settings():
 
     settings = FOOOFSettings([1, 8], 8, 0.25, 2, 'fixed')
     assert settings
@@ -19,7 +19,7 @@ def test_fooof_settings():
     for field in OBJ_DESC['settings']:
         assert getattr(settings, field)
 
-def test_fooof_meta_data():
+def test_ERPparam_meta_data():
 
     meta_data = FOOOFMetaData([1, 50], 0.5)
     assert meta_data
@@ -27,7 +27,7 @@ def test_fooof_meta_data():
     for field in OBJ_DESC['meta_data']:
         assert getattr(meta_data, field)
 
-def test_fooof_results():
+def test_ERPparam_results():
 
     results = FOOOFResults([1, 1], [10, 0.5, 1], 0.95, 0.05, [10, 0.5, 0.5])
     assert results

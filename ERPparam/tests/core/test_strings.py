@@ -1,7 +1,7 @@
-"""Tests for fooof.core.strings."""
+"""Tests for ERPparam.core.strings."""
 
-from fooof.core.strings import *
-from fooof.core.strings import _format, _no_model_str
+from ERPparam.core.strings import *
+from ERPparam.core.strings import _format, _no_model_str
 
 ###################################################################################################
 ###################################################################################################

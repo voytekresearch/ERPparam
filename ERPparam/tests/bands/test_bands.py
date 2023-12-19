@@ -1,8 +1,8 @@
-"""Test functions for fooof.data.bands."""
+"""Test functions for ERPparam.data.bands."""
 
 from pytest import raises
 
-from fooof.bands.bands import *
+from ERPparam.bands.bands import *
 
 ###################################################################################################
 ###################################################################################################

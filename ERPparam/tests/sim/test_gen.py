@@ -1,11 +1,11 @@
-"""Test functions for fooof.sim.gen"""
+"""Test functions for ERPparam.sim.gen"""
 
 import numpy as np
 from numpy import array_equal
 
-from fooof.tests.tutils import default_group_params
+from ERPparam.tests.tutils import default_group_params
 
-from fooof.sim.gen import *
+from ERPparam.sim.gen import *
 
 ###################################################################################################
 ###################################################################################################

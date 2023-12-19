@@ -1,13 +1,13 @@
-"""Tests for the fooof.data.conversions."""
+"""Tests for the ERPparam.data.conversions."""
 
 from copy import deepcopy
 
 import numpy as np
 
-from fooof.core.modutils import safe_import
+from ERPparam.core.modutils import safe_import
 pd = safe_import('pandas')
 
-from fooof.data.conversions import *
+from ERPparam.data.conversions import *
 
 ###################################################################################################
 ###################################################################################################

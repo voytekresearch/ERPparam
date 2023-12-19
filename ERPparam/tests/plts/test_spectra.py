@@ -1,13 +1,13 @@
-"""Tests for fooof.plts.spectra."""
+"""Tests for ERPparam.plts.spectra."""
 
 from pytest import raises
 
 import numpy as np
 
-from fooof.tests.tutils import plot_test
-from fooof.tests.settings import TEST_PLOTS_PATH
+from ERPparam.tests.tutils import plot_test
+from ERPparam.tests.settings import TEST_PLOTS_PATH
 
-from fooof.plts.spectra import *
+from ERPparam.plts.spectra import *
 
 ###################################################################################################
 ###################################################################################################

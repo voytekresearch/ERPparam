@@ -1,14 +1,14 @@
-"""Tests for fooof.plts.fg."""
+"""Tests for ERPparam.plts.fg."""
 
 from pytest import raises
 
-from fooof import FOOOFGroup
-from fooof.core.errors import NoModelError
+from ERPparam import ERPparamGroup
+from ERPparam.core.errors import NoModelError
 
-from fooof.tests.tutils import plot_test
-from fooof.tests.settings import TEST_PLOTS_PATH
+from ERPparam.tests.tutils import plot_test
+from ERPparam.tests.settings import TEST_PLOTS_PATH
 
-from fooof.plts.fg import *
+from ERPparam.plts.fg import *
 
 ###################################################################################################
 ###################################################################################################
@@ -20,7 +20,7 @@ def test_plot_fg(tfg, skip_if_no_mpl):
             file_name='test_plot_fg.png')
 
     # Test error if no data available to plot
-    tfg = FOOOFGroup()
+    tfg = ERPparamGroup()
     with raises(NoModelError):
         tfg.plot()
 

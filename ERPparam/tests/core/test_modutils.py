@@ -1,11 +1,11 @@
-"""Tests for fooof.core.modutils.
+"""Tests for ERPparam.core.modutils.
 
 Note: the decorators for copying documentation are not currently tested.
 """
 
 from pytest import raises
 
-from fooof.core.modutils import *
+from ERPparam.core.modutils import *
 
 ###################################################################################################
 ###################################################################################################
