@@ -27,8 +27,14 @@ def collect_sim_params(periodic_params, nlv):
     SimParams
         Object containing the simulation parameters.
     """
+    #print(check_flat(periodic_params))
+    #print(group_three(check_flat(periodic_params)))
+    grouped_params = group_three(check_flat(periodic_params))
+    sorted_grouped_params = sorted(grouped_params, key=lambda x: x[0])
+    #print(sorted_grouped_params)
+    #print(sorted(group_three(check_flat(periodic_params))))
 
-    return SimParams(sorted(group_three(check_flat(periodic_params))),
+    return SimParams(sorted_grouped_params,
                      nlv)
 
 

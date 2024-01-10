@@ -15,7 +15,7 @@ from ERPparam.core.items import OBJ_DESC
 from ERPparam.core.modutils import safe_import
 from ERPparam.core.errors import DataError, NoDataError, InconsistentDataError
 from ERPparam.data import ERPparamResults
-from ERPparam.sim import gen_group_power_spectra
+from ERPparam.sim import simulate_erps
 
 pd = safe_import('pandas')
 
@@ -80,42 +80,27 @@ def test_null_inds(tfg):
     assert tfg.null_inds_ == []
 
 def test_fg_fit_nk():
-    """Test ERPparamGroup fit, no knee."""
+    """Test ERPparamGroup fit, no noise."""
 
-    n_spectra = 2
-    xs, ys = gen_group_power_spectra(n_spectra, *default_group_params(), nlvs=0)
+    n_signals = 2
+    xs, ys = simulate_erps(n_signals, *default_group_params(), nlvs=0)
 
     tfg = ERPparamGroup(verbose=False)
     tfg.fit(xs, ys)
     out = tfg.get_results()
 
     assert out
-    assert len(out) == n_spectra
+    assert len(out) == n_signals
     assert isinstance(out[0], ERPparamResults)
-    assert np.all(out[1].aperiodic_params)
+    assert np.all(out[1].peak_params)
 
 def test_fg_fit_nk_noise():
-    """Test ERPparamGroup fit, no knee, on noisy data, to make sure nothing breaks."""
+    """Test ERPparamGroup fit, on noisy data, to make sure nothing breaks."""
 
-    n_spectra = 5
-    xs, ys = gen_group_power_spectra(n_spectra, *default_group_params(), nlvs=1.0)
+    n_signals = 5
+    xs, ys = simulate_erps(n_signals, *default_group_params(), nlvs=0.10)
 
     tfg = ERPparamGroup(max_n_peaks=8, verbose=False)
-    tfg.fit(xs, ys)
-
-    # No accuracy checking here - just checking that it ran
-    assert tfg.has_model
-
-def test_fg_fit_knee():
-    """Test ERPparamGroup fit, with a knee."""
-
-    n_spectra = 2
-    ap_params = [50, 2, 1]
-    gaussian_params = [10, 0.5, 2, 20, 0.3, 4]
-
-    xs, ys = gen_group_power_spectra(n_spectra, [1, 150], ap_params, gaussian_params, nlvs=0)
-
-    tfg = ERPparamGroup(aperiodic_mode='knee', verbose=False)
     tfg.fit(xs, ys)
 
     # No accuracy checking here - just checking that it ran
@@ -132,7 +117,7 @@ def test_fg_fail():
     """
 
     # Create some noisy spectra that will be hard to fit
-    fs, ps = gen_group_power_spectra(10, [3, 6], [1, 1], [10, 1, 1], nlvs=10)
+    fs, ps = simulate_erps(10, [3, 6], [1, 1], [10, 1, 1], nlvs=0.10)
 
     # Use a fg with the max iterations set so low that it will fail to converge
     ntfg = ERPparamGroup()
@@ -164,8 +149,8 @@ def test_fg_fail():
 def test_fg_drop():
     """Test function to drop results from ERPparamGroup."""
 
-    n_spectra = 3
-    xs, ys = gen_group_power_spectra(n_spectra, *default_group_params())
+    n_signals = 3
+    xs, ys = simulate_erps(n_signals, *default_group_params())
 
     tfg = ERPparamGroup(verbose=False)
 
@@ -196,15 +181,15 @@ def test_fg_drop():
 def test_fg_fit_par():
     """Test ERPparamGroup fit, running in parallel."""
 
-    n_spectra = 2
-    xs, ys = gen_group_power_spectra(n_spectra, *default_group_params())
+    n_signals = 2
+    xs, ys = simulate_erps(n_signals, *default_group_params())
 
     tfg = ERPparamGroup(verbose=False)
     tfg.fit(xs, ys, n_jobs=2)
     out = tfg.get_results()
 
     assert out
-    assert len(out) == n_spectra
+    assert len(out) == n_signals
     assert isinstance(out[0], ERPparamResults)
     assert np.all(out[1].aperiodic_params)
 
@@ -298,8 +283,8 @@ def test_fg_load():
 def test_fg_report(skip_if_no_mpl):
     """Check that running the top level model method runs."""
 
-    n_spectra = 2
-    xs, ys = gen_group_power_spectra(n_spectra, *default_group_params())
+    n_signals = 2
+    xs, ys = simulate_erps(n_signals, *default_group_params())
 
     tfg = ERPparamGroup(verbose=False)
     tfg.report(xs, ys)

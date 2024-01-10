@@ -14,7 +14,7 @@ from ERPparam.core.errors import FitError
 from ERPparam.core.utils import group_three
 from ERPparam.core.modutils import safe_import
 from ERPparam.core.errors import DataError, NoDataError, InconsistentDataError
-from ERPparam.sim import gen_freqs, gen_power_spectrum
+from ERPparam.sim import gen_time_vector, simulate_erp
 from ERPparam.data import ERPparamSettings, ERPparamMetaData, ERPparamResults
 
 pd = safe_import('pandas')
@@ -60,7 +60,7 @@ def test_ERPparam_fit_nk():
     gauss_params = [10, 0.5, 2, 20, 0.3, 4]
     nlv = 0.0025
 
-    xs, ys = gen_power_spectrum([3, 50], ap_params, gauss_params, nlv)
+    xs, ys = simulate_erp([3, 50], ap_params, gauss_params, nlv)
 
     tfm = ERPparam(verbose=False)
     tfm.fit(xs, ys)
@@ -79,7 +79,7 @@ def test_ERPparam_fit_nk_noise():
     gauss_params = [10, 0.5, 2, 20, 0.3, 4]
     nlv = 1.0
 
-    xs, ys = gen_power_spectrum([3, 50], ap_params, gauss_params, nlv)
+    xs, ys = simulate_erp([3, 50], ap_params, gauss_params, nlv)
 
     tfm = ERPparam(max_n_peaks=8, verbose=False)
     tfm.fit(xs, ys)
@@ -94,7 +94,7 @@ def test_ERPparam_fit_knee():
     gauss_params = [10, 0.3, 2, 20, 0.1, 4, 60, 0.3, 1]
     nlv = 0.0025
 
-    xs, ys = gen_power_spectrum([1, 150], ap_params, gauss_params, nlv)
+    xs, ys = simulate_erp([1, 150], ap_params, gauss_params, nlv)
 
     tfm = ERPparam(aperiodic_mode='knee', verbose=False)
     tfm.fit(xs, ys)
@@ -134,7 +134,7 @@ def test_ERPparam_checks():
     This tests all the input checking done in `_prepare_data`.
     """
 
-    xs, ys = gen_power_spectrum([3, 50], [50, 2], [10, 0.5, 2])
+    xs, ys = simulate_erp([3, 50], [50, 2], [10, 0.5, 2])
 
     tfm = ERPparam(verbose=False)
 
@@ -160,7 +160,7 @@ def test_ERPparam_checks():
     tfm.fit(xs, ys, [3, 40])
 
     # Check freq of 0 issue
-    xs, ys = gen_power_spectrum([3, 50], [50, 2], [10, 0.5, 2])
+    xs, ys = simulate_erp([3, 50], [50, 2], [10, 0.5, 2])
     tfm.fit(xs, ys)
     assert tfm.freqs[0] != 0
 
@@ -371,7 +371,7 @@ def test_ERPparam_report(skip_if_no_mpl):
 
     tfm = ERPparam(verbose=False)
 
-    tfm.report(*gen_power_spectrum([3, 50], [50, 2], [10, 0.5, 2, 20, 0.3, 4]))
+    tfm.report(*simulate_erp([3, 50], [50, 2], [10, 0.5, 2, 20, 0.3, 4]))
 
     assert tfm
 
@@ -382,7 +382,7 @@ def test_ERPparam_fit_failure():
     tfm = ERPparam(verbose=False)
     tfm._maxfev = 5
 
-    tfm.fit(*gen_power_spectrum([3, 50], [50, 2], [10, 0.5, 2, 20, 0.3, 4]))
+    tfm.fit(*simulate_erp([3, 50], [50, 2], [10, 0.5, 2, 20, 0.3, 4]))
 
     # Check after failing out of fit, all results are reset
     for result in OBJ_DESC['results']:
@@ -396,7 +396,7 @@ def test_ERPparam_fit_failure():
     tfm._fit_peaks = raise_runtime_error
 
     # Run a ERPparam fit - this should raise an error, but continue in try/except
-    tfm.fit(*gen_power_spectrum([3, 50], [50, 2], [10, 0.5, 2, 20, 0.3, 4]))
+    tfm.fit(*simulate_erp([3, 50], [50, 2], [10, 0.5, 2, 20, 0.3, 4]))
 
     # Check after failing out of fit, all results are reset
     for result in OBJ_DESC['results']:
@@ -412,7 +412,7 @@ def test_ERPparam_debug():
     assert tfm._debug is True
 
     with raises(FitError):
-        tfm.fit(*gen_power_spectrum([3, 50], [50, 2], [10, 0.5, 2, 20, 0.3, 4]))
+        tfm.fit(*simulate_erp([3, 50], [50, 2], [10, 0.5, 2, 20, 0.3, 4]))
 
 def test_ERPparam_check_data():
     """Test ERPparam in with check data mode turned off, including with NaN data."""
@@ -424,7 +424,7 @@ def test_ERPparam_check_data():
 
     # Add data, with check data turned off
     #   In check data mode, adding data with NaN should run
-    freqs = gen_freqs([3, 50], 0.5)
+    freqs = gen_time_vector([3, 50], 0.5)
     powers = np.ones_like(freqs) * np.nan
     tfm.add_data(freqs, powers)
     assert tfm.has_data

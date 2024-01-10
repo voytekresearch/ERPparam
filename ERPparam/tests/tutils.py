@@ -33,8 +33,8 @@ def get_tfm():
 def get_tfg():
     """Get a ERPparamGroup object, with some fit power spectra, for testing."""
 
-    n_spectra = 3
-    xs, ys = simulate_erps(n_spectra, *default_group_params())
+    n_signals = 3
+    xs, ys = simulate_erps(n_signals, *default_group_params())
 
     tfg = ERPparamGroup(verbose=False)
     tfg.fit(xs, ys)
@@ -57,11 +57,19 @@ def get_tresults():
 def default_group_params():
     """Create default parameters for generating a test group of power spectra."""
 
-    freq_range = [3, 50]
-    ap_opts = param_sampler([[20, 2], [50, 2.5], [35, 1.5]])
-    gauss_opts = param_sampler([[10, 0.5, 2], [10, 0.5, 2, 20, 0.3, 4]])
+    time_range = [-0.5, 2]
+    erp_latency = [0.1, 0.2, 0.5]
+    erp_amplitude = [2, -1.5, 0.75]
+    erp_width = [0.03, 0.05, 0.1]
+    erp_params = param_sampler( [np.ravel(np.column_stack([erp_latency, erp_amplitude, erp_width])),
+                                 np.ravel(np.column_stack([erp_latency[:2], erp_amplitude[:2], erp_width[:2]])),
+                                 np.ravel(np.column_stack([erp_latency[0], erp_amplitude[0], erp_width[0]]))
+                                 ] )
+                        #param_sampler([[erp_latency[0], erp_amplitude[0], erp_width[0]],
+                        #        [erp_latency[1], erp_amplitude[1], erp_width[1]],
+                         #       [erp_latency[2], erp_amplitude[2], erp_width[2]]])#
 
-    return freq_range, ap_opts, gauss_opts
+    return time_range, erp_params
 
 def plot_test(func):
     """Decorator for simple testing of plotting functions.

@@ -122,7 +122,6 @@ def simulate_erps(n_signals, time_range, params, nlvs=0.005,
     # Simulate ERPs
     for ind, pe, nlv in zip(range(n_signals), pe_params, nlvs):
         signals[ind, :] = gen_signal(time, pe, nlv)
-
         sim_params[ind] = collect_sim_params(pe, nlv)
 
     if return_params:
