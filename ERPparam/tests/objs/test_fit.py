@@ -42,7 +42,7 @@ def test_ERPparam_has_data(tfm):
 
 def test_ERPparam_has_model(tfm):
     """Test the has_model property attribute, with and without model fits."""
-
+    
     assert tfm.has_model
 
     ntfm = ERPparam()
@@ -56,30 +56,34 @@ def test_ERPparam_n_peaks(tfm):
 def test_ERPparam_fit_nk():
     """Test ERPparam fit, no knee."""
 
-    ap_params = [50, 2]
-    gauss_params = [10, 0.5, 2, 20, 0.3, 4]
+    time_range = (-0.5, 2)
+    erp_latency = [0.1, 0.2]
+    erp_amplitude = [2, -1.5]
+    erp_width = [0.03, 0.05]
+    erp_params = np.ravel(np.column_stack([erp_latency, erp_amplitude, erp_width]))
     nlv = 0.0025
 
-    xs, ys = simulate_erp([3, 50], ap_params, gauss_params, nlv)
+    xs, ys = simulate_erp(time_range, erp_params, nlv)
 
-    tfm = ERPparam(verbose=False)
+    tfm = ERPparam(verbose=False, max_n_peaks=4)
     tfm.fit(xs, ys)
-
-    # Check model results - aperiodic parameters
-    assert np.allclose(ap_params, tfm.aperiodic_params_, [0.5, 0.1])
+    print(tfm.peak_params_)
 
     # Check model results - gaussian parameters
-    for ii, gauss in enumerate(group_three(gauss_params)):
-        assert np.allclose(gauss, tfm.gaussian_params_[ii], [2.0, 0.5, 1.0])
+    for ii, gauss in enumerate(group_three(erp_params)):
+        assert np.allclose(gauss, tfm.peak_params_[ii], [2.0, 0.5, 1.0])
 
 def test_ERPparam_fit_nk_noise():
     """Test ERPparam fit on noisy data, to make sure nothing breaks."""
 
-    ap_params = [50, 2]
-    gauss_params = [10, 0.5, 2, 20, 0.3, 4]
-    nlv = 1.0
+    time_range = (-0.5, 2)
+    erp_latency = [0.1, 0.2]
+    erp_amplitude = [2, -1.5]
+    erp_width = [0.03, 0.05]
+    erp_params = np.ravel(np.column_stack([erp_latency, erp_amplitude, erp_width]))
+    nlv = 0.1
 
-    xs, ys = simulate_erp([3, 50], ap_params, gauss_params, nlv)
+    xs, ys = simulate_erp(time_range, erp_params, nlv)
 
     tfm = ERPparam(max_n_peaks=8, verbose=False)
     tfm.fit(xs, ys)
@@ -87,24 +91,6 @@ def test_ERPparam_fit_nk_noise():
     # No accuracy checking here - just checking that it ran
     assert tfm.has_model
 
-def test_ERPparam_fit_knee():
-    """Test ERPparam fit, with a knee."""
-
-    ap_params = [50, 10, 1]
-    gauss_params = [10, 0.3, 2, 20, 0.1, 4, 60, 0.3, 1]
-    nlv = 0.0025
-
-    xs, ys = simulate_erp([1, 150], ap_params, gauss_params, nlv)
-
-    tfm = ERPparam(aperiodic_mode='knee', verbose=False)
-    tfm.fit(xs, ys)
-
-    # Check model results - aperiodic parameters
-    assert np.allclose(ap_params, tfm.aperiodic_params_, [1, 2, 0.2])
-
-    # Check model results - gaussian parameters
-    for ii, gauss in enumerate(group_three(gauss_params)):
-        assert np.allclose(gauss, tfm.gaussian_params_[ii], [2.0, 0.5, 1.0])
 
 def test_ERPparam_fit_measures():
     """Test goodness of fit & error metrics, post model fitting."""

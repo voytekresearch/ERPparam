@@ -19,14 +19,22 @@ plt = safe_import('.pyplot', 'matplotlib')
 def get_tfm():
     """Get a ERPparam object, with a fit power spectrum, for testing."""
 
-    freq_range = [3, 50]
-    ap_params = [50, 2]
-    gaussian_params = [10, 0.5, 2, 20, 0.3, 4]
+    #freq_range = [3, 50]
+    #ap_params = [50, 2]
+    #gaussian_params = [10, 0.5, 2, 20, 0.3, 4]
+    time_range = (-0.5, 2)
+    fs = 1000
+    erp_latency = [0.1, 0.2, 0.5]
+    erp_amplitude = [2, -1.5, 0.75]
+    erp_width = [0.03, 0.05, 0.1]
+    erp_params = np.ravel(np.column_stack([erp_latency, erp_amplitude, erp_width]))
 
-    xs, ys = simulate_erp(freq_range, ap_params, gaussian_params)
+    #xs, ys = simulate_erp(freq_range, ap_params, gaussian_params)
+    xs, ys = simulate_erp(time_range, erp_params, fs=fs)
 
-    tfm = ERPparam(verbose=False)
+    tfm = ERPparam(verbose=False, max_n_peaks=4)
     tfm.fit(xs, ys)
+    print('HAS DATTA: '+str(tfm.has_data))
 
     return tfm
 

@@ -136,7 +136,7 @@ class ERPparam():
     """
     # pylint: disable=attribute-defined-outside-init
 
-    def __init__(self, signal=None, time=None, time_range=None, baseline=None, peak_width_limits=(0.01, 10), max_n_peaks=np.inf, 
+    def __init__(self, signal=None, time=None, time_range=None, baseline=None, peak_width_limits=(0.01, 10), max_n_peaks=20, 
                  peak_threshold=2.0, min_peak_height=0.0, verbose=True):
         
         self.peak_width_limits = peak_width_limits
