@@ -268,6 +268,11 @@ class ERPparamGroup(ERPparam):
         -----
         Data is optional, if data has already been added to the object.
         """
+        if self._skewed_gaussian:
+            print("Fitting with skewed gaussian")
+        else:
+            print("Fitting with gaussian")
+
         # If times & power spectra provided together, add data to object
         if time is not None and signals is not None:
             self._add_data(time, signals, time_range)

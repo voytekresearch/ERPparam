@@ -34,6 +34,10 @@ def skewed_gaussian(xs, *params):
         Output values for skewed gaussian function.
     """
 
+    # check if empty
+    if len(params) == 0:
+        return np.zeros_like(xs)
+    
     # compute Gaussian PDF
     if params[3] == 0:
         pdf = gaussian_pdf(xs, *params[:3]) # no skew
@@ -253,6 +257,8 @@ def get_pe_func(periodic_mode):
 
     if periodic_mode == 'gaussian':
         pe_func = gaussian_function
+    elif periodic_mode == 'skewed_gaussian':
+        pe_func = skewed_gaussian
     else:
         raise ValueError("Requested periodic mode not understood.")
 

@@ -423,7 +423,12 @@ class ERPparam():
 
             # Calculate the peak fit
             #   Note: if no peaks are found, this creates a flat (all zero) peak fit
-            self._peak_fit = sim_erp(self.time, np.ndarray.flatten(self.gaussian_params_))
+            if self._skewed_gaussian:
+                self._peak_fit = sim_erp(self.time, np.ndarray.flatten(self.gaussian_params_), 
+                                         periodic_mode='skewed_gaussian')
+            else:
+                self._peak_fit = sim_erp(self.time, np.ndarray.flatten(self.gaussian_params_[:,:-1]), 
+                                         periodic_mode='gaussian')
 
             # Convert gaussian definitions to peak parameters
             self.peak_params_  = self._create_peak_params(self.gaussian_params_)
@@ -733,7 +738,7 @@ class ERPparam():
 
         # If no peaks were found, return empty array
         else:
-            gaussian_params = np.empty([0, 3])
+            gaussian_params = np.empty([0, 4])
 
         return gaussian_params
     
@@ -887,11 +892,10 @@ class ERPparam():
         # Re-organize params into 2d matrix
         if self._skewed_gaussian: # if using skewed gaussian
             gaussian_params = np.array(group_four(gaussian_params))
-            gaussian_params = gaussian_params[:, :-1]
         else:
             gaussian_params = np.array(group_three(gaussian_params))
+            gaussian_params = np.hstack((gaussian_params, np.ones((len(gaussian_params), 1))*np.nan))
             
-
         return gaussian_params
 
 
