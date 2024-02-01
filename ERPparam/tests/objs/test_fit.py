@@ -98,8 +98,8 @@ def test_ERPparam_fit_measures():
     tfm = ERPparam(verbose=False)
 
     # Hack fake data with known properties: total error magnitude 2
-    tfm.power_spectrum = np.array([1, 2, 3, 4, 5])
-    tfm.ERPparamed_spectrum_ = np.array([1, 2, 5, 4, 5])
+    tfm.signal = np.array([1, 2, 3, 4, 5])
+    tfm._peak_fit = np.array([1, 2, 5, 4, 5])
 
     # Check default goodness of fit and error measures
     tfm._calc_r_squared()
@@ -119,8 +119,14 @@ def test_ERPparam_checks():
     """Test various checks, errors and edge cases in ERPparam.
     This tests all the input checking done in `_prepare_data`.
     """
+    time_range = (-0.5, 2)
+    erp_latency = [0.1, 0.2]
+    erp_amplitude = [2, -1.5]
+    erp_width = [0.03, 0.05]
+    erp_params = np.ravel(np.column_stack([erp_latency, erp_amplitude, erp_width]))
+    nlv = 0
 
-    xs, ys = simulate_erp([3, 50], [50, 2], [10, 0.5, 2])
+    xs, ys = simulate_erp(time_range, erp_params, nlv)
 
     tfm = ERPparam(verbose=False)
 
@@ -142,15 +148,10 @@ def test_ERPparam_checks():
     with raises(DataError):
         tfm.fit(xs, ys.astype('complex'))
 
-    # Check trim_spectrum range
-    tfm.fit(xs, ys, [3, 40])
+    # Check time_range cropping 
+    tfm.fit(xs, ys, [1, 2])
 
-    # Check freq of 0 issue
-    xs, ys = simulate_erp([3, 50], [50, 2], [10, 0.5, 2])
-    tfm.fit(xs, ys)
-    assert tfm.freqs[0] != 0
-
-    # Check error for `check_freqs` - for if there is non-even frequency values
+    # Check error for `check_times` - for if there is non-evenly spaced time values
     with raises(DataError):
         tfm.fit(np.array([1, 2, 4]), np.array([1, 2, 3]))
 
