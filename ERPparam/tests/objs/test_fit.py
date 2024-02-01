@@ -81,7 +81,7 @@ def test_ERPparam_fit_nk_noise():
     erp_amplitude = [2, -1.5]
     erp_width = [0.03, 0.05]
     erp_params = np.ravel(np.column_stack([erp_latency, erp_amplitude, erp_width]))
-    nlv = 0.1
+    nlv = 0.001
 
     xs, ys = simulate_erp(time_range, erp_params, nlv)
 

@@ -1,6 +1,7 @@
 """Functions for generating model components and simulated ERPs."""
 
 import numpy as np
+from neurodsp.sim import sim_powerlaw
 
 from ERPparam.core.utils import check_iter
 from ERPparam.core.funcs import  get_pe_func
@@ -69,7 +70,7 @@ def simulate_erp(time_range,  params, nlv=0.005, fs=1000, return_params=False):
     """
 
     time = gen_time_vector(time_range, fs)
-    signal = gen_signal(time, params, nlv)
+    signal, time = gen_signal(time, time_range, params, fs, nlv)
 
     if return_params:
         sim_params = collect_sim_params(params, nlv)
@@ -121,7 +122,7 @@ def simulate_erps(n_signals, time_range, params, nlvs=0.005,
 
     # Simulate ERPs
     for ind, pe, nlv in zip(range(n_signals), pe_params, nlvs):
-        signals[ind, :] = gen_signal(time, pe, nlv)
+        signals[ind, :], time = gen_signal(time, time_range, pe, fs, nlv)
         sim_params[ind] = collect_sim_params(pe, nlv)
 
     if return_params:
@@ -145,7 +146,7 @@ def sim_erp(time, params, periodic_mode='gaussian'):
     Returns
     -------
     peak_vals : 1d array
-        Peak values, in log10 spacing.
+        Peak values.
     """
 
     pe_func = get_pe_func(periodic_mode)
@@ -155,13 +156,15 @@ def sim_erp(time, params, periodic_mode='gaussian'):
     return pe_vals
 
 
-def sim_noise(time, nlv):
+def sim_noise(time_range, params, fs, nlv):
     """Generate noise values for a simulated ERP.
 
     Parameters
     ----------
-    time : 1d array
-        Time vector to create noise values for.
+    time_range : list of [float, float]
+        Times to create noise values.
+    params : list of float
+        Parameters of ERP components to scale noise to
     nlv : float
         Noise level to generate.
 
@@ -175,13 +178,13 @@ def sim_noise(time, nlv):
     This approach generates noise as randomly distributed white noise.
     The 'level' of noise is controlled as the scale of the normal distribution.
     """
-
-    noise_vals = np.random.normal(0, nlv, len(time))
+ 
+    noise_vals = sim_powerlaw(time_range[1]-time_range[0], fs) * (nlv*params[1])
 
     return noise_vals
 
 
-def gen_signal(time, params, nlv):
+def gen_signal(time, time_range, params, fs, nlv):
     """Generate simulated ERP.
 
     Parameters
@@ -201,8 +204,15 @@ def gen_signal(time, params, nlv):
     """
 
     pe_vals = sim_erp(time, params)
-    noise = sim_noise(time, nlv)
+    if nlv != 0:
+        noise = sim_noise(time_range, params, fs, nlv)
+    else:
+        noise = np.zeros(len(pe_vals)-1)
 
-    signal = pe_vals + noise
+    print(pe_vals.shape)
+    print(noise.shape)
 
-    return signal
+    signal = pe_vals[:-1] + noise
+    time = time[:-1]
+
+    return signal, time
