@@ -39,6 +39,8 @@ class ERPparamGroup(ERPparam):
         Absolute threshold for detecting peaks, in units of the input data.
     peak_threshold : float, optional, default: 2.0
         Relative threshold for detecting peaks, in units of standard deviation of the input data.
+    skewed_gaussian : bool, optional, default: True
+        Whether to use a skewed gaussian model for the ERP components.
     verbose : bool, optional, default: True
         Verbosity mode. If True, prints out warnings and general status updates.
 
@@ -268,10 +270,6 @@ class ERPparamGroup(ERPparam):
         -----
         Data is optional, if data has already been added to the object.
         """
-        if self._skewed_gaussian:
-            print("Fitting with skewed gaussian")
-        else:
-            print("Fitting with gaussian")
 
         # If times & power spectra provided together, add data to object
         if time is not None and signals is not None:
