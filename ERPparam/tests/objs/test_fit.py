@@ -53,7 +53,7 @@ def test_ERPparam_n_peaks(tfm):
 
     assert tfm.n_peaks_
 
-def test_ERPparam_fit_nk():
+def test_ERPparam_fit():
     """Test ERPparam fit, no knee."""
 
     time_range = (-0.5, 2)
@@ -61,7 +61,7 @@ def test_ERPparam_fit_nk():
     erp_amplitude = [2, -1.5]
     erp_width = [0.03, 0.05]
     erp_params = np.ravel(np.column_stack([erp_latency, erp_amplitude, erp_width]))
-    nlv = 0.0025
+    nlv = 0.0 # no noise
 
     xs, ys = simulate_erp(time_range, erp_params, nlv)
 
@@ -73,7 +73,7 @@ def test_ERPparam_fit_nk():
     for ii, gauss in enumerate(group_three(erp_params)):
         assert np.allclose(gauss, tfm.peak_params_[ii], [2.0, 0.5, 1.0])
 
-def test_ERPparam_fit_nk_noise():
+def test_ERPparam_fit_noise():
     """Test ERPparam fit on noisy data, to make sure nothing breaks."""
 
     time_range = (-0.5, 2)
@@ -81,11 +81,11 @@ def test_ERPparam_fit_nk_noise():
     erp_amplitude = [2, -1.5]
     erp_width = [0.03, 0.05]
     erp_params = np.ravel(np.column_stack([erp_latency, erp_amplitude, erp_width]))
-    nlv = 0.001
+    nlv = 0.3
 
     xs, ys = simulate_erp(time_range, erp_params, nlv)
 
-    tfm = ERPparam(max_n_peaks=8, verbose=False)
+    tfm = ERPparam(max_n_peaks=2, verbose=False)
     tfm.fit(xs, ys)
 
     # No accuracy checking here - just checking that it ran

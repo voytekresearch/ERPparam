@@ -1186,6 +1186,11 @@ class ERPparam():
         if time.shape[-1] != signal.shape[-1]:
             raise InconsistentDataError("The input times and ERP signal "
                                         "are not a consistent size.")
+        
+        # Check if power values are complex
+        if np.iscomplexobj(signal):
+            raise DataError("Input ERPs are complex values. "
+                            "Model fitting does not currently support complex inputs.")
 
         # Force data to be dtype of float64
         #   If they end up as float32, or less, scipy curve_fit fails (sometimes implicitly)
