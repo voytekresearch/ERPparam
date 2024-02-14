@@ -170,7 +170,7 @@ def get_band_peak(peak_params, band, select_highest=True, threshold=None, thresh
 
     # Return nan array if empty input
     if peak_params.size == 0:
-        return np.array([np.nan, np.nan, np.nan])
+        return np.array([np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan])
 
     # Find indices of peaks in the specified range, and check the number found
     peak_inds = (peak_params[:, 0] >= band[0]) & (peak_params[:, 0] <= band[1])
@@ -179,7 +179,7 @@ def get_band_peak(peak_params, band, select_highest=True, threshold=None, thresh
     # If there are no peaks within the specified range, return nan
     #   Note: this also catches and returns if the original input was empty
     if n_peaks == 0:
-        return np.array([np.nan, np.nan, np.nan])
+        return np.array([np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan])
 
     band_peaks = peak_params[peak_inds, :]
 
@@ -217,7 +217,7 @@ def get_highest_peak(peak_params):
 
     # Catch & return NaN if empty
     if len(peak_params) == 0:
-        return np.array([np.nan, np.nan, np.nan])
+        return np.array([np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan])
 
     high_ind = np.argmax(peak_params[:, 1])
 

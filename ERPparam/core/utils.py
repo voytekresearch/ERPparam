@@ -35,6 +35,35 @@ def group_three(vec):
         return np.reshape(vec, (-1, 3))
     else:
         return [list(vec[ii:ii+3]) for ii in range(0, len(vec), 3)]
+    
+
+def group_four(vec):
+    """Group an array of values into four.
+
+    Parameters
+    ----------
+    vec : list or 1d array
+        List or array of items to group by 4. Length of array must be divisible by four.
+
+    Returns
+    -------
+    array or list of list
+        Array or list of lists, each with four items. Output type will match input type.
+
+    Raises
+    ------
+    ValueError
+        If input data cannot be evenly grouped into fours.
+    """
+
+    if len(vec) % 4 != 0:
+        raise ValueError("Wrong size array to group by four.")
+
+    # Reshape, if an array, as it's faster, otherwise asssume lise
+    if isinstance(vec, np.ndarray):
+        return np.reshape(vec, (-1, 4))
+    else:
+        return [list(vec[ii:ii+4]) for ii in range(0, len(vec), 4)]
 
 
 def nearest_ind(array, value):

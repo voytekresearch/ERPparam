@@ -54,8 +54,8 @@ from ERPparam.core.info import get_indices
 from ERPparam.core.io import save_fm, load_json
 from ERPparam.core.reports import save_report_fm
 from ERPparam.core.modutils import copy_doc_func_to_method
-from ERPparam.core.utils import group_three, check_array_dim
-from ERPparam.core.funcs import gaussian_function
+from ERPparam.core.utils import group_three, group_four, check_array_dim
+from ERPparam.core.funcs import gaussian_function, skewed_gaussian
 from ERPparam.core.errors import (FitError, NoModelError, DataError,
                                NoDataError, InconsistentDataError)
 from ERPparam.core.strings import (gen_settings_str, gen_results_fm_str,
@@ -86,6 +86,8 @@ class ERPparam():
     peak_threshold : float, optional, default: 2.0
         Relative threshold for detecting peaks.
         This threshold is defined in relative units of the signal (standard deviation).
+    skewed_gaussian : bool, optional, default: True
+        Whether to use a skewed gaussian model for the ERP components.
     verbose : bool, optional, default: True
         Verbosity mode. If True, prints out warnings and general status updates.
 
@@ -137,12 +139,14 @@ class ERPparam():
     # pylint: disable=attribute-defined-outside-init
 
     def __init__(self, peak_width_limits=(0.01, 10), max_n_peaks=np.inf, 
-                 peak_threshold=2.0, min_peak_height=0.0, verbose=True):
+                 peak_threshold=2.0, min_peak_height=0.0, skewed_gaussian=True, 
+                 verbose=True):
         
         self.peak_width_limits = peak_width_limits
         self.max_n_peaks = max_n_peaks
         self.min_peak_height = min_peak_height
         self.peak_threshold = peak_threshold
+        self.skewed_gaussian = skewed_gaussian
         self.verbose = verbose
 
         # Threshold for how far a peak has to be from edge to keep.
@@ -425,7 +429,12 @@ class ERPparam():
 
             # Calculate the peak fit
             #   Note: if no peaks are found, this creates a flat (all zero) peak fit
-            self._peak_fit = sim_erp(self.time, np.ndarray.flatten(self.gaussian_params_))
+            if self.skewed_gaussian:
+                self._peak_fit = sim_erp(self.time, np.ndarray.flatten(self.gaussian_params_), 
+                                         periodic_mode='skewed_gaussian')
+            else:
+                self._peak_fit = sim_erp(self.time, np.ndarray.flatten(self.gaussian_params_[:,:-1]), 
+                                         periodic_mode='gaussian')
 
             # Convert gaussian definitions to peak parameters
             self.peak_params_  = self._create_peak_params(self.gaussian_params_)
@@ -735,7 +744,7 @@ class ERPparam():
 
         # If no peaks were found, return empty array
         else:
-            gaussian_params = np.empty([0, 3])
+            gaussian_params = np.empty([0, 4])
 
         return gaussian_params
     
@@ -839,10 +848,16 @@ class ERPparam():
         #     ((cf_low_peak1, height_low_peak1, bw_low_peak1, *repeated for n_peaks*),
         #      (cf_high_peak1, height_high_peak1, bw_high_peak, *repeated for n_peaks*))
         #     ^where each value sets the bound on the specified parameter
-        lo_bound = [[peak[0] - 2 * self._cf_bound * peak[2], np.min((self.signal)), self._gauss_std_limits[0]]
-                    for peak in guess]
-        hi_bound = [[peak[0] + 2 * self._cf_bound * peak[2], np.max((self.signal)), self._gauss_std_limits[1]]
-                    for peak in guess]
+        if self.skewed_gaussian:
+            lo_bound = [[peak[0] - 2 * self._cf_bound * peak[2], np.min((self.signal)), self._gauss_std_limits[0], -np.inf]
+                        for peak in guess]
+            hi_bound = [[peak[0] + 2 * self._cf_bound * peak[2], np.max((self.signal)), self._gauss_std_limits[1], np.inf]
+                        for peak in guess]
+        else:
+            lo_bound = [[peak[0] - 2 * self._cf_bound * peak[2], np.min((self.signal)), self._gauss_std_limits[0]]
+                        for peak in guess]
+            hi_bound = [[peak[0] + 2 * self._cf_bound * peak[2], np.max((self.signal)), self._gauss_std_limits[1]]
+                        for peak in guess]
 
         # Check that CT bounds are within time range
         #   If they are  not, update them to be restricted to time range
@@ -855,14 +870,22 @@ class ERPparam():
         #   This is what the fit function requires as input
         gaus_param_bounds = (tuple(item for sublist in lo_bound for item in sublist),
                              tuple(item for sublist in hi_bound for item in sublist))
+        
+        # add skewness parameter to guess
+        if self.skewed_gaussian:
+            guess = np.hstack((guess, np.zeros((len(guess), 1))))
 
         # Flatten guess, for use with curve fit
         guess = np.ndarray.flatten(guess)
 
         # Fit the peaks
         try:
-            gaussian_params, _ = curve_fit(gaussian_function, self.time, self.signal,
-                                        p0=guess, maxfev=self._maxfev, bounds=gaus_param_bounds)
+            if self.skewed_gaussian: # if using skewed gaussian
+                gaussian_params, _ = curve_fit(skewed_gaussian, self.time, self.signal,
+                                               p0=guess, maxfev=self._maxfev, bounds=gaus_param_bounds)
+            else:
+                gaussian_params, _ = curve_fit(gaussian_function, self.time, self.signal,
+                                            p0=guess, maxfev=self._maxfev, bounds=gaus_param_bounds)
         except RuntimeError as excp:
             error_msg = ("Model fitting failed due to not finding "
                          "parameters in the peak component fit.")
@@ -874,8 +897,12 @@ class ERPparam():
             raise FitError(error_msg) from excp
 
         # Re-organize params into 2d matrix
-        gaussian_params = np.array(group_three(gaussian_params))
-
+        if self.skewed_gaussian: # if using skewed gaussian
+            gaussian_params = np.array(group_four(gaussian_params))
+        else:
+            gaussian_params = np.array(group_three(gaussian_params))
+            gaussian_params = np.hstack((gaussian_params, np.ones((len(gaussian_params), 1))*np.nan))
+            
         return gaussian_params
 
 
