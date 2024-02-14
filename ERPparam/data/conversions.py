@@ -51,7 +51,7 @@ def model_to_dict(fit_results, peak_org):
 
     if isinstance(peak_org, int):
         if len(peaks) < peak_org:
-            nans = [np.array([np.nan] * 10) for _ in range(peak_org-len(peaks))]
+            nans = [np.array([np.nan] * 14) for _ in range(peak_org-len(peaks))]
             peaks = np.vstack((peaks, nans))
 
         for ind, peak in enumerate(peaks[:peak_org, :]):
