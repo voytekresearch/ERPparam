@@ -484,7 +484,7 @@ class ERPparamGroup(ERPparam):
         """
 
         # Initialize a ERPparam object, with same settings & check data mode as current ERPparamGroup
-        fm = ERPparam(**self.get_settings(), verbose=self.verbose)
+        fm = ERPparam(**self.get_settings(return_dict=True), verbose=self.verbose)
         fm.set_check_data_mode(self._check_data)
 
         # Add data for specified single power spectrum, if available
@@ -522,7 +522,7 @@ class ERPparamGroup(ERPparam):
         inds = check_inds(inds)
 
         # Initialize a new ERPparamGroup object, with same settings as current ERPparamGroup
-        fg = ERPparamGroup(**self.get_settings(), verbose=self.verbose)
+        fg = ERPparamGroup(**self.get_settings(return_dict=True), verbose=self.verbose)
 
         # Add data for specified power spectra, if available
         #   The power spectra are inverted back to linear, as they are re-logged when added to ERPparam

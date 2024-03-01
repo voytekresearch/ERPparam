@@ -499,7 +499,7 @@ class ERPparam():
         print(gen_issue_str(concise))
 
 
-    def get_settings(self):
+    def get_settings(self, return_dict=False):
         """Return user defined settings of the current object.
 
         Returns
@@ -508,10 +508,12 @@ class ERPparam():
             Object containing the settings from the current object.
         """
 
-        sets = {key : getattr(self, key) for key in OBJ_DESC['settings']}
-               # # ERPparamSettings(**{key : getattr(self, key) \
-               #              for key in OBJ_DESC['settings']})
-        return sets# {key:getattr(sets,key) for key in sets}
+        if return_dict:
+            sets = {key : getattr(self, key) for key in OBJ_DESC['settings']}
+        else:
+            sets = ERPparamSettings(**{key : getattr(self, key) \
+                          for key in OBJ_DESC['settings']})
+        return sets
 
 
     def get_meta_data(self):
@@ -534,7 +536,7 @@ class ERPparam():
         ----------
         name : {'peak_params', 'gaussian_params', 'shape_params', 'error', 'r_squared'}
             Name of the data field to extract.
-        col : {'CT', 'PW', 'BW'}, {'MN','HT','SD'}, {fwhm, rise_time, decay_time, symmetry,
+        col : {'CT', 'PW', 'BW'}, {'MN','HT','SD'}, {FWHM, rise_time, decay_time, symmetry,
             sharpness, sharpness_rise, sharpness_decay} or int, optional
             Column name / index to extract from selected data, if requested.
             Only used for name of {'peak_params', 'gaussian_params', 'shape_params}, 

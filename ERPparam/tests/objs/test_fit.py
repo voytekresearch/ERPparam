@@ -155,12 +155,6 @@ def test_ERPparam_checks():
     with raises(DataError):
         tfm.fit(np.array([1, 2, 4]), np.array([1, 2, 3]))
 
-    # Check error for `check_data` - for if there is a post-logging inf or nan
-    with raises(DataError):  # Double log (1) -> -inf
-        tfm.fit(np.array([1, 2, 3]), np.log10(np.array([1, 2, 3])))
-    with raises(DataError):  # Log (-1) -> NaN
-        tfm.fit(np.array([1, 2, 3]), np.array([-1, 2, 3]))
-
     ## Check errors & errors done in `fit`
 
     # Check fit, and string report model error (no data / model fit)
@@ -227,24 +221,34 @@ def test_add_data():
     tfm = get_tfm()
 
     # Test data for adding
-    freqs, pows = np.array([1, 2, 3]), np.array([10, 10, 10])
+    time, signal = np.array([1, 2, 3]), np.array([10, 10, 10])
 
     # Test adding data
-    tfm.add_data(freqs, pows)
+    tfm.add_data(time, signal)
     assert tfm.has_data
-    assert np.all(tfm.freqs == freqs)
-    assert np.all(tfm.power_spectrum == np.log10(pows))
+    assert np.all(tfm.time == time)
+    assert np.all(tfm.signal == signal)
 
     # Test that prior data does not get cleared, when requesting not to clear
     tfm._reset_data_results(True, True, True)
-    tfm.add_results(ERPparamResults([1, 1], [10, 0.5, 0.5], 0.95, 0.02, [10, 0.5, 0.25]))
-    tfm.add_data(freqs, pows, clear_results=False)
+    tfm.add_results(ERPparamResults(peak_params=np.asarray([[ 0.102     ,  1.7758259 ,  0.05875653],
+       [ 0.198     , -1.48916601,  0.09412952]]), 
+       r_squared=0.9973886245863048, error=0.01234299919871499, 
+       gaussian_params=np.asarray([[ 0.10157924,  1.8103013 ,  0.02937827],
+       [ 0.1980535 , -1.39908145,  0.04706476]]), 
+       shape_params=np.asarray([[0.064     , 0.04      , 0.024     , 0.625     , 0.97706828,
+        0.97134   , 0.98279656],
+       [0.103     , 0.041     , 0.062     , 0.39805825, 0.9560461 ,
+        0.96498029, 0.9471119 ]]), 
+        peak_indices=np.asarray([[562, 602, 626],
+       [657, 698, 760]])))
+    tfm.add_data(time, signal, clear_results=False)
     assert tfm.has_data
     assert tfm.has_model
 
-    # Test that prior data does get cleared, when requesting not to clear
+    # Test that prior data does get cleared, when requesting to clear
     tfm._reset_data_results(True, True, True)
-    tfm.add_data(freqs, pows, clear_results=True)
+    tfm.add_data(time, signal, clear_results=True)
     assert tfm.has_data
     assert not tfm.has_model
 
@@ -279,11 +283,18 @@ def test_add_results():
     tfm = get_tfm()
 
     # Test adding results
-    ERPparam_results = ERPparamResults([1, 1], [10, 0.5, 0.5], 0.95, 0.02, [10, 0.5, 0.25])
+    ERPparam_results = ERPparamResults(peak_params=np.asarray([[ 0.1     ,  1.7 ,  0.053],
+                                                                 [ 0.1     , -1.4,  0.09]]), 
+       r_squared=0.99, error=0.01, 
+       gaussian_params=np.asarray([[ 0.10,  1.8 ,  0.02],
+                                    [ 0.19 , -1.39,  0.047]]), 
+       shape_params=np.asarray([[0.064 , 0.04 , 0.024, 0.625 , 0.97, 0.97   , 0.98],
+                                  [0.103 , 0.041 , 0.062 , 0.39, 0.951 , 0.964, 0.947 ]]), 
+        peak_indices=np.asarray([[562, 602, 626],  [657, 698, 760]]))
     tfm.add_results(ERPparam_results)
     assert tfm.has_model
     for setting in OBJ_DESC['results']:
-        assert getattr(tfm, setting) == getattr(ERPparam_results, setting.strip('_'))
+        assert np.sum(getattr(tfm, setting) != getattr(ERPparam_results, setting.strip('_'))) == 0
 
 def test_obj_gets(tfm):
     """Tests methods that return ERPparam data objects.
@@ -301,16 +312,21 @@ def test_obj_gets(tfm):
 def test_get_params(tfm):
     """Test the get_params method."""
 
-    for dname in ['aperiodic_params', 'aperiodic', 'peak_params', 'peak',
+    for dname in ['peak_params', 'peak','shape','shape_params',
                   'error', 'r_squared', 'gaussian_params', 'gaussian']:
         assert np.any(tfm.get_params(dname))
 
-        if dname == 'aperiodic_params' or dname == 'aperiodic':
-            for dtype in ['offset', 'exponent']:
+        if dname == 'peak_params' or dname == 'peak':
+            for dtype in ['CT', 'PW', 'BW']:
                 assert np.any(tfm.get_params(dname, dtype))
 
-        if dname == 'peak_params' or dname == 'peak':
-            for dtype in ['CF', 'PW', 'BW']:
+        if dname == 'gaussian_params' or dname == 'gaussian':
+            for dtype in ['MN','HT','SD']:
+                assert np.any(tfm.get_params(dname, dtype))
+
+        if dname == 'shape_params' or dname == 'shape':
+            for dtype in ['FWHM', 'rise_time', 'decay_time', 'symmetry',
+            'sharpness', 'sharpness_rise', 'sharpness_decay']:
                 assert np.any(tfm.get_params(dname, dtype))
 
 def test_copy():
@@ -351,14 +367,20 @@ def test_ERPparam_resets():
             assert getattr(tfm, field) is None
     for field in OBJ_DESC['results']:
         assert np.all(np.isnan(getattr(tfm, field)))
-    assert tfm.freqs is None and tfm.ERPparamed_spectrum_ is None
+    assert tfm.time is None and tfm._peak_fit is None
 
 def test_ERPparam_report(skip_if_no_mpl):
     """Check that running the top level model method runs."""
 
     tfm = ERPparam(verbose=False)
+    time_range = (-0.5, 2)
+    erp_latency = [0.1, 0.2]
+    erp_amplitude = [2, -1.5]
+    erp_width = [0.03, 0.05]
+    erp_params = np.ravel(np.column_stack([erp_latency, erp_amplitude, erp_width]))
+    nlv = 0.0
 
-    tfm.report(*simulate_erp([3, 50], [50, 2], [10, 0.5, 2, 20, 0.3, 4]))
+    tfm.report(*simulate_erp(time_range, erp_params, nlv))
 
     assert tfm
 
@@ -369,7 +391,14 @@ def test_ERPparam_fit_failure():
     tfm = ERPparam(verbose=False)
     tfm._maxfev = 5
 
-    tfm.fit(*simulate_erp([3, 50], [50, 2], [10, 0.5, 2, 20, 0.3, 4]))
+    time_range = (-0.5, 2)
+    erp_latency = [0.1, 0.2]
+    erp_amplitude = [2, -1.5]
+    erp_width = [0.03, 0.05]
+    erp_params = np.ravel(np.column_stack([erp_latency, erp_amplitude, erp_width]))
+    nlv = 0.0
+
+    tfm.fit(*simulate_erp(time_range, erp_params, nlv))
 
     # Check after failing out of fit, all results are reset
     for result in OBJ_DESC['results']:
@@ -383,7 +412,7 @@ def test_ERPparam_fit_failure():
     tfm._fit_peaks = raise_runtime_error
 
     # Run a ERPparam fit - this should raise an error, but continue in try/except
-    tfm.fit(*simulate_erp([3, 50], [50, 2], [10, 0.5, 2, 20, 0.3, 4]))
+    tfm.fit(*simulate_erp(time_range, erp_params, nlv))
 
     # Check after failing out of fit, all results are reset
     for result in OBJ_DESC['results']:
@@ -398,8 +427,15 @@ def test_ERPparam_debug():
     tfm.set_debug_mode(True)
     assert tfm._debug is True
 
+    time_range = (-0.5, 2)
+    erp_latency = [0.1, 0.2]
+    erp_amplitude = [2, -1.5]
+    erp_width = [0.03, 0.05]
+    erp_params = np.ravel(np.column_stack([erp_latency, erp_amplitude, erp_width]))
+    nlv = 0.0
+
     with raises(FitError):
-        tfm.fit(*simulate_erp([3, 50], [50, 2], [10, 0.5, 2, 20, 0.3, 4]))
+        tfm.fit(*simulate_erp(time_range, erp_params, nlv))
 
 def test_ERPparam_check_data():
     """Test ERPparam in with check data mode turned off, including with NaN data."""
