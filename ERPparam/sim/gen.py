@@ -69,7 +69,7 @@ def simulate_erp(time_range,  params, nlv=0.005, fs=1000, return_params=False):
         Only returned if `return_params` is True.
     """
 
-    time = gen_time_vector(time_range, fs)
+    time = gen_time_vector(time_range, fs)[:-1]
     signal, time = gen_signal(time, time_range, params, fs, nlv)
 
     if return_params:
@@ -112,8 +112,8 @@ def simulate_erps(n_signals, time_range, params, nlvs=0.005,
     """
 
     # Initialize things
-    time = gen_time_vector(time_range, fs)
-    signals = np.zeros([n_signals, len(time)])
+    time = gen_time_vector(time_range, fs)[:-1]
+    signals = np.zeros([n_signals, (len(time))])
     sim_params = [None] * n_signals
 
     # Check if inputs are generators, if not, make them into repeat generators
@@ -207,12 +207,11 @@ def gen_signal(time, time_range, params, fs, nlv):
     if nlv != 0:
         noise = sim_noise(time_range, params, fs, nlv)
     else:
-        noise = np.zeros(len(pe_vals)-1)
+        noise = np.zeros(len(pe_vals))
 
     print(pe_vals.shape)
     print(noise.shape)
 
-    signal = pe_vals[:-1] + noise
-    time = time[:-1]
+    signal = pe_vals + noise 
 
     return signal, time

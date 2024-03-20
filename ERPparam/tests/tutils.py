@@ -44,7 +44,7 @@ def get_tfg():
     n_signals = 3
     xs, ys = simulate_erps(n_signals, *default_group_params())
 
-    tfg = ERPparamGroup(verbose=False)
+    tfg = ERPparamGroup(verbose=False, peak_threshold=1.5, max_n_peaks=3)
     tfg.fit(xs, ys)
 
     return tfg
@@ -70,9 +70,13 @@ def default_group_params():
     erp_amplitude = [2, -1.5, 0.75]
     erp_width = [0.03, 0.05, 0.1]
     erp_params = param_sampler( [np.ravel(np.column_stack([erp_latency, erp_amplitude, erp_width])),
-                                 np.ravel(np.column_stack([erp_latency[:2], erp_amplitude[:2], erp_width[:2]])),
-                                 np.ravel(np.column_stack([erp_latency[0], erp_amplitude[0], erp_width[0]]))
-                                 ] )
+                                np.ravel(np.column_stack([erp_latency[:2], erp_amplitude[:2], erp_width[:2]])),
+                                np.ravel(np.column_stack([erp_latency[0], erp_amplitude[0], erp_width[0]]))
+                                ] )
+    # [np.ravel(np.column_stack([erp_latency, erp_amplitude, erp_width])),
+    #                 np.ravel(np.column_stack([erp_latency[:2], erp_amplitude[:2], erp_width[:2]])),
+    #                 np.ravel(np.column_stack([erp_latency[0], erp_amplitude[0], erp_width[0]]))
+    #                 ] 
                         #param_sampler([[erp_latency[0], erp_amplitude[0], erp_width[0]],
                         #        [erp_latency[1], erp_amplitude[1], erp_width[1]],
                          #       [erp_latency[2], erp_amplitude[2], erp_width[2]]])#

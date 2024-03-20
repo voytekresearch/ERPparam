@@ -359,8 +359,7 @@ def gen_results_fg_str(fg, concise=False):
         '',
 
         # Frequency range and resolution
-        'The model was run on the time range {} - {} '.format(
-            int(np.floor(fg.time_range[0])), int(np.ceil(fg.time_range[1]))),
+        'The model was run on the time range {} - {} '.format( fg.time_range[0], fg.time_range[1]),
         'Time Resolution is {:1.2f}'.format(fg.time_res),
         '',
 

@@ -16,6 +16,7 @@ from ERPparam.core.modutils import safe_import
 from ERPparam.core.errors import DataError, NoDataError, InconsistentDataError
 from ERPparam.data import ERPparamResults
 from ERPparam.sim import simulate_erps
+from ERPparam.sim.params import param_sampler
 
 pd = safe_import('pandas')
 
@@ -116,30 +117,40 @@ def test_fg_fail():
     Also checks that model failures don't cause errors.
     """
 
-    # Create some noisy spectra that will be hard to fit
-    fs, ps = simulate_erps(10, [3, 6], [1, 1], [10, 1, 1], nlvs=0.10)
+    # Create some noisy spectra that will be hard to fit    
+    time_range = (-0.5, 2)
+    erp_latency = [0.1, 0.5]
+    erp_amplitude = [2, -1.5]
+    erp_width = [0.03, 0.05]
+    erp_params =  param_sampler( [np.ravel(np.column_stack([erp_latency, erp_amplitude, erp_width])),
+                                np.ravel(np.column_stack([erp_latency[1], erp_amplitude[1], erp_width[1]])),
+                                np.ravel(np.column_stack([erp_latency[0], erp_amplitude[0], erp_width[0]]))
+                                ] )
+    nlv = 0.3
+
+    xs, ys = simulate_erps(3, time_range, erp_params, nlv)
 
     # Use a fg with the max iterations set so low that it will fail to converge
-    ntfg = ERPparamGroup()
+    ntfg = ERPparamGroup(max_n_peaks=3, peak_threshold=1.5)
     ntfg._maxfev = 5
 
     # Fit models, where some will fail, to see if it completes cleanly
-    ntfg.fit(fs, ps)
+    ntfg.fit(xs, ys)
 
     # Check that results are all
     for res in ntfg.get_results():
         assert res
 
     # Test that get_params works with failed model fits
-    outs1 = ntfg.get_params('aperiodic_params')
-    outs2 = ntfg.get_params('aperiodic_params', 'exponent')
-    outs3 = ntfg.get_params('peak_params')
+    outs1 = ntfg.get_params('peak_params')
+    outs2 = ntfg.get_params('shape_params', 'sharpness')
+    outs3 = ntfg.get_params('gaussian_params')
     outs4 = ntfg.get_params('peak_params', 0)
     outs5 = ntfg.get_params('gaussian_params', 2)
 
     # Test shortcut labels
-    outs6 = ntfg.get_params('aperiodic')
-    outs6 = ntfg.get_params('peak', 'CF')
+    outs6 = ntfg.get_params('gaussian')
+    outs6 = ntfg.get_params('peak', 'CT')
 
     # Test the property attributes related to null model fits
     #   This checks that they do the right thing when there are null fits (failed fits)
@@ -152,7 +163,7 @@ def test_fg_drop():
     n_signals = 3
     xs, ys = simulate_erps(n_signals, *default_group_params())
 
-    tfg = ERPparamGroup(verbose=False)
+    tfg = ERPparamGroup(verbose=False, peak_threshold=1.5, max_n_peaks=3)
 
     # Test dropping one ind
     tfg.fit(xs, ys)
@@ -174,7 +185,7 @@ def test_fg_drop():
 
     # Test that a ERPparamGroup that has had inds dropped still works with `get_params`
     cfs = tfg.get_params('peak_params', 1)
-    exps = tfg.get_params('aperiodic_params', 'exponent')
+    exps = tfg.get_params('gaussian_params', 'MN')
     assert np.all(np.isnan(exps[drop_inds]))
     assert np.all(np.invert(np.isnan(np.delete(exps, drop_inds))))
 
