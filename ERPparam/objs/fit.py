@@ -55,7 +55,7 @@ from ERPparam.core.io import save_fm, load_json
 from ERPparam.core.reports import save_report_fm
 from ERPparam.core.modutils import copy_doc_func_to_method
 from ERPparam.core.utils import group_three, group_four, check_array_dim
-from ERPparam.core.funcs import gaussian_function, skewed_gaussian
+from ERPparam.core.funcs import gaussian_function, skewed_gaussian_function
 from ERPparam.core.errors import (FitError, NoModelError, DataError,
                                NoDataError, InconsistentDataError)
 from ERPparam.core.strings import (gen_settings_str, gen_results_fm_str,
@@ -881,7 +881,7 @@ class ERPparam():
         # Fit the peaks
         try:
             if self.skewed_gaussian: # if using skewed gaussian
-                gaussian_params, _ = curve_fit(skewed_gaussian, self.time, self.signal,
+                gaussian_params, _ = curve_fit(skewed_gaussian_function, self.time, self.signal,
                                                p0=guess, maxfev=self._maxfev, bounds=gaus_param_bounds)
             else:
                 gaussian_params, _ = curve_fit(gaussian_function, self.time, self.signal,
