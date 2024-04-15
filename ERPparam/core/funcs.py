@@ -14,6 +14,31 @@ from ERPparam.core.errors import InconsistentDataError
 ###################################################################################################
 ###################################################################################################
 
+def skewed_gaussian_function(xs, *params):
+    """Skewed Gaussian fitting function.
+
+    Parameters
+    ----------
+    xs : 1d array
+        Input x-axis values.
+    *params : float
+        Parameters that define skewed gaussian function:
+        * ctr: center of gaussian
+        * hgt: height of gaussian
+        * wid: width of gaussian
+        * skew: skewness of gaussian
+    """
+
+    ys = np.zeros_like(xs)
+
+    for ii in range(0, len(params), 4):
+
+        ctr, hgt, wid, skew = params[ii:ii+4]
+
+        ys = ys + hgt * skewed_gaussian(xs, ctr, hgt, wid, skew)
+
+    return ys
+
 def skewed_gaussian(xs, *params):
     """Skewed Gaussian PDF function.
 
