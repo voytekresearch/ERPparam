@@ -48,6 +48,8 @@ def skewed_gaussian(xs, *params):
     
     # scale to height parameter
     ys = pdf * (params[1] / np.max(np.abs(pdf)))
+    if params[1] < 0:
+        ys = -ys
 
     return ys
 
