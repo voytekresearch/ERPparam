@@ -14,93 +14,6 @@ from ERPparam.core.errors import InconsistentDataError
 ###################################################################################################
 ###################################################################################################
 
-def skewed_gaussian(xs, *params):
-    """Skewed Gaussian PDF function.
-
-    Parameters
-    ----------
-    xs : 1d array
-        Input x-axis values.
-    *params : float
-        Parameters that define skewed gaussian function:
-        * ctr: center of gaussian
-        * hgt: height of gaussian
-        * wid: width of gaussian
-        * skew: skewness of gaussian
-
-    Returns
-    -------
-    ys : 1d array
-        Output values for skewed gaussian function.
-    """
-
-    # check if empty
-    if len(params) == 0:
-        return np.zeros_like(xs)
-    
-    # compute Gaussian PDF
-    if params[3] == 0:
-        pdf = gaussian_pdf(xs, *params[:3]) # no skew
-    elif params[3] > 0:
-        pdf = 2 * gaussian_pdf(xs, *params[:3]) * gaussian_cdf(params[3] * xs, *params[:3])
-    elif params[3] < 0:
-        pdf = 2 * gaussian_pdf(xs, *params[:3]) * (1 - gaussian_cdf(params[3] * xs, *params[:3]))
-    
-    # scale to height parameter
-    ys = pdf * (params[1] / np.max(pdf))
-
-    return ys
-
-
-def gaussian_pdf(xs, *params):
-    """Probability density function (PDF) of a Gaussian.
-
-    Parameters
-    ----------
-    xs : 1d array
-        Input x-axis values.
-    *params : float
-        Parameters that define skewed gaussian function:
-        * ctr: center of gaussian
-        * hgt: height of gaussian
-        * wid: width of gaussian
-
-    Returns
-    -------
-    ys : 1d array
-        Output values for skewed gaussian function.
-    """
-
-    gf = gaussian_function(xs, *params) # compute gaussian function
-    ys = gf / (np.sqrt(2*np.pi) * params[2]) # normalize to unit area
-
-    return ys
-
-
-def gaussian_cdf(xs, *params):
-    """Cumulative distribution function (CDF) of a Gaussian PDF.
-
-    Parameters
-    ----------
-    xs : 1d array
-        Input x-axis values.
-    *params : float
-        Parameters that define skewed gaussian function:
-        * ctr: center of gaussian
-        * hgt: height of gaussian
-        * wid: width of gaussian
-
-    Returns
-    -------
-    ys : 1d array
-        Output values for skewed gaussian function.
-    """
-
-    gf = gaussian_pdf(xs, *params)
-    ys = np.cumsum(gf) / np.sum(gf) 
-
-    return ys
-
 
 def gaussian_function(xs, *params):
     """Gaussian fitting function.
@@ -257,8 +170,6 @@ def get_pe_func(periodic_mode):
 
     if periodic_mode == 'gaussian':
         pe_func = gaussian_function
-    elif periodic_mode == 'skewed_gaussian':
-        pe_func = skewed_gaussian
     else:
         raise ValueError("Requested periodic mode not understood.")
 
