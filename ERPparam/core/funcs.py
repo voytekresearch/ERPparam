@@ -47,7 +47,7 @@ def skewed_gaussian(xs, *params):
         pdf = 2 * gaussian_pdf(xs, *params[:3]) * (1 - gaussian_cdf(params[3] * xs, *params[:3]))
     
     # scale to height parameter
-    ys = pdf * (params[1] / np.max(pdf))
+    ys = pdf * (params[1] / np.max(np.abs(pdf)))
 
     return ys
 
