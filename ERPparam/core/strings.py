@@ -47,6 +47,36 @@ def gen_width_warning_str(freq_res, bwl):
     return output
 
 
+def gen_sharpness_warning_str(width_sharpness, fs):
+    """Generate a string representation of the warning about peak sharpness.
+
+    Parameters
+    ----------
+    width_sharpness : float
+        Hyperparameter setting for the number of samples to use in sharpness
+        calculation.
+    fs : float
+        Sampling rate.
+
+    Returns
+    -------
+    output : str
+        Formatted string of a warning about the peak sharpness setting.
+    """
+
+    output = '\n'.join([
+        '',
+        f'ERPparam WARNING: width_sharpness setting is large: {width_sharpness}',
+        '\tThis setting determines the number of samples used to calculate peak sharpness.',
+        f'\tAt a sampling frequency of {fs} samples/seconds, this corresponds to {width_sharpness/fs:0.3f} seconds.',
+        '\tValues much greater than the expected width of ERPs will not yeild informative results.',
+        '\tWe recommend that width_sharpness * fs be approximately 0.01 s.',
+        ''
+    ])
+
+    return output
+
+
 def gen_version_str(concise=False):
     """Generate a string representation of the current version of ERPparam.
 

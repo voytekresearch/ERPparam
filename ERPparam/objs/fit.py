@@ -59,7 +59,8 @@ from ERPparam.core.funcs import gaussian_function, skewed_gaussian
 from ERPparam.core.errors import (FitError, NoModelError, DataError,
                                NoDataError, InconsistentDataError)
 from ERPparam.core.strings import (gen_settings_str, gen_results_fm_str,
-                                gen_issue_str, gen_width_warning_str)
+                                gen_issue_str, gen_width_warning_str,
+                                gen_sharpness_warning_str)
 
 from ERPparam.plts.model import plot_ERPparam
 from ERPparam.utils.data import trim_spectrum
@@ -88,6 +89,8 @@ class ERPparam():
         This threshold is defined in relative units of the signal (standard deviation).
     skewed_gaussian : bool, optional, default: True
         Whether to use a skewed gaussian model for the ERP components.
+    width_sharpness : float, optional, default: 5
+        Number fo samples to use when computing the sharpness of the peak.
     verbose : bool, optional, default: True
         Verbosity mode. If True, prints out warnings and general status updates.
 
@@ -140,13 +143,14 @@ class ERPparam():
 
     def __init__(self, peak_width_limits=(0.01, 10), max_n_peaks=np.inf, 
                  peak_threshold=2.0, min_peak_height=0.0, skewed_gaussian=True, 
-                 verbose=True):
+                 width_sharpness=5, verbose=True):
         
         self.peak_width_limits = peak_width_limits
         self.max_n_peaks = max_n_peaks
         self.min_peak_height = min_peak_height
         self.peak_threshold = peak_threshold
         self.skewed_gaussian = skewed_gaussian
+        self.width_sharpness = width_sharpness
         self.verbose = verbose
 
         # Threshold for how far a peak has to be from edge to keep.
@@ -1013,11 +1017,23 @@ class ERPparam():
             # compute rise-decay symmetry
             rise_decay_symmetry = rise_time / fwhm
 
-            # compute sharpness
-            half_mag = np.abs(peak[1] / 2)
-            sharpness_rise = np.arctan(half_mag / rise_time) * (180 / np.pi) / 90
-            sharpness_decay = np.arctan(half_mag / decay_time) * (180 / np.pi) / 90
-            sharpness = 1 - ((180 - ((np.arctan(half_mag / rise_time) * (180 / np.pi)) + (np.arctan(half_mag / decay_time)) * (180 / np.pi))) / 180)
+            # compute sharpness (angle approch: normalized to be dimensionless 0-1)
+            # half_mag = np.abs(peak[1] / 2)
+            # sharpness_rise = np.arctan(half_mag / rise_time) * (180 / np.pi) / 90
+            # sharpness_decay = np.arctan(half_mag / decay_time) * (180 / np.pi) / 90
+            # sharpness = 1 - ((180 - ((np.arctan(half_mag / rise_time) * (180 / np.pi)) + (np.arctan(half_mag / decay_time)) * (180 / np.pi))) / 180)
+
+            # compute sharpness (volts per second using half-magnitude points)
+            # half_mag = np.abs(peak[1] / 2)
+            # sharpness_rise = half_mag / rise_time
+            # sharpness_decay = half_mag / decay_time
+            # sharpness = (sharpness_rise + sharpness_decay) / 2
+
+            # compute sharpness (volts per second within N samples)
+            duration = self.width_sharpness * self.time_res
+            sharpness_rise = np.abs(self.signal[peak_index] - self.signal[peak_index-self.width_sharpness]) / duration
+            sharpness_decay = np.abs(self.signal[peak_index] - self.signal[peak_index+self.width_sharpness]) / duration
+            sharpness = (sharpness_rise + sharpness_decay) / 2
 
             # collect results
             shape_params[ii] = [fwhm, rise_time, decay_time, rise_decay_symmetry,
@@ -1257,8 +1273,19 @@ class ERPparam():
         time_res = np.abs(time[1] - time[0])
         fs = 1 / time_res
 
-        ## Data checks - run checks on inputs based on check modes
+        # check that self.width_sharedness is an integer, and not too small/large
+        if not isinstance(self.width_sharpness, int):
+            width_sharpness = int(self.width_sharpness)
+            if width_sharpness != self.width_sharpness: # if the conversion to int changed the value
+                raise ValueError("The hyperparameter 'width_sharpness' must be an integer")
+            else:
+                self.width_sharpness = width_sharpness
+        if self.width_sharpness <=0: # if the value is too small
+            raise ValueError("The hyperparameter 'width_sharpness' must be greater than 0")
+        if self.width_sharpness / fs >= 0.5: # warn if the sharpness window is too large
+            print(gen_sharpness_warning_str(self.width_sharpness, fs))
 
+        ## Data checks - run checks on inputs based on check modes
         if self._check_times:
             # Check if the time data is unevenly spaced, and raise an error if so
             time_diffs = np.diff(time)
