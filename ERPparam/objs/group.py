@@ -377,8 +377,12 @@ class ERPparamGroup(ERPparam):
         if name in ('peak_params', 'gaussian_params'):
 
             # Collect peak data, appending the index of the model it comes from
-            out = np.vstack([np.insert(getattr(data, name), 3, index, axis=1)
-                             for index, data in enumerate(self.group_results)])
+            gather_params = [getattr(data, name) for data in (self.group_results)]
+            out = np.vstack([np.insert(p, 3, index, axis=1) if p.size != 0
+                             else  np.insert([np.nan]*3, 3, index, axis=0) 
+                             for index, p in enumerate(gather_params)])
+            # out = np.vstack([np.insert(getattr(data, name), 3, index, axis=1)
+            #                  for index, data in enumerate(self.group_results)])
 
             # This updates index to grab selected column, and the last column
             #  This last column is the 'index' column (ERPparam object source)

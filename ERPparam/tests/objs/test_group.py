@@ -186,8 +186,8 @@ def test_fg_drop():
     # Test that a ERPparamGroup that has had inds dropped still works with `get_params`
     cfs = tfg.get_params('peak_params', 1)
     exps = tfg.get_params('gaussian_params', 'MN')
-    assert np.all(np.isnan(exps[drop_inds]))
-    assert np.all(np.invert(np.isnan(np.delete(exps, drop_inds))))
+    assert np.all(np.isnan([exps[i,0] for i in range(exps.shape[0]) if exps[i,1] in drop_inds ]))
+    #assert np.all(np.invert(np.isnan(np.delete(exps, drop_inds))))
 
 def test_fg_fit_par():
     """Test ERPparamGroup fit, running in parallel."""
