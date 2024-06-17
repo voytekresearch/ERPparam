@@ -10,6 +10,7 @@ import os
 
 import numpy as np
 from numpy.testing import assert_equal
+from pytest import raises
 
 from ERPparam.core.items import OBJ_DESC
 from ERPparam.core.modutils import safe_import
@@ -55,6 +56,8 @@ def test_fg_has_data(tfg):
     ntfg = ERPparamGroup()
     assert not ntfg.has_data
 
+    
+
 def test_fg_has_model(tfg):
     """Test the has_model property attribute, with and without model fits."""
 
@@ -62,6 +65,9 @@ def test_fg_has_model(tfg):
 
     ntfg = ERPparamGroup()
     assert not ntfg.has_model
+
+    with raises(NoDataError):
+        ntfg.fit()
 
 def test_ERPparam_n_peaks(tfg):
     """Test the n_peaks property attribute."""
@@ -81,7 +87,7 @@ def test_null_inds(tfg):
     assert tfg.null_inds_ == []
 
 def test_fg_fit_nk():
-    """Test ERPparamGroup fit, no noise."""
+    """Test ERPparamGroup fit, no noise. Intialize empty Group obj, then feed data into fit func. """
 
     n_signals = 2
     xs, ys = simulate_erps(n_signals, *default_group_params(), nlvs=0)
@@ -202,7 +208,7 @@ def test_fg_fit_par():
     assert out
     assert len(out) == n_signals
     assert isinstance(out[0], ERPparamResults)
-    assert np.all(out[1].aperiodic_params)
+    assert np.all(out[1].gaussian_params)
 
 def test_fg_print(tfg):
     """Check print method (alias)."""
@@ -223,17 +229,36 @@ def test_get_results(tfg):
     assert tfg.get_results()
 
 def test_get_params(tfg):
-    """Check get_params method."""
+    # """Check get_params method."""
 
-    for dname in ['aperiodic_params', 'peak_params', 'error', 'r_squared', 'gaussian_params']:
+    # for dname in ['aperiodic_params', 'peak_params', 'error', 'r_squared', 'gaussian_params']:
+    #     assert np.any(tfg.get_params(dname))
+
+    #     if dname == 'aperiodic_params':
+    #         for dtype in ['offset', 'exponent']:
+    #             assert np.any(tfg.get_params(dname, dtype))
+
+    #     if dname == 'peak_params':
+    #         for dtype in ['CF', 'PW', 'BW']:
+    #             assert np.any(tfg.get_params(dname, dtype))
+
+    """Test the get_params method."""
+
+    for dname in ['peak_params', 'peak','shape','shape_params',
+                  'error', 'r_squared', 'gaussian_params', 'gaussian']:
         assert np.any(tfg.get_params(dname))
 
-        if dname == 'aperiodic_params':
-            for dtype in ['offset', 'exponent']:
+        if dname == 'peak_params' or dname == 'peak':
+            for dtype in ['CT', 'PW', 'BW']:
                 assert np.any(tfg.get_params(dname, dtype))
 
-        if dname == 'peak_params':
-            for dtype in ['CF', 'PW', 'BW']:
+        if dname == 'gaussian_params' or dname == 'gaussian':
+            for dtype in ['MN','HT','SD']:
+                assert np.any(tfg.get_params(dname, dtype))
+
+        if dname == 'shape_params' or dname == 'shape':
+            for dtype in ['FWHM', 'rise_time', 'decay_time', 'symmetry',
+            'sharpness', 'sharpness_rise', 'sharpness_decay']:
                 assert np.any(tfg.get_params(dname, dtype))
 
 @plot_test

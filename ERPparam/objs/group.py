@@ -16,7 +16,7 @@ from ERPparam.plts.fg import plot_fg
 from ERPparam.core.items import OBJ_DESC
 from ERPparam.core.info import get_indices
 from ERPparam.core.utils import check_inds
-from ERPparam.core.errors import NoModelError
+from ERPparam.core.errors import NoModelError, NoDataError
 from ERPparam.core.reports import save_report_fg
 from ERPparam.core.strings import gen_results_fg_str
 from ERPparam.core.io import save_fg, load_jsonlines
@@ -94,12 +94,11 @@ class ERPparamGroup(ERPparam):
     def __init__(self, *args, **kwargs):
         """Initialize object with desired settings."""
 
-        ERPparam.__init__(self, *args, **kwargs)
-
         self.signals = None
 
         self._reset_group_results()
 
+        ERPparam.__init__(self, *args, **kwargs)
 
     def __len__(self):
         """Define the length of the object as the number of model fit results available."""
@@ -270,8 +269,12 @@ class ERPparamGroup(ERPparam):
         Data is optional, if data has already been added to the object.
         """
         # If times & power spectra provided together, add data to object
-        if time is not None and signals is not None:
+        if signals is not None:
             self._add_data(time, signals, time_range)
+
+        # Check that data is available
+        if not self.has_data:
+            raise NoDataError("No data available to fit, can not proceed.")
 
         # If 'verbose', print out a marker of what is being run
         if self.verbose and not progress:
@@ -285,7 +288,7 @@ class ERPparamGroup(ERPparam):
             self._reset_group_results(len(self.signals))
             for ind, signal in \
                 _progress(enumerate(self.signals), progress, len(self)):
-                self._fit(time=self.time, signal=signal, time_range=self.time_range)
+                self._fit(time=self.time, signal=signal, time_range=self.time_range, baseline=self.baseline)
                 self.group_results[ind] = self._get_results()
 
         # Run in parallel
@@ -665,7 +668,7 @@ class ERPparamGroup(ERPparam):
 def _par_fit(signal, fg):
     """Helper function for running in parallel."""
 
-    fg._fit(signal=signal)
+    fg._fit(time=fg.time, signal=signal, time_range=fg.time_range, baseline=fg.baseline)
 
     return fg._get_results()
 
