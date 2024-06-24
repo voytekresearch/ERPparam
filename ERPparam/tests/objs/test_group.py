@@ -327,7 +327,6 @@ def test_fg_report(skip_if_no_mpl):
 
     assert tfg
 
-def test_fg_get_ERPparam(tfg):
     """Check return of an individual model fit to a ERPparam object from ERPparamGroup."""
 
     # Check without regenerating
@@ -346,7 +345,8 @@ def test_fg_get_ERPparam(tfg):
 
     # Test when object has no data (clear a copy of tfg)
     new_tfg = tfg.copy()
-    new_tfg._reset_data_results(False, True, True, True)
+    new_tfg._reset_data_results(clear_signals=True, clear_time=False, clear_results=True, clear_signal=True)
+    new_tfg._reset_group_results(length=n_signals)
     tfm2 = new_tfg.get_ERPparam(0, True)
     assert tfm2
     # Check that data info is copied over properly
@@ -377,8 +377,8 @@ def test_fg_get_group(tfg):
         assert getattr(nfg2, meta_dat)
 
     # Check that the correct data is extracted
-    assert_equal(tfg.power_spectra[inds1, :], nfg1.power_spectra)
-    assert_equal(tfg.power_spectra[inds2, :], nfg2.power_spectra)
+    assert_equal(tfg.signals[inds1, :], nfg1.signals)
+    assert_equal(tfg.signals[inds2, :], nfg2.signals)
 
     # Check that the correct results are extracted
     assert [tfg.group_results[ind] for ind in inds1] == nfg1.group_results
