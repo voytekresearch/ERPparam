@@ -18,9 +18,9 @@ def test_gen_settings_str(tfm):
 
     assert gen_settings_str(tfm)
 
-def test_gen_freq_range_str(tfm):
+def test_gen_time_range_str(tfm):
 
-    assert gen_freq_range_str(tfm)
+    assert gen_time_range_str(tfm)
 
 def test_gen_methods_report_str():
 
