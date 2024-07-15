@@ -585,17 +585,41 @@ class ERPparam():
         return out
 
 
-    def get_results(self):
+    def get_results(self, param_names=False):
         """Return model fit parameters and goodness of fit metrics.
+
+        Parameters
+        ----------
+        param_names : bool
+            If True, return the names and descriptions of the various parameters output in each array of the ERPparamResults object attribute 
 
         Returns
         -------
         ERPparamResults
             Object containing the model fit results from the current object.
         """
+        if param_names:
 
-        return ERPparamResults(**{key.strip('_') : getattr(self, key) \
-            for key in OBJ_DESC['results']})
+            params_dict = {'shape_params':{'FWHM':'full width at half magnitude', 
+                                           'rise_time': 'time between peak and rising half-magnitude point', 
+                                           'decay_time': 'time between peak and decaying half-magnitude point', 
+                                           'symmetry': 'rise time / FWHM', 
+                                           'sharpness': 'peak sharpness (normalized to be dimensionless 0-1)', 
+                                           'sharpness_rise': 'sharpness of the rise (normalized to be dimensionless 0-1)', 
+                                           'sharpness_decay': 'sharpness of the decay (normalized to be dimensionless 0-1)'},
+                            'peak_params': {'CT': "Center time of the peak, calculated from the raw signal", 
+                                            'PW': 'Peak amplitude, calculate from the raw signal', 
+                                            'BW': 'Bandwidth of the peak, 2-sided (ie, both halves from the peak center), calculated from the raw signal'},
+                            'gaussian_params':{'MN':'mean of the gaussian',
+                                               'HT':'height of the gaussian',
+                                               'SD':'gaussian width'}
+                            }
+
+            return ERPparamResults(**{key.strip('_') : getattr(self, key) \
+                for key in OBJ_DESC['results']}), params_dict
+        else:
+            return ERPparamResults(**{key.strip('_') : getattr(self, key) \
+                for key in OBJ_DESC['results']})
 
 
     # @copy_doc_func_to_method(plot_fm)

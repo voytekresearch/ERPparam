@@ -12,17 +12,16 @@ pd = safe_import('pandas')
 ###################################################################################################
 ###################################################################################################
 
-def model_to_dict(fit_results, peak_org):
+def model_to_dict(fit_results, peak_subset=None):
     """Convert model fit results to a dictionary.
 
     Parameters
     ----------
     fit_results : ERPparamResults
         Results of a model fit.
-    peak_org : int or Bands
-        How to organize peaks.
-        If int, extracts the first n peaks.
-        If Bands, extracts peaks based on band definitions.
+    peak_subset : int or None
+        Extracts the first n peaks.
+        If None, extracts all peaks
 
     Returns
     -------
@@ -32,23 +31,20 @@ def model_to_dict(fit_results, peak_org):
 
     fr_dict = {}
 
-    # periodic parameters
+    # peaks parameters
     peaks = fit_results.peak_params
 
-    if isinstance(peak_org, int):
+    if peak_subset == None:
+        # if the user didn't specify the first N peaks to extract, set the desired N to be equal to the number of peaks
+        peak_subset = peaks.shape[0]
 
-        if len(peaks) < peak_org:
-            nans = [np.array([np.nan] * 3) for ind in range(peak_org-len(peaks))]
-            peaks = np.vstack((peaks, nans))
+    if len(peaks) < peak_subset:
+        nans = [np.array([np.nan] * 3) for ind in range(peak_subset-len(peaks))]
+        peaks = np.vstack((peaks, nans))
 
-        for ind, peak in enumerate(peaks[:peak_org, :]):
-            for pe_label, pe_param in zip(get_peak_indices(), peak):
-                fr_dict[pe_label.lower() + '_' + str(ind)] = pe_param
-
-    elif isinstance(peak_org, Bands):
-        for band, f_range in peak_org:
-            for label, param in zip(get_peak_indices(), get_band_peak(peaks, f_range)):
-                fr_dict[band + '_' + label.lower()] = param
+    for ind, peak in enumerate(peaks[:peak_subset, :]):
+        for pe_label, pe_param in zip(get_peak_indices(), peak):
+            fr_dict[pe_label.lower() + '_' + str(ind)] = pe_param
 
     # goodness-of-fit metrics
     fr_dict['error'] = fit_results.error
@@ -57,17 +53,16 @@ def model_to_dict(fit_results, peak_org):
     return fr_dict
 
 @check_dependency(pd, 'pandas')
-def model_to_dataframe(fit_results, peak_org):
-    """Convert model fit results to a dataframe.
+def model_to_dataframe(fit_results, peak_subset=None):
+    """Convert model fit results to a dictionary.
 
     Parameters
     ----------
     fit_results : ERPparamResults
         Results of a model fit.
-    peak_org : int or Bands
-        How to organize peaks.
-        If int, extracts the first n peaks.
-        If Bands, extracts peaks based on band definitions.
+    peak_subset : int or None
+        Extracts the first n peaks.
+        If None, extracts all peaks
 
     Returns
     -------
@@ -75,21 +70,20 @@ def model_to_dataframe(fit_results, peak_org):
         Model results organized into a dataframe.
     """
 
-    return pd.Series(model_to_dict(fit_results, peak_org))
+    return pd.Series(model_to_dict(fit_results, peak_subset))
 
 
 @check_dependency(pd, 'pandas')
-def group_to_dataframe(fit_results, peak_org):
-    """Convert a group of model fit results into a dataframe.
+def group_to_dataframe(fit_results, peak_subset=None):
+    """Convert model fit results to a dictionary.
 
     Parameters
     ----------
-    fit_results : list of ERPparamResults
-        List of ERPparamResults objects.
-    peak_org : int or Bands
-        How to organize peaks.
-        If int, extracts the first n peaks.
-        If Bands, extracts peaks based on band definitions.
+    fit_results : ERPparamResults
+        Results of a model fit.
+    peak_subset : int or None
+        Extracts the first n peaks.
+        If None, extracts all peaks
 
     Returns
     -------
@@ -97,4 +91,4 @@ def group_to_dataframe(fit_results, peak_org):
         Model results organized into a dataframe.
     """
 
-    return pd.DataFrame([model_to_dataframe(f_res, peak_org) for f_res in fit_results])
+    return pd.DataFrame([model_to_dataframe(f_res, peak_subset) for f_res in fit_results])

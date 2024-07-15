@@ -57,10 +57,15 @@ def get_tbands():
 def get_tresults():
     """Get a ERPparamResults objet, for testing."""
 
-    return ERPparamResults(aperiodic_params=np.array([1.0, 1.00]),
+    return ERPparamResults(shape_params=np.array([[0.08, 0.05, 0.02, 0.6, 0.97,  0.97, 0.98],[0.08, 0.05, 0.02, 0.6, 0.97,  0.97   , 0.98]]),
+                           # [duration, rise-time, decay-time, rise-decay symmetry, FWHM, rising sharpness, decaying sharpness]
                         peak_params=np.array([[10.0, 1.25, 2.0], [20.0, 1.0, 3.0]]),
+                            # [CT, PW, BW]
                         r_squared=0.97, error=0.01,
-                        gaussian_params=np.array([[10.0, 1.25, 1.0], [20.0, 1.0, 1.5]]))
+                        gaussian_params=np.array([[10.0, 1.25, 1.0], [20.0, 1.0, 1.5]]),
+                        # [mean, height, standard deviation]
+                        peak_indices=np.array([[1,2,3],[4,5,6]])
+                        )
 
 def default_group_params():
     """Create default parameters for generating a test group of power spectra."""
