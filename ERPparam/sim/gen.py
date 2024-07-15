@@ -63,7 +63,7 @@ def simulate_erp(time_range,  params, nlv=0.005, fs=1000, return_params=False):
     time : 1d array
         Time vector.
     signals : 2d array
-        Matrix of signals [n_signals, n_times].
+        Matrix of signals [n_signals, n_times-1].
     sim_params : list of SimParams
         Definitions of parameters used for each signal. Has length of n_signals.
         Only returned if `return_params` is True.
@@ -105,7 +105,7 @@ def simulate_erps(n_signals, time_range, params, nlvs=0.005,
     time : 1d array
         Time vector.
     signals : 2d array
-        Matrix of signals [n_signals, n_times].
+        Matrix of signals [n_signals, n_times-1].
     sim_params : list of SimParams
         Definitions of parameters used for each signal. Has length of n_signals.
         Only returned if `return_params` is True.

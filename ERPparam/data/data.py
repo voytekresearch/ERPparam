@@ -82,13 +82,13 @@ class ERPparamResults(namedtuple('ERPparamResults', ['peak_params', 'r_squared',
     __slots__ = ()
 
 
-class SimParams(namedtuple('SimParams', ['periodic_params', 'nlv'])):
-    """Parameters that define a simulated power spectrum.
+class SimParams(namedtuple('SimParams', ['peak_params', 'nlv'])):
+    """Parameters that define a simulated ERP.
 
     Parameters
     ----------
-    periodic_params : list or list of lists
-        Parameters that define the periodic component.
+    peak_params : list or list of lists
+        Parameters that define the peaks component.
     nlv : float
         Noise level added to simulated spectrum.
 
