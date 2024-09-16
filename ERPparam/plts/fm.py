@@ -12,10 +12,10 @@ from ERPparam.core.modutils import safe_import, check_dependency
 from ERPparam.sim.gen import gen_periodic
 from ERPparam.utils.data import trim_spectrum
 from ERPparam.utils.params import compute_fwhm
-from ERPparam.plts.spectra import plot_spectra
+from ERPparam.plts.signals import plot_signals
 from ERPparam.plts.settings import PLT_FIGSIZES, PLT_COLORS
 from ERPparam.plts.utils import check_ax, check_plot_kwargs, savefig
-from ERPparam.plts.style import style_spectrum_plot, style_plot, style_erp_plot
+from ERPparam.plts.style import style_ERP_plot, style_plot
 
 plt = safe_import('.pyplot', 'matplotlib')
 
@@ -28,12 +28,12 @@ plt = safe_import('.pyplot', 'matplotlib')
 def plot_fm(fm, plot_peaks=None, plot_aperiodic=True, plt_log=False, add_legend=True,
             save_fig=False, file_name=None, file_path=None, ax=None, data_kwargs=None,
             model_kwargs=None, aperiodic_kwargs=None, peak_kwargs=None, **plot_kwargs):
-    """Plot the power spectrum and model fit results from a ERPparam object.
+    """Plot the signals and model fit results from a ERPparam object.
 
     Parameters
     ----------
     fm : ERPparam
-        Object containing a power spectrum and (optionally) results from fitting.
+        Object containing ERP signals and (optionally) results from fitting.
     plot_peaks : None or {'shade', 'dot', 'outline', 'line'}, optional
         What kind of approach to take to plot peaks. If None, peaks are not specifically plotted.
         Can also be a combination of approaches, separated by '-', for example: 'shade-line'.
@@ -62,7 +62,7 @@ def plot_fm(fm, plot_peaks=None, plot_aperiodic=True, plt_log=False, add_legend=
     the y-axis (power) is plotted in log spacing by default.
     """
 
-    ax = check_ax(ax, plot_kwargs.pop('figsize', PLT_FIGSIZES['spectral']))
+    ax = check_ax(ax, plot_kwargs.pop('figsize', PLT_FIGSIZES['signal']))
 
     # Log settings - note that power values in ERPparam objects are already logged
     log_freqs = plt_log
@@ -71,16 +71,16 @@ def plot_fm(fm, plot_peaks=None, plot_aperiodic=True, plt_log=False, add_legend=
     # Plot the data, if available
     if fm.has_data:
         data_defaults = {'color' : PLT_COLORS['data'], 'linewidth' : 2.0,
-                         'label' : 'Original Spectrum' if add_legend else None}
+                         'label' : 'Original Signal' if add_legend else None}
         data_kwargs = check_plot_kwargs(data_kwargs, data_defaults)
-        plot_spectra(fm.freqs, fm.power_spectrum, log_freqs, log_powers, ax=ax, **data_kwargs)
+        plot_signals(fm.time, fm.signal, log_freqs, log_powers, ax=ax, **data_kwargs)
 
     # Add the full model fit, and components (if requested)
     if fm.has_model:
         model_defaults = {'color' : PLT_COLORS['model'], 'linewidth' : 3.0, 'alpha' : 0.5,
                           'label' : 'Full Model Fit' if add_legend else None}
         model_kwargs = check_plot_kwargs(model_kwargs, model_defaults)
-        plot_spectra(fm.freqs, fm.fooofed_spectrum_, log_freqs, log_powers, ax=ax, **model_kwargs)
+        plot_signals(fm.freqs, fm.fooofed_spectrum_, log_freqs, log_powers, ax=ax, **model_kwargs)
 
         # Plot the aperiodic component of the model fit
         if plot_aperiodic:
@@ -88,14 +88,14 @@ def plot_fm(fm, plot_peaks=None, plot_aperiodic=True, plt_log=False, add_legend=
                                   'alpha' : 0.5, 'linestyle' : 'dashed',
                                   'label' : 'Aperiodic Fit' if add_legend else None}
             aperiodic_kwargs = check_plot_kwargs(aperiodic_kwargs, aperiodic_defaults)
-            plot_spectra(fm.freqs, fm._ap_fit, log_freqs, log_powers, ax=ax, **aperiodic_kwargs)
+            plot_signals(fm.freqs, fm._ap_fit, log_freqs, log_powers, ax=ax, **aperiodic_kwargs)
 
         # Plot the periodic components of the model fit
         if plot_peaks:
             _add_peaks(fm, plot_peaks, plt_log, ax, peak_kwargs)
 
     # Apply default style to plot
-    style_spectrum_plot(ax, log_freqs, True)
+    style_ERP_plot(ax, log_freqs, True)
 
 
 def _add_peaks(fm, approach, plt_log, ax, peak_kwargs):

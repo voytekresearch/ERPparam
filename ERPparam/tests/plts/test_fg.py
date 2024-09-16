@@ -25,9 +25,9 @@ def test_plot_fg(tfg, skip_if_no_mpl):
         tfg.plot()
 
 @plot_test
-def test_plot_fg_ap(tfg, skip_if_no_mpl):
+def test_plot_fg_pks(tfg, skip_if_no_mpl):
 
-    plot_fg_ap(tfg, save_fig=True, file_path=TEST_PLOTS_PATH,
+    plot_fg_pks(tfg, save_fig=True, file_path=TEST_PLOTS_PATH,
                file_name='test_plot_fg_ap.png')
 
 @plot_test

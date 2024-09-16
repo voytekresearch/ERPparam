@@ -56,8 +56,8 @@ def plot_peak_params(peaks, time_range=None, colors=None, labels=None, ax=None, 
         ax.scatter(xs, ys, sizes, c=colors, label=labels, **plot_kwargs)
 
     # Add axis labels
-    ax.set_xlabel('Center Frequency')
-    ax.set_ylabel('Power')
+    ax.set_xlabel('Center Time')
+    ax.set_ylabel('Amplitude')
 
     # Set plot limits
     if time_range:
@@ -135,8 +135,8 @@ def plot_peak_fits(peaks, time_range=None, colors=None, labels=None, ax=None, **
         ax.plot(times, avg, color=avg_color, linewidth=3.75, label=labels)
 
     # Add axis labels
-    ax.set_xlabel('Frequency')
-    ax.set_ylabel('log(Power)')
+    ax.set_xlabel('Time')
+    ax.set_ylabel('Amplitude')
 
     # Set plot limits
     ax.set_xlim(time_range)

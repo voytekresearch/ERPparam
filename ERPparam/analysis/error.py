@@ -3,7 +3,7 @@
 import numpy as np
 
 from ERPparam.sim.gen import sim_erp, simulate_erp
-from ERPparam.plts.error import plot_spectral_error
+from ERPparam.plts.error import plot_signals_error
 from ERPparam.core.errors import NoModelError, NoDataError
 
 ###################################################################################################
@@ -45,7 +45,7 @@ def compute_pointwise_error_fm(fm, plot_errors=True, return_errors=False, **plt_
     errors = compute_pointwise_error(fm._peak_fit, fm.signal)
 
     if plot_errors:
-        plot_spectral_error(fm.time, errors, **plt_kwargs)
+        plot_signals_error(fm.time, errors, **plt_kwargs)
 
     if return_errors:
         return errors
@@ -95,7 +95,7 @@ def compute_pointwise_error_fg(fg, plot_errors=True, return_errors=False, **plt_
     standard_dev = np.std(errors, 0)
 
     if plot_errors:
-        plot_spectral_error(fg.time[:-1], mean, standard_dev, **plt_kwargs)
+        plot_signals_error(fg.time[:-1], mean, standard_dev, **plt_kwargs)
 
     if return_errors:
         return errors
