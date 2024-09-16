@@ -60,6 +60,7 @@ from ERPparam.core.errors import (FitError, NoModelError, DataError,
                                NoDataError, InconsistentDataError)
 from ERPparam.core.strings import (gen_settings_str, gen_results_fm_str,
                                 gen_issue_str, gen_width_warning_str)
+from ERPparam.core.corrections import correct_overlapping_peaks
 
 from ERPparam.plts.model import plot_ERPparam
 from ERPparam.utils.data import trim_spectrum
@@ -434,9 +435,12 @@ class ERPparam():
             # compute rise-decay symmetry
             self.shape_params_, self.peak_indices_ = self._compute_shape_params(self.peak_params_)
 
+            # correct overlapping peaks
+            self.peak_indices_ = correct_overlapping_peaks(self.signal, 
+                                                           self.peak_indices_)
+            
             # drop peaks based on edge proximity (if shape could not be fit)
             self._drop_peaks_near_edge()
-            self.peak_indices_ = self.peak_indices_.astype(int)
 
             # Calculate R^2 and error of the model fit
             self._calc_r_squared()
@@ -999,6 +1003,7 @@ class ERPparam():
             shape_params[ii] = [fwhm, rise_time, decay_time, rise_decay_symmetry,
                              sharpness, sharpness_rise, sharpness_decay]
             peak_indices[ii] = [start_index, peak_index, end_index]
+            peak_indices = peak_indices.astype(int)
 
         return shape_params, peak_indices
 
