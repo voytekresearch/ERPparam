@@ -438,6 +438,15 @@ class ERPparam():
             self._drop_peaks_near_edge()
             self.peak_indices_ = self.peak_indices_.astype(int)
 
+            # Calculate the peak fit
+            #   Note: if no peaks are found, this creates a flat (all zero) peak fit
+            if self.skewed_gaussian:
+                self._peak_fit = sim_erp(self.time, np.ndarray.flatten(self.gaussian_params_), 
+                                         periodic_mode='skewed_gaussian')
+            else:
+                self._peak_fit = sim_erp(self.time, np.ndarray.flatten(self.gaussian_params_[:,:-1]), 
+                                         periodic_mode='gaussian')
+
             # Calculate R^2 and error of the model fit
             self._calc_r_squared()
             self._calc_error()
