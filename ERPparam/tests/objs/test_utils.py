@@ -7,7 +7,7 @@ import numpy as np
 
 from ERPparam import ERPparamGroup
 from ERPparam.objs.utils import compare_info
-from ERPparam.sim import gen_group_power_spectra
+from ERPparam.sim import simulate_erps
 from ERPparam.core.errors import NoModelError, IncompatibleSettingsError
 
 from ERPparam.tests.tutils import default_group_params
@@ -123,7 +123,7 @@ def test_fit_ERPparam_3d(tfg):
 
     n_groups = 2
     n_spectra = 3
-    xs, ys = gen_group_power_spectra(n_spectra, *default_group_params())
+    xs, ys = simulate_erps(n_spectra, *default_group_params())
     ys = np.stack([ys] * n_groups, axis=0)
     spectra_shape = np.shape(ys)
 

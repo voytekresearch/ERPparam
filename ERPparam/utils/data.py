@@ -133,7 +133,7 @@ def interpolate_spectrum(time, signals, interp_range, buffer=3):
     return time, signals
 
 
-def subsample_signals(signals, selection, return_inds=False):
+def subsample_spectra(signals, selection, return_inds=False):
     """Subsample a group of power signals.
 
     Parameters

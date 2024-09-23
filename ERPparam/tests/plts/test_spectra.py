@@ -7,7 +7,7 @@ import numpy as np
 from ERPparam.tests.tutils import plot_test
 from ERPparam.tests.settings import TEST_PLOTS_PATH
 
-from ERPparam.plts.spectra import *
+# from ERPparam.plts.spectra import *
 
 ###################################################################################################
 ###################################################################################################
