@@ -12,77 +12,77 @@ from ERPparam.data import SimParams
 ###################################################################################################
 ###################################################################################################
 
-def collect_sim_params(periodic_params, nlv):
+def collect_sim_params(peak_params, nlv):
     """Collect simulation parameters into a SimParams object.
 
     Parameters
     ----------
-    periodic_params : list of float or list of list of float
-        Parameters of the periodic component of the power spectrum.
+    peak_params : list of float or list of list of float
+        Parameters of the peak parameters of the ERP.
     nlv : float
-        Noise level of the power spectrum.
+        Noise level of the signal.
 
     Returns
     -------
     SimParams
         Object containing the simulation parameters.
     """
-    #print(check_flat(periodic_params))
-    #print(group_three(check_flat(periodic_params)))
-    grouped_params = group_three(check_flat(periodic_params))
+    #print(check_flat(peak_params))
+    #print(group_three(check_flat(peak_params)))
+    grouped_params = group_three(check_flat(peak_params))
     sorted_grouped_params = sorted(grouped_params, key=lambda x: x[0])
     #print(sorted_grouped_params)
-    #print(sorted(group_three(check_flat(periodic_params))))
+    #print(sorted(group_three(check_flat(peak_params))))
 
     return SimParams(sorted_grouped_params,
                      nlv)
 
 
-def update_sim_ap_params(sim_params, delta, field=None):
-    """Update the aperiodic parameter definition in a SimParams object.
+# def update_sim_ap_params(sim_params, delta, field=None):
+#     """Update the aperiodic parameter definition in a SimParams object.
 
-    Parameters
-    ----------
-    sim_params : SimParams
-        Object storing the current parameter definition.
-    delta : float or list of float
-        Value(s) by which to update the parameters.
-    field : {'offset', 'knee', 'exponent'} or list of string
-        Field of the aperiodic parameter(s) to update.
+#     Parameters
+#     ----------
+#     sim_params : SimParams
+#         Object storing the current parameter definition.
+#     delta : float or list of float
+#         Value(s) by which to update the parameters.
+#     field : {'offset', 'knee', 'exponent'} or list of string
+#         Field of the aperiodic parameter(s) to update.
 
-    Returns
-    -------
-    new_sim_params : SimParams
-        Updated object storing the new parameter definition.
+#     Returns
+#     -------
+#     new_sim_params : SimParams
+#         Updated object storing the new parameter definition.
 
-    Raises
-    ------
-    InconsistentDataError
-        If the input parameters and update values are inconsistent.
-    """
+#     Raises
+#     ------
+#     InconsistentDataError
+#         If the input parameters and update values are inconsistent.
+#     """
 
-    # Grab the aperiodic parameters that need updating
-    ap_params = sim_params.aperiodic_params.copy()
+#     # Grab the aperiodic parameters that need updating
+#     ap_params = sim_params.aperiodic_params.copy()
 
-    # If field isn't specified, check shapes line up and update across parameters
-    if not field:
-        if not len(ap_params) == len(delta):
-            raise InconsistentDataError("The number of items to update and "
-                                        "number of new values is inconsistent.")
-        ap_params = [param + update for param, update in zip(ap_params, delta)]
+#     # If field isn't specified, check shapes line up and update across parameters
+#     if not field:
+#         if not len(ap_params) == len(delta):
+#             raise InconsistentDataError("The number of items to update and "
+#                                         "number of new values is inconsistent.")
+#         ap_params = [param + update for param, update in zip(ap_params, delta)]
 
-    # If labels are given, update deltas according to their labels
-    else:
-        # This loop checks & casts to list, to work for single or multiple passed in values
-        for cur_field, cur_delta in zip(list([field]) if not isinstance(field, list) else field,
-                                        list([delta]) if not isinstance(delta, list) else delta):
-            data_ind = get_indices(infer_ap_func(ap_params))[cur_field]
-            ap_params[data_ind] = ap_params[data_ind] + cur_delta
+#     # If labels are given, update deltas according to their labels
+#     else:
+#         # This loop checks & casts to list, to work for single or multiple passed in values
+#         for cur_field, cur_delta in zip(list([field]) if not isinstance(field, list) else field,
+#                                         list([delta]) if not isinstance(delta, list) else delta):
+#             data_ind = get_indices(infer_ap_func(ap_params))[cur_field]
+#             ap_params[data_ind] = ap_params[data_ind] + cur_delta
 
-    # Replace parameters. Note that this copies a new object, as data objects are immutable
-    new_sim_params = sim_params._replace(aperiodic_params=ap_params)
+#     # Replace parameters. Note that this copies a new object, as data objects are immutable
+#     new_sim_params = sim_params._replace(aperiodic_params=ap_params)
 
-    return new_sim_params
+#     return new_sim_params
 
 
 class Stepper():

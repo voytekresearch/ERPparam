@@ -131,7 +131,7 @@ def simulate_erps(n_signals, time_range, params, nlvs=0.005,
         return time, signals
 
 
-def sim_erp(time, params, periodic_mode='gaussian'):
+def sim_erp(time, params, peak_mode='gaussian'):
     """Generate signal values.
 
     Parameters
@@ -140,7 +140,7 @@ def sim_erp(time, params, periodic_mode='gaussian'):
         Time vector to create peak values for.
     params : list of float
         Parameters to create the component.
-    periodic_mode : {'gaussian'}, optional
+    peak_mode : {'gaussian'}, optional
         Which kind of component to generate.
 
     Returns
@@ -149,7 +149,7 @@ def sim_erp(time, params, periodic_mode='gaussian'):
         Peak values.
     """
 
-    pe_func = get_pe_func(periodic_mode)
+    pe_func = get_pe_func(peak_mode)
 
     pe_vals = pe_func(time, *params)
 
@@ -178,7 +178,6 @@ def sim_noise(time_range, params, fs, nlv):
     This approach generates noise as randomly distributed white noise.
     The 'level' of noise is controlled as the scale of the normal distribution.
     """
- 
     noise_vals = sim_powerlaw(time_range[1]-time_range[0], fs) * (nlv*params[1])
 
     return noise_vals
@@ -212,6 +211,9 @@ def gen_signal(time, time_range, params, fs, nlv):
     print(pe_vals.shape)
     print(noise.shape)
 
+    if len(noise) == (len(pe_vals)-1):
+        pe_vals = pe_vals[:-1]
+        time = time[:-1]
     signal = pe_vals + noise 
 
     return signal, time
