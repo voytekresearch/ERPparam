@@ -37,7 +37,7 @@ def plot_annotated_peak_search(fm):
     flatspec = fm.signal.copy()
 
     # Calculate ylims of the plot that are scaled to the range of the data
-    ylims = [min(flatspec) - 0.1 * np.abs(min(flatspec)), max(flatspec) + 0.1 * max(flatspec)]
+    ylim = np.max(np.abs([min(flatspec) - 0.1 * np.abs(min(flatspec)), max(flatspec) + 0.1 * max(flatspec)]))
 
     # Sort parameters by peak height
     gaussian_params = fm.gaussian_params_[fm.gaussian_params_[:, 1].argsort()][::-1]
@@ -64,7 +64,7 @@ def plot_annotated_peak_search(fm):
         ax.plot(fm.time[extremum], flatspec[extremum], '.', label='Extremum', 
                 color=PLT_COLORS['periodic'], alpha=0.75, markersize=30)
 
-        ax.set_ylim(ylims)
+        ax.set_ylim([-ylim, ylim])
         ax.set_title('Iteration #' + str(ind+1), fontsize=16)
 
         if ind < fm.n_peaks_:
