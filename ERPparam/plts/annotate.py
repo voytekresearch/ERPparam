@@ -59,13 +59,10 @@ def plot_annotated_peak_search(fm):
         plot_signals(fm.time, -1*(np.asarray([fm.min_peak_height]*len(fm.time))), ax=ax,
                       color='red', linewidth=2.5, linestyle='dashed')
 
-        maxi = np.argmax(flatspec)
-        mini = np.argmin(flatspec)
-        ax.plot(fm.time[maxi], flatspec[maxi], '.',
+        # Annotate the peak with the largest amplitude
+        extremum = np.argmax(np.abs(flatspec))
+        ax.plot(fm.time[extremum], flatspec[extremum], '.',
                 color=PLT_COLORS['periodic'], alpha=0.75, markersize=30)
-        ax.plot(fm.time[mini], flatspec[mini], '.',
-                color=PLT_COLORS['periodic'], alpha=0.75, markersize=30)
-
 
         ax.set_ylim(ylims)
         ax.set_title('Iteration #' + str(ind+1), fontsize=16)
