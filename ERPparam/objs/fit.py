@@ -740,7 +740,7 @@ class ERPparam():
 
             # drop peaks below threshold
             gaussian_params = gaussian_params[np.abs(gaussian_params[:, 1]) >= self.min_peak_height]
-            gaussian_params = gaussian_params[np.abs(gaussian_params[:, 1]) >= (self.peak_threshold * np.std(self.signal))]
+            gaussian_params = gaussian_params[np.abs(gaussian_params[:, 1]) >= (self.peak_threshold * np.std(self.baseline_signal))]
 
         # If no peaks were found, return empty array
         else:
