@@ -49,7 +49,7 @@ def plot_annotated_peak_search(fm):
         ax = check_ax(None, PLT_FIGSIZES['signal'])
 
         plot_signals(fm.time, flatspec, ax=ax, linewidth=2.5,
-                     label='Flattened Signal', color=PLT_COLORS['data'])
+                     label='Signal', color=PLT_COLORS['data'])
         plot_signals(fm.time, [fm.peak_threshold * np.std(fm.signal)]*len(fm.time), ax=ax,
                      label='Relative Threshold', color='orange', linewidth=2.5, linestyle='dashed')
         plot_signals(fm.time, -1*(np.asarray([fm.peak_threshold * np.std(fm.signal)]*len(fm.time))), ax=ax,
@@ -61,7 +61,7 @@ def plot_annotated_peak_search(fm):
 
         # Annotate the peak with the largest amplitude
         extremum = np.argmax(np.abs(flatspec))
-        ax.plot(fm.time[extremum], flatspec[extremum], '.',
+        ax.plot(fm.time[extremum], flatspec[extremum], '.', label='Extremum', 
                 color=PLT_COLORS['periodic'], alpha=0.75, markersize=30)
 
         ax.set_ylim(ylims)
