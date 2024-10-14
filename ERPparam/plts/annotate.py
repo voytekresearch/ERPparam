@@ -34,7 +34,8 @@ def plot_annotated_peak_search(fm):
     """
 
     # Get signal with all peaks
-    flatspec = fm.signal 
+    flatspec = fm.signal.copy()
+
     # Calculate ylims of the plot that are scaled to the range of the data
     ylims = [min(flatspec) - 0.1 * np.abs(min(flatspec)), max(flatspec) + 0.1 * max(flatspec)]
 
@@ -49,9 +50,9 @@ def plot_annotated_peak_search(fm):
 
         plot_signals(fm.time, flatspec, ax=ax, linewidth=2.5,
                      label='Flattened Signal', color=PLT_COLORS['data'])
-        plot_signals(fm.time, [fm.peak_threshold * np.std(flatspec)]*len(fm.time), ax=ax,
+        plot_signals(fm.time, [fm.peak_threshold * np.std(fm.signal)]*len(fm.time), ax=ax,
                      label='Relative Threshold', color='orange', linewidth=2.5, linestyle='dashed')
-        plot_signals(fm.time, -1*(np.asarray([fm.peak_threshold * np.std(flatspec)]*len(fm.time))), ax=ax,
+        plot_signals(fm.time, -1*(np.asarray([fm.peak_threshold * np.std(fm.signal)]*len(fm.time))), ax=ax,
                       color='orange', linewidth=2.5, linestyle='dashed')
         plot_signals(fm.time, [fm.min_peak_height]*len(fm.time), ax=ax,
                      label='Absolute Threshold', color='red', linewidth=2.5, linestyle='dashed')
