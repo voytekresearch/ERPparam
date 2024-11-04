@@ -208,9 +208,6 @@ def gen_signal(time, time_range, params, fs, nlv):
     else:
         noise = np.zeros(len(pe_vals))
 
-    print(pe_vals.shape)
-    print(noise.shape)
-
     if len(noise) == (len(pe_vals)-1):
         pe_vals = pe_vals[:-1]
         time = time[:-1]
