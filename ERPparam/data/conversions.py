@@ -13,17 +13,16 @@ pd = safe_import('pandas')
 ###################################################################################################
 ###################################################################################################
 
-def model_to_dict(fit_results, peak_org):
+def model_to_dict(fit_results, peak_subset=None):
     """Convert model fit results to a dictionary.
 
     Parameters
     ----------
     fit_results : ERPparamResults
         Results of a model fit.
-    peak_org : int or Bands
-        How to organize peaks.
-        If int, extracts the first n peaks.
-        If Bands, extracts peaks based on band definitions.
+    peak_subset : int or None
+        Extracts the first n peaks.
+        If None, extracts all peaks
 
     Returns
     -------
@@ -70,17 +69,16 @@ def model_to_dict(fit_results, peak_org):
     return fr_dict
 
 @check_dependency(pd, 'pandas')
-def model_to_dataframe(fit_results, peak_org):
-    """Convert model fit results to a dataframe.
+def model_to_dataframe(fit_results, peak_subset=None):
+    """Convert model fit results to a dictionary.
 
     Parameters
     ----------
     fit_results : ERPparamResults
         Results of a model fit.
-    peak_org : int or Bands
-        How to organize peaks.
-        If int, extracts the first n peaks.
-        If Bands, extracts peaks based on band definitions.
+    peak_subset : int or None
+        Extracts the first n peaks.
+        If None, extracts all peaks
 
     Returns
     -------
@@ -88,21 +86,20 @@ def model_to_dataframe(fit_results, peak_org):
         Model results organized into a dataframe.
     """
 
-    return pd.Series(model_to_dict(fit_results, peak_org))
+    return pd.Series(model_to_dict(fit_results, peak_subset))
 
 
 @check_dependency(pd, 'pandas')
-def group_to_dataframe(fit_results, peak_org):
-    """Convert a group of model fit results into a dataframe.
+def group_to_dataframe(fit_results, peak_subset=None):
+    """Convert model fit results to a dictionary.
 
     Parameters
     ----------
-    fit_results : list of ERPparamResults
-        List of ERPparamResults objects.
-    peak_org : int or Bands
-        How to organize peaks.
-        If int, extracts the first n peaks.
-        If Bands, extracts peaks based on band definitions.
+    fit_results : ERPparamResults
+        Results of a model fit.
+    peak_subset : int or None
+        Extracts the first n peaks.
+        If None, extracts all peaks
 
     Returns
     -------
@@ -110,4 +107,4 @@ def group_to_dataframe(fit_results, peak_org):
         Model results organized into a dataframe.
     """
 
-    return pd.DataFrame([model_to_dataframe(f_res, peak_org) for f_res in fit_results])
+    return pd.DataFrame([model_to_dataframe(f_res, peak_subset) for f_res in fit_results])

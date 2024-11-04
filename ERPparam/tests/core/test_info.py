@@ -1,6 +1,6 @@
-"""Tests for fooof.core.info."""
+"""Tests for ERPparam.core.info."""
 
-from fooof.core.info import *
+from ERPparam.core.info import *
 
 ###################################################################################################
 ###################################################################################################
@@ -10,7 +10,7 @@ def test_get_description(tfm):
     desc = get_description()
     objs = dir(tfm)
 
-    # Test that everything in dict is a valid component of the fooof object
+    # Test that everything in dict is a valid component of the ERPparam object
     for ke, va in desc.items():
         for it in va:
             assert it in objs
@@ -22,31 +22,26 @@ def test_get_peak_indices():
 
     # Check it returns a valid object & that values are correct
     assert indices
-    for ind, val in enumerate(['CF', 'PW', 'BW']):
+    for ind, val in enumerate(['CT', 'PW', 'BW']):
         assert indices[val] == ind
 
-def test_get_ap_indices():
+def test_get_gauss_indices():
 
-    indices_fixed = get_indices('fixed')
+    indices = get_gauss_indices()
 
-    assert indices_fixed
-    for ind, val in enumerate(['offset', 'exponent']):
-        assert indices_fixed[val] == ind
+    # Check it returns a valid object & that values are correct
+    assert indices
+    for ind, val in enumerate(['MN', 'HT', 'SD']):
+        assert indices[val] == ind
 
+def test_get_shape_indices():
 
-    indices_knee = get_indices('knee')
+    indices = get_shape_indices()
 
-    assert indices_knee
-    for ind, val in enumerate(['offset', 'knee', 'exponent']):
-        assert indices_knee[val] == ind
-
-def test_get_indices():
-
-    all_indices_fixed = get_indices('fixed')
-    assert len(all_indices_fixed) == 5
-
-    all_indices_knee = get_indices('knee')
-    assert len(all_indices_knee) == 6
+    # Check it returns a valid object & that values are correct
+    assert indices
+    for ind, val in enumerate(['FWHM', 'rise_time', 'decay_time', 'symmetry', 'sharpness', 'sharpness_rise', 'sharpness_decay']):
+        assert indices[val] == ind
 
 def test_get_info(tfm, tfg):
 

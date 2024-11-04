@@ -1,13 +1,13 @@
-"""Tests for fooof.core.funcs."""
+"""Tests for ERPparam.core.funcs."""
 
 from pytest import raises
 
 import numpy as np
 from scipy.stats import norm, linregress
 
-from fooof.core.errors import InconsistentDataError
+from ERPparam.core.errors import InconsistentDataError
 
-from fooof.core.funcs import *
+from ERPparam.core.funcs import *
 
 ###################################################################################################
 ###################################################################################################

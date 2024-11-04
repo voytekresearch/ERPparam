@@ -1,6 +1,6 @@
-"""Test functions for fooof.analysis.error."""
+"""Test functions for ERPparam.analysis.error."""
 
-from fooof.analysis.error import *
+from ERPparam.analysis.error import *
 
 ###################################################################################################
 ###################################################################################################

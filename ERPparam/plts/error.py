@@ -3,9 +3,9 @@
 import numpy as np
 
 from ERPparam.core.modutils import safe_import, check_dependency
-from ERPparam.plts.spectra import plot_spectra
+from ERPparam.plts.signals import plot_signals
 from ERPparam.plts.settings import PLT_FIGSIZES
-from ERPparam.plts.style import style_spectrum_plot, style_plot
+from ERPparam.plts.style import style_ERP_plot, style_plot
 from ERPparam.plts.utils import check_ax, savefig
 
 plt = safe_import('.pyplot', 'matplotlib')
@@ -16,39 +16,37 @@ plt = safe_import('.pyplot', 'matplotlib')
 @savefig
 @style_plot
 @check_dependency(plt, 'matplotlib')
-def plot_spectral_error(freqs, error, shade=None, log_freqs=False, ax=None, **plot_kwargs):
-    """Plot frequency by frequency error values.
+def plot_signals_error(time, error, shade=None, ax=None, **plot_kwargs):
+    """Plot timepoint by timepoint error values.
 
     Parameters
     ----------
-    freqs : 1d array
-        Frequency values, to be plotted on the x-axis.
+    time : 1d array
+        Time values, to be plotted on the x-axis.
     error : 1d array
-        Calculated error values or mean error values across frequencies, to plot on the y-axis.
+        Calculated error values or mean error values across Time, to plot on the y-axis.
     shade : 1d array, optional
         Values to shade in around the plotted error.
         This could be, for example, the standard deviation of the errors.
-    log_freqs : bool, optional, default: False
-        Whether to plot the frequency axis in log spacing.
     ax : matplotlib.Axes, optional
         Figure axes upon which to plot.
     **plot_kwargs
         Keyword arguments to pass into the ``style_plot``.
     """
 
-    ax = check_ax(ax, plot_kwargs.pop('figsize', PLT_FIGSIZES['spectral']))
+    ax = check_ax(ax, plot_kwargs.pop('figsize', PLT_FIGSIZES['signal']))
 
-    plt_freqs = np.log10(freqs) if log_freqs else freqs
+    plt_time = time
 
-    plot_spectra(plt_freqs, error, ax=ax, linewidth=3)
+    plot_signals(plt_time, error, ax=ax, linewidth=3)
 
     if np.any(shade):
-        ax.fill_between(plt_freqs, error-shade, error+shade, alpha=0.25)
+        ax.fill_between(plt_time, error-shade, error+shade, alpha=0.25)
 
     ymin, ymax = ax.get_ylim()
     if ymin < 0:
         ax.set_ylim([0, ymax])
-    ax.set_xlim(plt_freqs.min(), plt_freqs.max())
+    ax.set_xlim(plt_time.min(), plt_time.max())
 
-    style_spectrum_plot(ax, log_freqs, True)
+    style_ERP_plot(ax)
     ax.set_ylabel('Absolute Error')
