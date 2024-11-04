@@ -3,6 +3,9 @@
 /*.egg-info/*
 /build/*
 
+# Ignore VS Code settings
+ERPparam/.vscode/settings.json
+
 # Ignore notebook checkpoints
 *.ipynb_checkpoints*
 

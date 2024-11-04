@@ -14,6 +14,7 @@ from ERPparam.core.errors import InconsistentDataError
 ###################################################################################################
 ###################################################################################################
 
+
 def gaussian_function(xs, *params):
     """Gaussian fitting function.
 

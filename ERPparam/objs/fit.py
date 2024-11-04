@@ -136,8 +136,7 @@ class ERPparam():
     """
     # pylint: disable=attribute-defined-outside-init
 
-    def __init__(self, signal=None, time=None, time_range=None, baseline=None, peak_width_limits=(0.01, 10), max_n_peaks=20, 
-                 peak_threshold=2.0, min_peak_height=0.0, verbose=True):
+    def __init__(self, peak_width_limits=(0.01, 10), max_n_peaks=20, peak_threshold=2.0, min_peak_height=0.0, verbose=True):
         
         self.peak_width_limits = peak_width_limits
         self.max_n_peaks = max_n_peaks
@@ -171,10 +170,6 @@ class ERPparam():
         # Set internal settings, based on inputs, and initialize data & results attributes
         self._reset_internal_settings()
         self._reset_data_results(True, True, True)
-
-        # If user inputs data upon initialization, then populate these, but AFTER we've run _reset_data_results()
-        if time is not None and signal is not None:
-            self.add_data(time, signal, time_range, baseline)
 
 
     @property
@@ -429,7 +424,8 @@ class ERPparam():
 
             # Calculate the peak fit
             #   Note: if no peaks are found, this creates a flat (all zero) peak fit
-            self._peak_fit = sim_erp(self.time, np.ndarray.flatten(self.gaussian_params_))
+            self._peak_fit = sim_erp(self.time, np.ndarray.flatten(self.gaussian_params_[:,:-1]), 
+                                        periodic_mode='gaussian')
 
             # Convert gaussian definitions to peak parameters
             self.peak_params_  = self._create_peak_params(self.gaussian_params_)
@@ -761,11 +757,11 @@ class ERPparam():
 
             # drop peaks below threshold
             gaussian_params = gaussian_params[np.abs(gaussian_params[:, 1]) >= self.min_peak_height]
-            gaussian_params = gaussian_params[np.abs(gaussian_params[:, 1]) >= (self.peak_threshold * np.std(self.signal))]
+            gaussian_params = gaussian_params[np.abs(gaussian_params[:, 1]) >= (self.peak_threshold * np.std(self.baseline_signal))]
 
         # If no peaks were found, return empty array
         else:
-            gaussian_params = np.empty([0, 3])
+            gaussian_params = np.empty([0, 4])
 
         return gaussian_params
     
@@ -886,6 +882,7 @@ class ERPparam():
         gaus_param_bounds = (tuple(item for sublist in lo_bound for item in sublist),
                              tuple(item for sublist in hi_bound for item in sublist))
 
+
         # Flatten guess, for use with curve fit
         guess = np.ndarray.flatten(guess)
 
@@ -905,7 +902,8 @@ class ERPparam():
 
         # Re-organize params into 2d matrix
         gaussian_params = np.array(group_three(gaussian_params))
-
+        gaussian_params = np.hstack((gaussian_params, np.ones((len(gaussian_params), 1))*np.nan))
+            
         return gaussian_params
 
 
@@ -1182,6 +1180,10 @@ class ERPparam():
             1d vector, or 2d as [n_ERPs, n_times].
         time_range : list of [float, float]
             Time range to restrict signal to. If None, keeps the entire range.
+        baseline : list of [float, float]
+            Time range to use as a baseline estimate of the noise floor (not baseline correction).
+            If baseline is not given, baseline will be estimated from the whole pretrial window (time < 0).
+            If time vector does not contain zero, the whole signal will be used to estimate the baseline.
         signal_dim : int, optional, default: 1
             Dimensionality that the signal should have.
 
@@ -1191,6 +1193,18 @@ class ERPparam():
             signal (trimmed in time range, if desired)
         time_range : list of [float, float]
             Minimum and maximum values of the time vector.
+        baseline_signal : 1d or 2d array
+            Subset of signal being used for estimation of the noise floor
+        baseline : list of [float, float]
+            Minimum and maximum values of the baseline time period.
+        uncropped_signal : 1d or 2d array
+            Original full-length signal
+        uncropped_time : 1d array
+            Time vector unaltered by time_range. Used for plotting
+        fs : integer
+            Sampling frequency (Hz)
+        time_res : float
+            Time resolution
 
         Raises
         ------
@@ -1238,8 +1252,8 @@ class ERPparam():
         _, baseline_signal = trim_spectrum(time, signal, baseline)
 
         # get the uncropped signal, for later plotting 
-        uncropped_signal = signal
-        uncropped_time = time
+        uncropped_signal = signal.copy()
+        uncropped_time = time.copy()
         # Check time range, trim the signal range if requested
         if time_range:
             time, signal = trim_spectrum(time, signal, time_range)

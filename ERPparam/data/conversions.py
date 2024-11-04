@@ -3,7 +3,8 @@
 import numpy as np
 
 from ERPparam import Bands
-from ERPparam.core.info import get_peak_indices
+from ERPparam.core.info import (get_peak_indices, get_shape_indices, 
+                                get_gauss_indices)
 from ERPparam.core.modutils import safe_import, check_dependency
 from ERPparam.analysis.periodic import get_band_peak
 
@@ -31,24 +32,39 @@ def model_to_dict(fit_results, peak_subset=None):
 
     fr_dict = {}
 
-    # peaks parameters
-    peaks = fit_results.peak_params
+    # concatenate peak and shape parameters
+    peak_params = fit_results.peak_params
+    shape_params = fit_results.shape_params
+    gaussian_params = fit_results.gaussian_params
+    peaks = np.hstack((peak_params, shape_params, gaussian_params))
 
-    if peak_subset == None:
-        # if the user didn't specify the first N peaks to extract, set the desired N to be equal to the number of peaks
-        peak_subset = peaks.shape[0]
+    # get indices for peak and shape parameters
+    peak_indices = get_peak_indices()
+    shape_indices = get_shape_indices()
+    gauss_indices = get_gauss_indices()
+    for key in shape_indices.keys():
+        shape_indices[key] += len(peak_indices)
+    for key in gauss_indices.keys():
+        gauss_indices[key] += (len(peak_indices) + len(shape_indices))
+    indices = {**peak_indices, **shape_indices, **gauss_indices}
 
-    if len(peaks) < peak_subset:
-        nans = [np.array([np.nan] * 3) for ind in range(peak_subset-len(peaks))]
-        peaks = np.vstack((peaks, nans))
+    if isinstance(peak_org, int):
+        if len(peaks) < peak_org:
+            nans = [np.array([np.nan] * 14) for _ in range(peak_org-len(peaks))]
+            peaks = np.vstack((peaks, nans))
 
-    for ind, peak in enumerate(peaks[:peak_subset, :]):
-        for pe_label, pe_param in zip(get_peak_indices(), peak):
-            fr_dict[pe_label.lower() + '_' + str(ind)] = pe_param
+        for ind, peak in enumerate(peaks[:peak_org, :]):
+            for pe_label, pe_param in zip(indices, peak):
+                fr_dict[pe_label.lower() + '_' + str(ind)] = pe_param
 
-    # goodness-of-fit metrics
-    fr_dict['error'] = fit_results.error
-    fr_dict['r_squared'] = fit_results.r_squared
+    elif isinstance(peak_org, Bands):
+        for band, f_range in peak_org:
+            for label, param in zip(indices, get_band_peak(peaks, f_range)):
+                fr_dict[band + '_' + label.lower()] = param
+
+        # goodness-of-fit metrics
+        fr_dict['error'] = fit_results.error
+        fr_dict['r_squared'] = fit_results.r_squared
 
     return fr_dict
 

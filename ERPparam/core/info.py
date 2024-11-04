@@ -68,6 +68,7 @@ def get_gauss_indices():
         'MN' : 0,
         'HT' : 1,
         'SD' : 2,
+        'SK' : 3,
     }
 
     return indices
