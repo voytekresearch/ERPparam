@@ -424,7 +424,7 @@ class ERPparam():
 
             # Calculate the peak fit
             #   Note: if no peaks are found, this creates a flat (all zero) peak fit
-            self._peak_fit = sim_erp(self.time, np.ndarray.flatten(self.gaussian_params_[:,:-1]), 
+            self._peak_fit = sim_erp(self.time, np.ndarray.flatten(self.gaussian_params_), 
                                         peak_mode='gaussian')
 
             # Convert gaussian definitions to peak parameters
@@ -761,7 +761,7 @@ class ERPparam():
 
         # If no peaks were found, return empty array
         else:
-            gaussian_params = np.empty([0, 4])
+            gaussian_params = np.empty([0, 3])
 
         return gaussian_params
     
@@ -902,7 +902,6 @@ class ERPparam():
 
         # Re-organize params into 2d matrix
         gaussian_params = np.array(group_three(gaussian_params))
-        gaussian_params = np.hstack((gaussian_params, np.ones((len(gaussian_params), 1))*np.nan))
             
         return gaussian_params
 
@@ -1341,6 +1340,5 @@ class ERPparam():
 
     def _regenerate_model(self):
         """Regenerate model fit from parameters."""
-
         self._peak_fit = sim_erp(
             self.time,  np.ndarray.flatten(self.gaussian_params_))
