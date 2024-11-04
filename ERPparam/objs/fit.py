@@ -425,7 +425,7 @@ class ERPparam():
             # Calculate the peak fit
             #   Note: if no peaks are found, this creates a flat (all zero) peak fit
             self._peak_fit = sim_erp(self.time, np.ndarray.flatten(self.gaussian_params_[:,:-1]), 
-                                        periodic_mode='gaussian')
+                                        peak_mode='gaussian')
 
             # Convert gaussian definitions to peak parameters
             self.peak_params_  = self._create_peak_params(self.gaussian_params_)
