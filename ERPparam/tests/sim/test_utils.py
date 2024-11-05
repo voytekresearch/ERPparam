@@ -1,6 +1,6 @@
-"""Test functions for fooof.sim.utils."""
+"""Test functions for ERPparam.sim.utils."""
 
-from fooof.sim.utils import *
+from ERPparam.sim.utils import *
 
 ###################################################################################################
 ###################################################################################################

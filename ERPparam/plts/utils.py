@@ -65,7 +65,7 @@ def set_alpha(n_points):
     return alpha
 
 
-def add_shades(ax, shades, colors='r', add_center=False, logged=False):
+def add_shades(ax, shades, colors='r', add_center=False):
     """Add shaded regions to a plot.
 
     Parameters
@@ -78,8 +78,6 @@ def add_shades(ax, shades, colors='r', add_center=False, logged=False):
         Color(s) to plot shades.
     add_center : boolean, default: False
         Whether to add a line at the center point of the shaded regions.
-    logged : boolean, default: False
-        Whether the shade values should be logged before applying to plot axes.
     """
 
     # If only one shade region is specified, this embeds in a list, so that the loop works
@@ -89,8 +87,6 @@ def add_shades(ax, shades, colors='r', add_center=False, logged=False):
     colors = repeat(colors) if not isinstance(colors, list) else colors
 
     for shade, color in zip(shades, colors):
-
-        shade = np.log10(shade) if logged else shade
 
         ax.axvspan(shade[0], shade[1], color=color, alpha=0.2, lw=0)
 

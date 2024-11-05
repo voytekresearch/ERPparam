@@ -1,6 +1,6 @@
-"""Test functions for fooof.utils.reports"""
+"""Test functions for ERPparam.utils.reports"""
 
-from fooof.utils.reports import *
+from ERPparam.utils.reports import *
 
 ###################################################################################################
 ###################################################################################################

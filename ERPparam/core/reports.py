@@ -3,7 +3,7 @@
 from ERPparam.core.io import fname, fpath
 from ERPparam.core.modutils import safe_import, check_dependency
 from ERPparam.core.strings import gen_settings_str, gen_results_fm_str, gen_results_fg_str
-from ERPparam.plts.fg import plot_fg_ap, plot_fg_gf, plot_fg_peak_cens
+from ERPparam.plts.fg import plot_fg_pks, plot_fg_gf, plot_fg_peak_cens
 
 plt = safe_import('.pyplot', 'matplotlib')
 gridspec = safe_import('.gridspec', 'matplotlib')

@@ -1,10 +1,10 @@
-"""Tests for fooof.core.reports."""
+"""Tests for ERPparam.core.reports."""
 
 import os
 
-from fooof.tests.settings import TEST_REPORTS_PATH
+from ERPparam.tests.settings import TEST_REPORTS_PATH
 
-from fooof.core.reports import *
+from ERPparam.core.reports import *
 
 ###################################################################################################
 ###################################################################################################

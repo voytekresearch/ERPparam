@@ -137,8 +137,7 @@ class ERPparam():
     """
     # pylint: disable=attribute-defined-outside-init
 
-    def __init__(self, peak_width_limits=(0.01, 10), max_n_peaks=np.inf, 
-                 peak_threshold=2.0, min_peak_height=0.0, verbose=True):
+    def __init__(self, peak_width_limits=(0.01, 10), max_n_peaks=20, peak_threshold=2.0, min_peak_height=0.0, verbose=True):
         
         self.peak_width_limits = peak_width_limits
         self.max_n_peaks = max_n_peaks
@@ -426,8 +425,8 @@ class ERPparam():
 
             # Calculate the peak fit
             #   Note: if no peaks are found, this creates a flat (all zero) peak fit
-            self._peak_fit = sim_erp(self.time, np.ndarray.flatten(self.gaussian_params_[:,:-1]), 
-                                        periodic_mode='gaussian')
+            self._peak_fit = sim_erp(self.time, np.ndarray.flatten(self.gaussian_params_), 
+                                        peak_mode='gaussian')
 
             # Convert gaussian definitions to peak parameters
             self.peak_params_  = self._create_peak_params(self.gaussian_params_)
@@ -500,7 +499,7 @@ class ERPparam():
         print(gen_issue_str(concise))
 
 
-    def get_settings(self):
+    def get_settings(self, return_dict=False):
         """Return user defined settings of the current object.
 
         Returns
@@ -509,10 +508,12 @@ class ERPparam():
             Object containing the settings from the current object.
         """
 
-        sets = {key : getattr(self, key) for key in OBJ_DESC['settings']}
-               # # ERPparamSettings(**{key : getattr(self, key) \
-               #              for key in OBJ_DESC['settings']})
-        return sets# {key:getattr(sets,key) for key in sets}
+        if return_dict:
+            sets = {key : getattr(self, key) for key in OBJ_DESC['settings']}
+        else:
+            sets = ERPparamSettings(**{key : getattr(self, key) \
+                          for key in OBJ_DESC['settings']})
+        return sets
 
 
     def get_meta_data(self):
@@ -535,7 +536,7 @@ class ERPparam():
         ----------
         name : {'peak_params', 'gaussian_params', 'shape_params', 'error', 'r_squared'}
             Name of the data field to extract.
-        col : {'CT', 'PW', 'BW'}, {'MN','HT','SD'}, {fwhm, rise_time, decay_time, symmetry,
+        col : {'CT', 'PW', 'BW'}, {'MN','HT','SD'}, {FWHM, rise_time, decay_time, symmetry,
             sharpness, sharpness_rise, sharpness_decay} or int, optional
             Column name / index to extract from selected data, if requested.
             Only used for name of {'peak_params', 'gaussian_params', 'shape_params}, 
@@ -584,17 +585,41 @@ class ERPparam():
         return out
 
 
-    def get_results(self):
+    def get_results(self, param_names=False):
         """Return model fit parameters and goodness of fit metrics.
+
+        Parameters
+        ----------
+        param_names : bool
+            If True, return the names and descriptions of the various parameters output in each array of the ERPparamResults object attribute 
 
         Returns
         -------
         ERPparamResults
             Object containing the model fit results from the current object.
         """
+        if param_names:
 
-        return ERPparamResults(**{key.strip('_') : getattr(self, key) \
-            for key in OBJ_DESC['results']})
+            params_dict = {'shape_params':{'FWHM':'full width at half magnitude', 
+                                           'rise_time': 'time between peak and rising half-magnitude point', 
+                                           'decay_time': 'time between peak and decaying half-magnitude point', 
+                                           'symmetry': 'rise time / FWHM', 
+                                           'sharpness': 'peak sharpness (normalized to be dimensionless 0-1)', 
+                                           'sharpness_rise': 'sharpness of the rise (normalized to be dimensionless 0-1)', 
+                                           'sharpness_decay': 'sharpness of the decay (normalized to be dimensionless 0-1)'},
+                            'peak_params': {'CT': "Center time of the peak, calculated from the raw signal", 
+                                            'PW': 'Peak amplitude, calculate from the raw signal', 
+                                            'BW': 'Bandwidth of the peak, 2-sided (ie, both halves from the peak center), calculated from the raw signal'},
+                            'gaussian_params':{'MN':'mean of the gaussian',
+                                               'HT':'height of the gaussian',
+                                               'SD':'gaussian width'}
+                            }
+
+            return ERPparamResults(**{key.strip('_') : getattr(self, key) \
+                for key in OBJ_DESC['results']}), params_dict
+        else:
+            return ERPparamResults(**{key.strip('_') : getattr(self, key) \
+                for key in OBJ_DESC['results']})
 
 
     # @copy_doc_func_to_method(plot_fm)
@@ -740,7 +765,7 @@ class ERPparam():
 
         # If no peaks were found, return empty array
         else:
-            gaussian_params = np.empty([0, 4])
+            gaussian_params = np.empty([0, 3])
 
         return gaussian_params
     
@@ -881,7 +906,6 @@ class ERPparam():
 
         # Re-organize params into 2d matrix
         gaussian_params = np.array(group_three(gaussian_params))
-        gaussian_params = np.hstack((gaussian_params, np.ones((len(gaussian_params), 1))*np.nan))
             
         return gaussian_params
 
@@ -1206,6 +1230,11 @@ class ERPparam():
         if time.shape[-1] != signal.shape[-1]:
             raise InconsistentDataError("The input times and ERP signal "
                                         "are not a consistent size.")
+        
+        # Check if power values are complex
+        if np.iscomplexobj(signal):
+            raise DataError("Input ERPs are complex values. "
+                            "Model fitting does not currently support complex inputs.")
 
         # Force data to be dtype of float64
         #   If they end up as float32, or less, scipy curve_fit fails (sometimes implicitly)
@@ -1316,6 +1345,5 @@ class ERPparam():
 
     def _regenerate_model(self):
         """Regenerate model fit from parameters."""
-
         self._peak_fit = sim_erp(
             self.time,  np.ndarray.flatten(self.gaussian_params_))

@@ -1,10 +1,10 @@
-"""Tests for fooof.plts.templates."""
+"""Tests for ERPparam.plts.templates."""
 
 import numpy as np
 
-from fooof.tests.tutils import plot_test
+from ERPparam.tests.tutils import plot_test
 
-from fooof.plts.templates import *
+from ERPparam.plts.templates import *
 
 ###################################################################################################
 ###################################################################################################

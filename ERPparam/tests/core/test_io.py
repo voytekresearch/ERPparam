@@ -1,12 +1,12 @@
-"""Tests for fooof.core.io."""
+"""Tests for ERPparam.core.io."""
 
 import os
 
-from fooof.core.items import OBJ_DESC
+from ERPparam.core.items import OBJ_DESC
 
-from fooof.tests.settings import TEST_DATA_PATH
+from ERPparam.tests.settings import TEST_DATA_PATH
 
-from fooof.core.io import *
+from ERPparam.core.io import *
 
 ###################################################################################################
 ###################################################################################################
@@ -31,9 +31,9 @@ def test_save_fm_str(tfm):
     """Check saving fm data, with file specifiers as strings."""
 
     # Test saving out each set of save elements
-    file_name_res = 'test_fooof_res'
-    file_name_set = 'test_fooof_set'
-    file_name_dat = 'test_fooof_dat'
+    file_name_res = 'test_ERPparam_res'
+    file_name_set = 'test_ERPparam_set'
+    file_name_dat = 'test_ERPparam_dat'
 
     save_fm(tfm, file_name_res, TEST_DATA_PATH, False, True, False, False)
     save_fm(tfm, file_name_set, TEST_DATA_PATH, False, False, True, False)
@@ -44,7 +44,7 @@ def test_save_fm_str(tfm):
     assert os.path.exists(os.path.join(TEST_DATA_PATH, file_name_dat + '.json'))
 
     # Test saving out all save elements
-    file_name_all = 'test_fooof_all'
+    file_name_all = 'test_ERPparam_all'
     save_fm(tfm, file_name_all, TEST_DATA_PATH, False, True, True, True)
     assert os.path.exists(os.path.join(TEST_DATA_PATH, file_name_all + '.json'))
 
@@ -52,7 +52,7 @@ def test_save_fm_str(tfm):
 def test_save_fm_append(tfm):
     """Check saving fm data, appending to a file."""
 
-    file_name = 'test_fooof_append'
+    file_name = 'test_ERPparam_append'
 
     save_fm(tfm, file_name, TEST_DATA_PATH, True, True, True, True)
     save_fm(tfm, file_name, TEST_DATA_PATH, True, True, True, True)
@@ -62,7 +62,7 @@ def test_save_fm_append(tfm):
 def test_save_fm_fobj(tfm):
     """Check saving fm data, with file object file specifier."""
 
-    file_name = 'test_fooof_fileobj'
+    file_name = 'test_ERPparam_fileobj'
 
     # Save, using file-object: three successive lines with three possible save settings
     with open(os.path.join(TEST_DATA_PATH, file_name + '.json'), 'w') as f_obj:
@@ -75,9 +75,9 @@ def test_save_fm_fobj(tfm):
 def test_save_fg(tfg):
     """Check saving fg data."""
 
-    res_file_name = 'test_fooofgroup_res'
-    set_file_name = 'test_fooofgroup_set'
-    dat_file_name = 'test_fooofgroup_dat'
+    res_file_name = 'test_ERPparamgroup_res'
+    set_file_name = 'test_ERPparamgroup_set'
+    dat_file_name = 'test_ERPparamgroup_dat'
 
     save_fg(tfg, file_name=res_file_name, file_path=TEST_DATA_PATH, save_results=True)
     save_fg(tfg, file_name=set_file_name, file_path=TEST_DATA_PATH, save_settings=True)
@@ -88,14 +88,14 @@ def test_save_fg(tfg):
     assert os.path.exists(os.path.join(TEST_DATA_PATH, dat_file_name + '.json'))
 
     # Test saving out all save elements
-    file_name_all = 'test_fooofgroup_all'
+    file_name_all = 'test_ERPparamgroup_all'
     save_fg(tfg, file_name_all, TEST_DATA_PATH, False, True, True, True)
     assert os.path.exists(os.path.join(TEST_DATA_PATH, file_name_all + '.json'))
 
 def test_save_fg_append(tfg):
     """Check saving fg data, appending to file."""
 
-    file_name = 'test_fooofgroup_append'
+    file_name = 'test_ERPparamgroup_append'
 
     save_fg(tfg, file_name, TEST_DATA_PATH, True, save_results=True)
     save_fg(tfg, file_name, TEST_DATA_PATH, True, save_results=True)
@@ -105,7 +105,7 @@ def test_save_fg_append(tfg):
 def test_save_fg_fobj(tfg):
     """Check saving fg data, with file object file specifier."""
 
-    file_name = 'test_fooof_fileobj'
+    file_name = 'test_ERPparam_fileobj'
 
     with open(os.path.join(TEST_DATA_PATH, file_name + '.json'), 'w') as f_obj:
         save_fg(tfg, f_obj, TEST_DATA_PATH, False, True, False, False)
@@ -117,7 +117,7 @@ def test_load_json_str():
     Loads files from test_save_fm_str.
     """
 
-    file_name = 'test_fooof_all'
+    file_name = 'test_ERPparam_all'
 
     data = load_json(file_name, TEST_DATA_PATH)
 
@@ -128,7 +128,7 @@ def test_load_json_fobj():
     Loads files from test_save_fm_str.
     """
 
-    file_name = 'test_fooof_all'
+    file_name = 'test_ERPparam_all'
 
     with open(os.path.join(TEST_DATA_PATH, file_name + '.json'), 'r') as f_obj:
         data = load_json(f_obj, '')
@@ -140,7 +140,7 @@ def test_load_jsonlines():
     Loads files from test_save_fg.
     """
 
-    res_file_name = 'test_fooofgroup_res'
+    res_file_name = 'test_ERPparamgroup_res'
 
     for data in load_jsonlines(res_file_name, TEST_DATA_PATH):
         assert data
@@ -150,7 +150,7 @@ def test_load_file_contents():
     Note that is this test fails, it likely stems from an issue from saving.
     """
 
-    file_name = 'test_fooof_all'
+    file_name = 'test_ERPparam_all'
     loaded_data = load_json(file_name, TEST_DATA_PATH)
 
     # Check settings

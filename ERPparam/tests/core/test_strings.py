@@ -1,7 +1,7 @@
-"""Tests for fooof.core.strings."""
+"""Tests for ERPparam.core.strings."""
 
-from fooof.core.strings import *
-from fooof.core.strings import _format, _no_model_str
+from ERPparam.core.strings import *
+from ERPparam.core.strings import _format, _no_model_str
 
 ###################################################################################################
 ###################################################################################################
@@ -18,9 +18,9 @@ def test_gen_settings_str(tfm):
 
     assert gen_settings_str(tfm)
 
-def test_gen_freq_range_str(tfm):
+def test_gen_time_range_str(tfm):
 
-    assert gen_freq_range_str(tfm)
+    assert gen_time_range_str(tfm)
 
 def test_gen_methods_report_str():
 

@@ -1,8 +1,8 @@
-"""Test functions for fooof.utils.params."""
+"""Test functions for ERPparam.utils.params."""
 
 import numpy as np
 
-from fooof.utils.params import *
+from ERPparam.utils.params import *
 
 ###################################################################################################
 ###################################################################################################

@@ -16,12 +16,13 @@ from ERPparam.plts.fg import plot_fg
 from ERPparam.core.items import OBJ_DESC
 from ERPparam.core.info import get_indices
 from ERPparam.core.utils import check_inds
-from ERPparam.core.errors import NoModelError
+from ERPparam.core.errors import NoModelError, NoDataError
 from ERPparam.core.reports import save_report_fg
 from ERPparam.core.strings import gen_results_fg_str
 from ERPparam.core.io import save_fg, load_jsonlines
 from ERPparam.core.modutils import copy_doc_func_to_method, safe_import
 from ERPparam.data.conversions import group_to_dataframe
+from ERPparam.data import ERPparamResults
 
 ###################################################################################################
 ###################################################################################################
@@ -96,12 +97,11 @@ class ERPparamGroup(ERPparam):
     def __init__(self, *args, **kwargs):
         """Initialize object with desired settings."""
 
-        ERPparam.__init__(self, *args, **kwargs)
-
         self.signals = None
 
         self._reset_group_results()
 
+        ERPparam.__init__(self, *args, **kwargs)
 
     def __len__(self):
         """Define the length of the object as the number of model fit results available."""
@@ -160,25 +160,33 @@ class ERPparamGroup(ERPparam):
             if self.has_model else None
 
 
-    def _reset_data_results(self, clear_signal=False, clear_signals=False, clear_time=False,
-                            clear_results=False):
-        """Set, or reset, data & results attributes to empty.
+    def _reset_data_results(self, clear_signals=False, clear_time=False,
+                            clear_results=False, clear_signal=False):
+        """Set, or reset, data & results attributes to empty. 
+        Automatically sets self.signal attribute to None if clear_signals=True.
 
         Parameters
         ----------
-        clear_times : bool, optional, default: False
+        clear_signals : bool, optional, default: False
+            Whether to clear  group signals attribute.
+        clear_time : bool, optional, default: False
             Whether to clear time attributes.
-        clear_spectrum : bool, optional, default: False
-            Whether to clear power spectrum attribute.
         clear_results : bool, optional, default: False
             Whether to clear model results attributes.
-        clear_spectra : bool, optional, default: False
-            Whether to clear power spectra attribute.
+        clear_signal : bool, optional, default: False
+            Sets self.signal to None if True, or if clear_signals is True
         """
+        if clear_signals==True:
+            clear_signal=True
 
-        super()._reset_data_results(clear_time, clear_signal, clear_results)
+        # if clear_results:
+        #     self._reset_group_results(length=len(self.group_results))
+
+        super()._reset_data_results(clear_time=clear_time, clear_signal=clear_signal, clear_results=clear_results)
         if clear_signals:
             self.signals= None
+
+
 
 
     def _reset_group_results(self, length=0):
@@ -189,8 +197,19 @@ class ERPparamGroup(ERPparam):
         length : int, optional, default: 0
             Length of list of empty lists to initialize. If 0, creates a single empty list.
         """
+        format_dict = { 'gaussian_params_' : np.ones([0,3])*np.nan,
+                        'peak_params_' : np.ones([0,3])*np.nan,
+                        'shape_params_' : np.ones([0,7])*np.nan,
+                        'r_squared_': np.nan,
+                        'error_' : np.nan,
+                        'peak_indices_' : np.full(3, np.nan)
+                    }
+        empty_res = ERPparamResults(**{key.strip('_') : format_dict[key] \
+            for key in OBJ_DESC['results']})
 
-        self.group_results = [[]] * length
+        self.group_results = [empty_res] * length
+
+        #self.group_results = [[]] * length
 
 
     def _add_data(self, time, signals, time_range, baseline):
@@ -214,9 +233,9 @@ class ERPparamGroup(ERPparam):
         # If any data is already present, then clear data & results
         #   This is to ensure object consistency of all data & results
         if np.any(self.time):
-            self._reset_data_results(True, True, True, True)
+            self._reset_data_results(True, True, True)
             self._reset_group_results()
-
+            
         #output of prepare data: time, signal, time_range, baseline_signal, baseline, uncropped signal, uncropped time, fs, time-res
         self.time, self.signals, self.time_range, self.baseline_signal, self.baseline, self.uncropped_signals, self.uncropped_time, self.fs, self.time_res \
             = self._prepare_data(time=time, signal=signals, time_range=time_range, baseline=baseline, signal_dim=2)
@@ -273,8 +292,13 @@ class ERPparamGroup(ERPparam):
         """
 
         # If times & power spectra provided together, add data to object
-        if time is not None and signals is not None:
+        if signals is not None:
             self._add_data(time, signals, time_range, baseline)
+
+
+        # Check that data is available
+        if not self.has_data:
+            raise NoDataError("No data available to fit, can not proceed.")
 
         # If 'verbose', print out a marker of what is being run
         if self.verbose and not progress:
@@ -287,8 +311,8 @@ class ERPparamGroup(ERPparam):
         if n_jobs == 1:
             self._reset_group_results(len(self.signals))
             for ind, signal in \
-                _progress(enumerate(signals), progress, len(self)):
-                self._fit(time=time, signal=signal, time_range=time_range)
+                _progress(enumerate(self.signals), progress, len(self)):
+                self._fit(time=self.time, signal=signal, time_range=self.time_range, baseline=self.baseline)
                 self.group_results[ind] = self._get_results()
 
         # Run in parallel
@@ -380,8 +404,12 @@ class ERPparamGroup(ERPparam):
         if name in ('peak_params', 'gaussian_params'):
 
             # Collect peak data, appending the index of the model it comes from
-            out = np.vstack([np.insert(getattr(data, name), 3, index, axis=1)
-                             for index, data in enumerate(self.group_results)])
+            gather_params = [getattr(data, name) for data in (self.group_results)]
+            out = np.vstack([np.insert(p, 3, index, axis=1) if p.size != 0
+                             else  np.insert([np.nan]*3, 3, index, axis=0) 
+                             for index, p in enumerate(gather_params)])
+            # out = np.vstack([np.insert(getattr(data, name), 3, index, axis=1)
+            #                  for index, data in enumerate(self.group_results)])
 
             # This updates index to grab selected column, and the last column
             #  This last column is the 'index' column (ERPparam object source)
@@ -467,7 +495,7 @@ class ERPparamGroup(ERPparam):
             self.signals = np.array(signals)
 
         # Reset peripheral data from last loaded result, keeping times info
-        self._reset_data_results(clear_spectrum=True, clear_results=True)
+        self._reset_data_results(clear_signals=True, clear_results=True)
 
 
     def get_ERPparam(self, ind, regenerate=True):
@@ -487,7 +515,7 @@ class ERPparamGroup(ERPparam):
         """
 
         # Initialize a ERPparam object, with same settings & check data mode as current ERPparamGroup
-        fm = ERPparam(**self.get_settings(), verbose=self.verbose)
+        fm = ERPparam(**self.get_settings(return_dict=True), verbose=self.verbose)
         fm.set_check_data_mode(self._check_data)
 
         # Add data for specified single power spectrum, if available
@@ -500,7 +528,7 @@ class ERPparamGroup(ERPparam):
 
         # Add results for specified power spectrum, regenerating full fit if requested
         fm.add_results(self.group_results[ind])
-        if regenerate:
+        if (regenerate and ((fm.gaussian_params_.size) > 0)):
             fm._regenerate_model()
 
         return fm
@@ -525,7 +553,7 @@ class ERPparamGroup(ERPparam):
         inds = check_inds(inds)
 
         # Initialize a new ERPparamGroup object, with same settings as current ERPparamGroup
-        fg = ERPparamGroup(**self.get_settings(), verbose=self.verbose)
+        fg = ERPparamGroup(**self.get_settings(return_dict=True), verbose=self.verbose)
 
         # Add data for specified ERPs, if available
         if self.has_data:
@@ -663,7 +691,7 @@ class ERPparamGroup(ERPparam):
 def _par_fit(signal, fg):
     """Helper function for running in parallel."""
 
-    fg._fit(signal=signal)
+    fg._fit(time=fg.time, signal=signal, time_range=fg.time_range, baseline=fg.baseline)
 
     return fg._get_results()
 

@@ -1,11 +1,11 @@
-"""Test functions for fooof.sim.transform"""
+"""Test functions for ERPparam.sim.transform"""
 
 import numpy as np
 
-from fooof.sim.gen import gen_power_spectrum
-from fooof.sim.params import SimParams
+from ERPparam.sim.gen import simulate_erp
+from ERPparam.sim.params import SimParams
 
-from fooof.sim.transform import *
+from ERPparam.sim.transform import *
 
 ###################################################################################################
 ###################################################################################################
@@ -13,7 +13,7 @@ from fooof.sim.transform import *
 def test_rotate_spectrum():
 
     # Create a spectrum to use for test rotations
-    freqs, spectrum = gen_power_spectrum([1, 100], [1, 1], [])
+    freqs, spectrum = simulate_erp([1, 100], [1, 1], [])
 
     # Check that rotation transforms the power spectrum
     rotated_spectrum = rotate_spectrum(freqs, spectrum, delta_exponent=0.5, f_rotation=25.)
@@ -26,7 +26,7 @@ def test_rotate_spectrum():
 def test_translate_spectrum():
 
     # Create a spectrum to use for test translation
-    freqs, spectrum = gen_power_spectrum([1, 100], [1, 1], [])
+    freqs, spectrum = simulate_erp([1, 100], [1, 1], [])
 
     # Check that translation transforms the power spectrum
     translated_spectrum = translate_spectrum(spectrum, delta_offset=1.)
@@ -39,7 +39,7 @@ def test_translate_spectrum():
 def test_rotate_sim_spectrum():
 
     sim_params = SimParams([1, 1], [10, 0.5, 1], 0)
-    freqs, spectrum = gen_power_spectrum([3, 40], *sim_params)
+    freqs, spectrum = simulate_erp([3, 40], *sim_params)
 
     rotated_spectrum, new_sim_params = rotate_sim_spectrum(freqs, spectrum, 0.5, 20, sim_params)
 
@@ -49,7 +49,7 @@ def test_rotate_sim_spectrum():
 def test_translate_sim_spectrum():
 
     sim_params = SimParams([1, 1], [10, 0.5, 1], 0)
-    freqs, spectrum = gen_power_spectrum([3, 40], *sim_params)
+    freqs, spectrum = simulate_erp([3, 40], *sim_params)
 
     translated_spectrum, new_sim_params = translate_sim_spectrum(spectrum, 0.5, sim_params)
     assert not np.all(translated_spectrum == spectrum)
