@@ -285,6 +285,8 @@ def get_pe_func(periodic_mode):
 
     if periodic_mode == 'gaussian':
         pe_func = gaussian_function
+    elif periodic_mode == 'skewed_gaussian':
+        pe_func = skewed_gaussian_function
     else:
         raise ValueError("Requested periodic mode not understood.")
 
