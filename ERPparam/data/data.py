@@ -14,7 +14,7 @@ from collections import namedtuple
 ###################################################################################################
 
 class ERPparamSettings(namedtuple('ERPparamSettings', ['peak_width_limits', 'max_n_peaks',
-                                                 'min_peak_height', 'peak_threshold', 'rectify'])):
+                                                 'min_peak_height', 'peak_threshold'])):
     """User defined settings for the fitting algorithm.
 
     Parameters
@@ -27,8 +27,6 @@ class ERPparamSettings(namedtuple('ERPparamSettings', ['peak_width_limits', 'max
         Absolute threshold for detecting peaks, in units of the input data.
     peak_threshold : float
         Relative threshold for detecting peaks, in units of standard deviation of the input data.
-    rectify : bool
-        Whether to rectify the signal prior to fitting.
 
     Notes
     -----
@@ -84,13 +82,13 @@ class ERPparamResults(namedtuple('ERPparamResults', ['peak_params', 'r_squared',
     __slots__ = ()
 
 
-class SimParams(namedtuple('SimParams', ['periodic_params', 'nlv'])):
-    """Parameters that define a simulated power spectrum.
+class SimParams(namedtuple('SimParams', ['peak_params', 'nlv'])):
+    """Parameters that define a simulated ERP.
 
     Parameters
     ----------
-    periodic_params : list or list of lists
-        Parameters that define the periodic component.
+    peak_params : list or list of lists
+        Parameters that define the peaks component.
     nlv : float
         Noise level added to simulated spectrum.
 

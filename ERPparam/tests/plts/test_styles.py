@@ -1,18 +1,18 @@
-"""Tests for fooof.plts.styles."""
+"""Tests for ERPparam.plts.styles."""
 
-from fooof.tests.tutils import plot_test
-from fooof.plts.style import *
+from ERPparam.tests.tutils import plot_test
+from ERPparam.plts.style import *
 
 ###################################################################################################
 ###################################################################################################
 
-def test_style_spectrum_plot(skip_if_no_mpl):
+def test_style_ERP_plot(skip_if_no_mpl):
 
     # Create a dummy plot and style it
-    from fooof.core.modutils import safe_import
+    from ERPparam.core.modutils import safe_import
     plt = safe_import('.pyplot', 'matplotlib')
     _, ax = plt.subplots()
-    style_spectrum_plot(ax, False, False)
+    style_ERP_plot(ax)
 
     # Check that axis labels are added - use as proxy that it ran correctly
     assert ax.xaxis.get_label().get_text()

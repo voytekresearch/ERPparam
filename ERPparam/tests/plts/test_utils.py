@@ -1,13 +1,13 @@
-"""Tests for fooof.plts.utils."""
+"""Tests for ERPparam.plts.utils."""
 
 import os
 
-from fooof.core.modutils import safe_import
+from ERPparam.core.modutils import safe_import
 
-from fooof.tests.tutils import plot_test
-from fooof.tests.settings import TEST_PLOTS_PATH
+from ERPparam.tests.tutils import plot_test
+from ERPparam.tests.settings import TEST_PLOTS_PATH
 
-from fooof.plts.utils import *
+from ERPparam.plts.utils import *
 
 mpl = safe_import('matplotlib')
 

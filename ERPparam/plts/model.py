@@ -12,10 +12,10 @@ from ERPparam.core.modutils import safe_import, check_dependency
 from ERPparam.sim.gen import sim_erp
 from ERPparam.utils.data import trim_spectrum
 from ERPparam.utils.params import compute_fwhm
-from ERPparam.plts.spectra import plot_spectra
+from ERPparam.plts.signals import plot_signals
 from ERPparam.plts.settings import PLT_FIGSIZES, PLT_COLORS
 from ERPparam.plts.utils import check_ax, check_plot_kwargs, savefig
-from ERPparam.plts.style import style_spectrum_plot, style_plot, style_erp_plot
+from ERPparam.plts.style import style_plot, style_ERP_plot
 
 plt = safe_import('.pyplot', 'matplotlib')
 
@@ -28,15 +28,15 @@ def plot_ERPparam(model, ax=None, y_label=None):
 
     # create figure
     if ax is None:
-        fig, ax = plt.subplots(1,1, figsize=PLT_FIGSIZES['spectral'])
+        fig, ax = plt.subplots(1,1, figsize=PLT_FIGSIZES['signal'])
 
     # plot signal
-    ax.plot(model.uncropped_time, model.uncropped_signal, alpha=0.5, label='ERP')
+    ax.plot(model.uncropped_time, model.uncropped_signal, alpha=0.75, label='ERP', color=PLT_COLORS['data'])
 
     # plot fit
     if model._peak_fit is not None:
         # plot full model fit
-        ax.plot(model.time, model._peak_fit, linestyle='--', color='k', label='Gaussian fit')
+        ax.plot(model.time, model._peak_fit, linestyle='--', color=PLT_COLORS['model'], label='Gaussian fit')
     
         # plot peak and half-mag points
         ax.scatter(model.time[model.peak_indices_[:,1]], model.signal[model.peak_indices_[:,1]], color='r', label='Peak fit')
@@ -45,10 +45,10 @@ def plot_ERPparam(model, ax=None, y_label=None):
     
     # label
     if y_label is not None:
-        ax.set(xlabel="time (s)", ylabel=y_label)
+        ax.set(xlabel="Time (s)", ylabel=y_label)
     else:
-        ax.set(xlabel="time (s)", ylabel="amplitude")
+        ax.set(xlabel="Time (s)", ylabel="Amplitude")
     ax.legend()
 
     # style
-    style_erp_plot(ax)
+    style_ERP_plot(ax)

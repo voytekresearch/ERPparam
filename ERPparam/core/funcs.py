@@ -14,6 +14,7 @@ from ERPparam.core.errors import InconsistentDataError
 ###################################################################################################
 ###################################################################################################
 
+
 def skewed_gaussian_function(xs, *params):
     """Skewed Gaussian fitting function.
 
@@ -284,8 +285,6 @@ def get_pe_func(periodic_mode):
 
     if periodic_mode == 'gaussian':
         pe_func = gaussian_function
-    elif periodic_mode == 'skewed_gaussian':
-        pe_func = skewed_gaussian
     else:
         raise ValueError("Requested periodic mode not understood.")
 

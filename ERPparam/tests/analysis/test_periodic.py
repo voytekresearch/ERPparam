@@ -1,8 +1,8 @@
-"""Test functions for fooof.analysis.periodic."""
+"""Test functions for ERPparam.analysis.periodic."""
 
 import numpy as np
 
-from fooof.analysis.periodic import *
+from ERPparam.analysis.periodic import *
 
 ###################################################################################################
 ###################################################################################################
