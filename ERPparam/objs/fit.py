@@ -951,11 +951,18 @@ class ERPparam():
         Find the indices of the peak and the half magnitude points.
         """
 
-        # compute half magnitude
-        half_mag = peak_params[1] / 2
+        # get index of peak (find extreme value within a range around the peak)
+        gaussian_bound_low = peak_params[0] - peak_params[2]
+        gaussian_bound_high = peak_params[0] + peak_params[2]
+        index_low = np.argmin(np.abs(self.time - gaussian_bound_low))
+        index_high = np.argmin(np.abs(self.time - gaussian_bound_high))
+        if peak_params[1]>0:
+            peak_index = np.argmax(self.signal[index_low:index_high]) + index_low
+        else:
+            peak_index = np.argmin(self.signal[index_low:index_high]) + index_low
 
-        # get index of peak
-        peak_index = np.argmin(np.abs(self.time - peak_params[0]))
+        # compute half magnitude
+        half_mag = self.signal[peak_index] / 2
 
         # find the index closest to the peak that crosses the half magnitude
         try:
