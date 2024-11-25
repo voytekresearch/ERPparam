@@ -136,12 +136,15 @@ class ERPparam():
     """
     # pylint: disable=attribute-defined-outside-init
 
-    def __init__(self, peak_width_limits=(0.01, 10), max_n_peaks=20, peak_threshold=2.0, min_peak_height=0.0, verbose=True):
+    def __init__(self, peak_width_limits=(0.01, 10), max_n_peaks=20, 
+                 peak_threshold=2.0, min_peak_height=0.0, peak_mode='gaussian',
+                 verbose=True):
         
         self.peak_width_limits = peak_width_limits
         self.max_n_peaks = max_n_peaks
         self.min_peak_height = min_peak_height
         self.peak_threshold = peak_threshold
+        self.peak_mode = 'gaussian'
         self.verbose = verbose
 
         # Threshold for how far a peak has to be from edge to keep.
@@ -951,11 +954,12 @@ class ERPparam():
         Find the indices of the peak and the half magnitude points.
         """
 
-        # get index of peak (find extreme value within a range around the peak)
-        gaussian_bound_low = peak_params[0] - peak_params[2]
-        gaussian_bound_high = peak_params[0] + peak_params[2]
-        index_low = np.argmin(np.abs(self.time - gaussian_bound_low))
-        index_high = np.argmin(np.abs(self.time - gaussian_bound_high))
+        # get index of peak (find extreme value within a range around the model peak)
+        model_compoment = sim_erp(self.time, peak_params, peak_mode=self.peak_mode)
+        model_peak_index = np.argmax(np.abs(model_compoment))
+        peak_range_indices = int(np.floor(peak_params[2] * self.fs))
+        index_low = model_peak_index - peak_range_indices
+        index_high = model_peak_index + peak_range_indices
         if peak_params[1]>0:
             peak_index = np.argmax(self.signal[index_low:index_high]) + index_low
         else:
