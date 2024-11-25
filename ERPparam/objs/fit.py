@@ -987,11 +987,19 @@ class ERPparam():
         Find the indices of the peak and the half magnitude points.
         """
 
-        # compute half magnitude
-        half_mag = peak_params[1] / 2
+        # get index of peak (find extreme value within a range around the model peak)
+        model_compoment = sim_erp(self.time, peak_params, peak_mode=self.peak_mode)
+        model_peak_index = np.argmax(np.abs(model_compoment))
+        peak_range_indices = int(np.floor(peak_params[2] * self.fs))
+        index_low = model_peak_index - peak_range_indices
+        index_high = model_peak_index + peak_range_indices
+        if peak_params[1]>0:
+            peak_index = np.argmax(self.signal[index_low:index_high]) + index_low
+        else:
+            peak_index = np.argmin(self.signal[index_low:index_high]) + index_low
 
-        # get index of peak
-        peak_index = np.argmin(np.abs(self.time - peak_params[0]))
+        # compute half magnitude
+        half_mag = self.signal[peak_index] / 2
 
         # find the index closest to the peak that crosses the half magnitude
         try:
