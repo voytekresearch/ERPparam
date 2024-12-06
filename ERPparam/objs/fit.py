@@ -991,7 +991,8 @@ class ERPparam():
         """
 
         # get index of peak (find extreme value within a range around the model peak)
-        model_compoment = sim_erp(self.time, gaussian_params, peak_mode=self.peak_mode)
+        model_compoment = sim_erp(self.time, gaussian_params, 
+                                  peak_mode=self.peak_mode)
         model_peak_index = np.argmax(np.abs(model_compoment))
         peak_range_indices = int(np.floor(peak_params[2] * self.fs))
         index_low = model_peak_index - peak_range_indices
