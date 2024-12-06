@@ -41,7 +41,8 @@ def gen_time_vector(time_range, fs):
     return time
 
 
-def simulate_erp(time_range,  params, nlv=0.005, fs=1000, return_params=False):
+def simulate_erp(time_range,  params, nlv=0.005, fs=1000, 
+                  peak_mode='gaussian', return_params=False):
     """Generate a simulated ERP.
 
     Parameters
@@ -55,6 +56,8 @@ def simulate_erp(time_range,  params, nlv=0.005, fs=1000, return_params=False):
         Noise level to add to generated ERP.
     fs : float
         Sampling frequency for desired time vector.
+    peak_mode : {'gaussian'}, optional
+        Which kind of component to generate.
     return_params : bool, optional, default: False
         Whether to return the parameters for the simulated ERP.
 
@@ -70,7 +73,8 @@ def simulate_erp(time_range,  params, nlv=0.005, fs=1000, return_params=False):
     """
 
     time = gen_time_vector(time_range, fs)[:-1]
-    signal, time = gen_signal(time, time_range, params, fs, nlv)
+    signal, time = gen_signal(time, time_range, params, fs, nlv,
+                                peak_mode=peak_mode)
 
     if return_params:
         sim_params = collect_sim_params(params, nlv)
@@ -80,8 +84,8 @@ def simulate_erp(time_range,  params, nlv=0.005, fs=1000, return_params=False):
 
 
 
-def simulate_erps(n_signals, time_range, params, nlvs=0.005,
-                            fs=1000, return_params=False):
+def simulate_erps(n_signals, time_range, params, nlvs=0.005, fs=1000, 
+                  peak_mode='gaussian', return_params=False):
     """Generate a group of simulated ERPs.
 
     Parameters
@@ -97,6 +101,8 @@ def simulate_erps(n_signals, time_range, params, nlvs=0.005,
         Noise level to add to generated ERPs.
     fs : float
         Sampling frequency for desired time vector.
+    peak_mode : {'gaussian'}, optional
+        Which kind of component to generate.
     return_params : bool, optional, default: False
         Whether to return the parameters for the simulated ERPs.
 
@@ -122,7 +128,8 @@ def simulate_erps(n_signals, time_range, params, nlvs=0.005,
 
     # Simulate ERPs
     for ind, pe, nlv in zip(range(n_signals), pe_params, nlvs):
-        signals[ind, :], time = gen_signal(time, time_range, pe, fs, nlv)
+        signals[ind, :], time = gen_signal(time, time_range, pe, fs, nlv,
+                                            peak_mode=peak_mode)
         sim_params[ind] = collect_sim_params(pe, nlv)
 
     if return_params:
@@ -183,7 +190,7 @@ def sim_noise(time_range, params, fs, nlv):
     return noise_vals
 
 
-def gen_signal(time, time_range, params, fs, nlv):
+def gen_signal(time, time_range, params, fs, nlv, peak_mode='gaussian'):
     """Generate simulated ERP.
 
     Parameters
@@ -202,7 +209,7 @@ def gen_signal(time, time_range, params, fs, nlv):
 
     """
 
-    pe_vals = sim_erp(time, params)
+    pe_vals = sim_erp(time, params, peak_mode=peak_mode)
     if nlv != 0:
         noise = sim_noise(time_range, params, fs, nlv)
     else:
