@@ -172,6 +172,8 @@ def sim_noise(time_range, params, fs, nlv):
         Times to create noise values.
     params : list of float
         Parameters of ERP components to scale noise to
+    fs : float
+        Sampling frequency for desired time vector.
     nlv : float
         Noise level to generate.
 
@@ -199,6 +201,8 @@ def gen_signal(time, time_range, params, fs, nlv, peak_mode='gaussian'):
         Time vector to create values for.
     params : list of float
         Parameters to create the ERP components.
+    fs : float
+        Sampling frequency for desired time vector.
     nlv : float
         Noise level to add to generated signal.
 
