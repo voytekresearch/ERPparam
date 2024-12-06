@@ -434,7 +434,7 @@ class ERPparam():
             self.peak_params_  = self._create_peak_params(self.gaussian_params_)
 
             # compute rise-decay symmetry
-            self.shape_params_, self.peak_indices_ = self._compute_shape_params(self.peak_params_)
+            self.shape_params_, self.peak_indices_ = self._compute_shape_params()
 
             # drop peaks based on edge proximity (if shape could not be fit)
             self._drop_peaks_near_edge()
@@ -949,13 +949,14 @@ class ERPparam():
         return peak_params
 
 
-    def _get_peak_indices(self, peak_params):
+    def _get_peak_indices(self, peak_params, gaussian_params):
         """
         Find the indices of the peak and the half magnitude points.
         """
 
         # get index of peak (find extreme value within a range around the model peak)
-        model_compoment = sim_erp(self.time, peak_params, peak_mode=self.peak_mode)
+        model_compoment = sim_erp(self.time, gaussian_params, 
+                                  peak_mode=self.peak_mode)
         model_peak_index = np.argmax(np.abs(model_compoment))
         peak_range_indices = int(np.floor(peak_params[2] * self.fs))
         index_low = model_peak_index - peak_range_indices
@@ -984,7 +985,7 @@ class ERPparam():
         return start_index, peak_index, end_index
 
 
-    def _compute_shape_params(self, peak_params):
+    def _compute_shape_params(self):
         """
         Compute the ERP shape parameters.
         
@@ -1001,14 +1002,18 @@ class ERPparam():
             * sharpness_decay: sharpness of the decay (normalized to be dimensionless 0-1)
         """
 
+        # get peak and gaussian parameters
+        peak_params = self.peak_params_
+        gaussian_params = self.gaussian_params_
+
         # initialize list of shape parameters
         shape_params = np.empty((len(peak_params), 7))
         peak_indices = np.empty((len(peak_params), 3))
 
-        for ii, peak in enumerate(peak_params):
+        for ii, (peak, gaus) in enumerate(zip(peak_params, gaussian_params)):
 
             # get peak indices
-            start_index, peak_index, end_index = self._get_peak_indices(peak)
+            start_index, peak_index, end_index = self._get_peak_indices(peak, gaus)
 
             # if the peak indices could not be determined, set all shape params to NaN
             if np.isnan(start_index) or np.isnan(end_index):
