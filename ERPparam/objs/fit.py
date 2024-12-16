@@ -55,7 +55,7 @@ from ERPparam.core.io import save_fm, load_json
 from ERPparam.core.reports import save_report_fm
 from ERPparam.core.modutils import copy_doc_func_to_method
 from ERPparam.core.utils import group_three, check_array_dim
-from ERPparam.core.funcs import gaussian_function
+from ERPparam.core.funcs import gaussian_function, sigmoid_multigauss, sigmoid_function
 from ERPparam.core.errors import (FitError, NoModelError, DataError,
                                NoDataError, InconsistentDataError)
 from ERPparam.core.strings import (gen_settings_str, gen_results_fm_str,
@@ -136,13 +136,14 @@ class ERPparam():
     """
     # pylint: disable=attribute-defined-outside-init
 
-    def __init__(self, peak_width_limits=(0.01, 10), max_n_peaks=20, peak_threshold=2.0, min_peak_height=0.0, verbose=True):
+    def __init__(self, peak_width_limits=(0.01, 10), max_n_peaks=20, peak_threshold=2.0, min_peak_height=0.0, fit_offset=False, verbose=True):
         
         self.peak_width_limits = peak_width_limits
         self.max_n_peaks = max_n_peaks
         self.min_peak_height = min_peak_height
         self.peak_threshold = peak_threshold
         self.verbose = verbose
+        self.offset_setting = fit_offset
 
         # Threshold for how far a peak has to be from edge to keep.
         #   This is defined in units of gaussian standard deviation
@@ -419,13 +420,47 @@ class ERPparam():
                     raise FitError("Model fitting was skipped because there are NaN or Inf "
                                    "values in the data, which preclude model fitting.")
 
+            # If we're fitting a sigmoid to the data, fit this first 
+            if self.offset_setting: # if true, fit the sigmoid
+                print('fitting sigmoid')
+                self.offset_params_ = self._fit_offset(self.time,self.signal)
+                self._sigmoid_fit = sigmoid_function(self.time, *self.offset_params_)
+                ## subtract sigmoid from signal before peak fitting
+                self._signal_minus_offset = self.signal - self._sigmoid_fit
+            else: # otherwise, leave the signal untouched
+                self.offset_params_ = None
+                self._sigmoid_fit = None
+                self._signal_minus_offset = self.signal
+
             # Find peaks, and fit them with gaussians
-            self.gaussian_params_ = self._fit_peaks(np.copy(self.signal))
+            #   Note: if the offset was fit with a sigmoid function, 
+            #         then the fit signal will be the sigmoid-removed signal
+            self.gaussian_params_ = self._fit_peaks(np.copy(self._signal_minus_offset))
 
             # Calculate the peak fit
             #   Note: if no peaks are found, this creates a flat (all zero) peak fit
             self._peak_fit = sim_erp(self.time, np.ndarray.flatten(self.gaussian_params_), 
                                         peak_mode='gaussian')
+            
+            # Now that we have the sigmoid and the peak fits, we want to
+            # get the multigaussian sigmoid and re-generate fit
+            #   Note: if we are fitting the offset, we want to replace 
+            #         the first gaussian params with the re-estimated gaussian params
+            if self.offset_setting:
+                # get the sigmoid + peaks signal, and apply curve_fit again
+                self._full_fit = self._peak_fit + self._sigmoid_fit
+                initial_sigmultigauss_params = np.hstack([self.offset_params_ , self.gaussian_params_]) 
+                final_sigmultigauss_params = self._fit_sigmultigauss(time,self.signal, initial_sigmultigauss_params)
+
+                # use our final estimated parameters to generate full model fit, and the separate sigmoid and gaussian peaks
+                self._full_fit = sigmoid_multigauss(self.time, *final_sigmultigauss_params)
+                self.offset_params_ = final_sigmultigauss_params[:2] # get sigmoid params alone
+                self._sigmoid_fit = sigmoid_function(self.time, *self.offset_params_) # re-generate sigmoid
+                self.gaussian_params_ = final_sigmultigauss_params[2:] # get gauss params alone
+                self._peak_fit = sim_erp(self.time, np.ndarray.flatten(self.gaussian_params_), 
+                                        peak_mode='gaussian') # re-generate peaks fit
+            else:
+                self._full_fit = self._peak_fit
 
             # Convert gaussian definitions to peak parameters
             self.peak_params_  = self._create_peak_params(self.gaussian_params_)
@@ -735,6 +770,32 @@ class ERPparam():
             print(gen_width_warning_str((1/self.fs), self.peak_width_limits[0]))
 
 
+    def _generate_guess_sigmoid(self, time, signal):
+        
+        # guesses that we need are the  amplitude, latency, slope
+        amplitude_guess = np.mean(signal)
+        latency = time[0]
+        slope = 8
+
+        return np.asarray([amplitude_guess, latency, slope])
+
+
+    def _fit_offset(self, time, signal):
+
+        p0_sigmoid = self._generate_guess_sigmoid(time, signal)
+        # bounds in order of amplitude, latency, slope 
+        bounds_sigmoid = ([np.min(signal), time[0], -np.inf],[np.max(signal), time[-1], np.inf])
+        print(bounds_sigmoid)
+
+        params_g , cov = curve_fit(sigmoid_function, time, signal, maxfev = self._maxfev, p0 = p0_sigmoid)#, bounds=bounds_sigmoid)
+        return params_g
+    
+    def _fit_sigmultigauss(self, time, signal, params):
+        
+        params_multigauss = curve_fit(sigmoid_multigauss, time, signal, maxfev = self._maxfev, p0 = params)
+
+        return params_multigauss
+
     def _fit_peaks(self, iter_signal):
         # generate guesses seperately for positive and negative peaks
         guess_pos = self._generate_guess(iter_signal)
@@ -749,7 +810,7 @@ class ERPparam():
         if len(guess) > 0:
 
             # Fit the peaks, and sort results
-            gaussian_params = self._fit_peak_guess(guess)
+            gaussian_params = self._fit_peak_guess(guess, iter_signal)
             gaussian_params = gaussian_params[gaussian_params[:, 0].argsort()]
 
             # drop overlapping peaks, again after fitting
@@ -845,7 +906,7 @@ class ERPparam():
         return guess
 
 
-    def _fit_peak_guess(self, guess):
+    def _fit_peak_guess(self, guess, signal):
         """Fits a group of peak guesses with a fit function.
 
         Parameters
@@ -865,9 +926,9 @@ class ERPparam():
         #     ((cf_low_peak1, height_low_peak1, bw_low_peak1, *repeated for n_peaks*),
         #      (cf_high_peak1, height_high_peak1, bw_high_peak, *repeated for n_peaks*))
         #     ^where each value sets the bound on the specified parameter
-        lo_bound = [[peak[0] - 2 * self._cf_bound * peak[2], np.min((self.signal)), self._gauss_std_limits[0]]
+        lo_bound = [[peak[0] - 2 * self._cf_bound * peak[2], np.min((signal)), self._gauss_std_limits[0]]
                     for peak in guess]
-        hi_bound = [[peak[0] + 2 * self._cf_bound * peak[2], np.max((self.signal)), self._gauss_std_limits[1]]
+        hi_bound = [[peak[0] + 2 * self._cf_bound * peak[2], np.max((signal)), self._gauss_std_limits[1]]
                     for peak in guess]
 
         # Check that CT bounds are within time range
@@ -888,7 +949,7 @@ class ERPparam():
 
         # Fit the peaks
         try:
-            gaussian_params, _ = curve_fit(gaussian_function, self.time, self.signal,
+            gaussian_params, _ = curve_fit(gaussian_function, self.time, signal,
                                         p0=guess, maxfev=self._maxfev, bounds=gaus_param_bounds)
         except RuntimeError as excp:
             error_msg = ("Model fitting failed due to not finding "
@@ -1125,7 +1186,7 @@ class ERPparam():
     def _calc_r_squared(self):
         """Calculate the r-squared goodness of fit of the model, compared to the original data."""
 
-        r_val = np.corrcoef(self.signal, self._peak_fit)
+        r_val = np.corrcoef(self.signal, self._full_fit)
         self.r_squared_ = r_val[0][1] ** 2
 
 
@@ -1154,13 +1215,13 @@ class ERPparam():
         metric = self._error_metric if not metric else metric
 
         if metric == 'MAE':
-            self.error_ = np.abs(self.signal - self._peak_fit).mean()
+            self.error_ = np.abs(self.signal - self._full_fit).mean()
 
         elif metric == 'MSE':
-            self.error_ = ((self.signal - self._peak_fit) ** 2).mean()
+            self.error_ = ((self.signal - self._full_fit) ** 2).mean()
 
         elif metric == 'RMSE':
-            self.error_ = np.sqrt(((self.signal - self._peak_fit) ** 2).mean())
+            self.error_ = np.sqrt(((self.signal - self._full_fit) ** 2).mean())
 
         else:
             msg = "Error metric '{}' not understood or not implemented.".format(metric)

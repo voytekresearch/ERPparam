@@ -41,62 +41,66 @@ def gaussian_function(xs, *params):
 
     return ys
 
-
-def expo_function(xs, *params):
-    """Exponential fitting function, for fitting aperiodic component with a 'knee'.
-
-    NOTE: this function requires linear frequency (not log).
+def sigmoid_function(time, amplitude=1, latency=0, slope=1):
+    """
+    Sigmoid function
 
     Parameters
     ----------
-    xs : 1d array
-        Input x-axis values.
-    *params : float
-        Parameters (offset, knee, exp) that define Lorentzian function:
-        y = 10^offset * (1/(knee + x^exp))
+    time : numpy array
+        Input data
+    amplitude : float, optional
+        Amplitude of the sigmoid function. The default is 1.
+    latency : float, optional
+        Latency of the sigmoid function. The default is 0.
+    slope : float, optional
+        Slope of the sigmoid function. The default is 1.
 
     Returns
     -------
-    ys : 1d array
-        Output values for exponential function.
+    sigmoid : numpy array
+        Sigmoid function output
+    
     """
 
-    ys = np.zeros_like(xs)
+    sigmoid = amplitude / (1 + np.exp(-slope * (time - latency)))
 
-    offset, knee, exp = params
-
-    ys = ys + offset - np.log10(knee + xs**exp)
-
-    return ys
+    return sigmoid
 
 
-def expo_nk_function(xs, *params):
-    """Exponential fitting function, for fitting aperiodic component without a 'knee'.
-
-    NOTE: this function requires linear frequency (not log).
+def sigmoid_multigauss(time, amplitude=1, latency=0, slope=1, *params):
+    """
+    Sigmoid function
 
     Parameters
     ----------
-    xs : 1d array
-        Input x-axis values.
+    time : numpy array
+        Input data
+    amplitude : float, optional
+        Amplitude of the sigmoid function. The default is 1.
+    latency : float, optional
+        Latency of the sigmoid function. The default is 0.
+    slope : float, optional
+        Slope of the sigmoid function. The default is 1.
     *params : float
-        Parameters (offset, exp) that define Lorentzian function:
-        y = 10^off * (1/(x^exp))
+        Parameters that define gaussian function.
 
     Returns
     -------
-    ys : 1d array
-        Output values for exponential function, without a knee.
+    sigmoid : numpy array
+        Sigmoid function output  
+    
     """
 
-    ys = np.zeros_like(xs)
+    # sigmoid function
+    sigmoid = amplitude / (1 + np.exp(-slope * (time - latency)))
 
-    offset, exp = params
+    # gaussian function
+    for ii in range(0, len(params), 3):
+        ctr, hgt, wid = params[ii:ii+3]
+        sigmoid = sigmoid + hgt * np.exp(-(time-ctr)**2 / (2*wid**2))
 
-    ys = ys + offset - np.log10(xs**exp)
-
-    return ys
-
+    return sigmoid
 
 def linear_function(xs, *params):
     """Linear fitting function.
@@ -176,60 +180,3 @@ def get_pe_func(periodic_mode):
     return pe_func
 
 
-def get_ap_func(aperiodic_mode):
-    """Select and return specified function for aperiodic component.
-
-    Parameters
-    ----------
-    aperiodic_mode : {'fixed', 'knee'}
-        Which aperiodic fitting function to return.
-
-    Returns
-    -------
-    ap_func : function
-        Function for the aperiodic component.
-
-    Raises
-    ------
-    ValueError
-        If the specified aperiodic mode label is not understood.
-    """
-
-    if aperiodic_mode == 'fixed':
-        ap_func = expo_nk_function
-    elif aperiodic_mode == 'knee':
-        ap_func = expo_function
-    else:
-        raise ValueError("Requested aperiodic mode not understood.")
-
-    return ap_func
-
-
-def infer_ap_func(aperiodic_params):
-    """Infers which aperiodic function was used, from parameters.
-
-    Parameters
-    ----------
-    aperiodic_params : list of float
-        Parameters that describe the aperiodic component of a power spectrum.
-
-    Returns
-    -------
-    aperiodic_mode : {'fixed', 'knee'}
-        Which kind of aperiodic fitting function the given parameters are consistent with.
-
-    Raises
-    ------
-    InconsistentDataError
-        If the given parameters are inconsistent with any available aperiodic function.
-    """
-
-    if len(aperiodic_params) == 2:
-        aperiodic_mode = 'fixed'
-    elif len(aperiodic_params) == 3:
-        aperiodic_mode = 'knee'
-    else:
-        raise InconsistentDataError("The given aperiodic parameters are "
-                                    "inconsistent with available options.")
-
-    return aperiodic_mode
