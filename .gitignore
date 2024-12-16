@@ -10,7 +10,7 @@ ERPparam/.vscode/settings.json
 *.ipynb_checkpoints*
 
 # Ignore cache
-*__pycache__/*
+*__pycache__*
 *.cache*
 
 # Ignore compiled files
