@@ -49,10 +49,18 @@ def get_tfg():
 
     return tfg
 
+
+def get_tbands():
+    """Get a bands object, for testing."""
+
+    return Bands({'theta' : (4, 8), 'alpha' : (8, 12), 'beta' : (13, 30)})
+
+
 def get_twindow():
     """Get a time window list, for testing."""
 
     return [0, 10]
+
 
 def get_tresults():
     """Get a ERPparamResults objet, for testing."""
