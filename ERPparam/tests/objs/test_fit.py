@@ -67,6 +67,7 @@ def test_ERPparam_fit():
     xs, ys = simulate_erp(time_range, erp_params, nlv)
 
     tfm = ERPparam(verbose=False, max_n_peaks=4)
+    tfm._gauss_overlap_thresh = 2.0
     tfm.fit(xs, ys)
     print(tfm.peak_params_)
 
