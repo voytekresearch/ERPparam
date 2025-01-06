@@ -283,7 +283,7 @@ def test_fg_load():
     for setting in OBJ_DESC['settings']:
         if setting != 'aperiodic_mode':
             assert getattr(tfg, setting) is None
-    assert tfg.power_spectra is None
+    assert tfg.signals is None
 
     # Test loading just settings
     tfg = ERPparamGroup(verbose=False)
@@ -293,12 +293,12 @@ def test_fg_load():
     # Test that results and data are None
     for result in OBJ_DESC['results']:
         assert np.all(np.isnan(getattr(tfg, result)))
-    assert tfg.power_spectra is None
+    assert tfg.signals is None
 
     # Test loading just data
     tfg = ERPparamGroup(verbose=False)
     tfg.load(file_name_dat, TEST_DATA_PATH)
-    assert tfg.power_spectra is not None
+    assert tfg.signals is not None
     # Test that settings and results are None
     for setting in OBJ_DESC['settings']:
         assert getattr(tfg, setting) is None
@@ -312,7 +312,7 @@ def test_fg_load():
     assert len(tfg.group_results) > 0
     for setting in OBJ_DESC['settings']:
         assert getattr(tfg, setting) is not None
-    assert tfg.power_spectra is not None
+    assert tfg.signals is not None
     for meta_dat in OBJ_DESC['meta_data']:
         assert getattr(tfg, meta_dat) is not None
 
