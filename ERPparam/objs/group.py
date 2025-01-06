@@ -176,13 +176,10 @@ class ERPparamGroup(ERPparam):
         clear_signal : bool, optional, default: False
             Sets self.signal to None if True, or if clear_signals is True
         """
-        if clear_signals==True:
-            clear_signal=True
 
-        # if clear_results:
-        #     self._reset_group_results(length=len(self.group_results))
-
-        super()._reset_data_results(clear_time=clear_time, clear_signal=clear_signal, clear_results=clear_results)
+        super()._reset_data_results(clear_time=clear_time, 
+                                    clear_signal=clear_signal, 
+                                    clear_results=clear_results)
         if clear_signals:
             self.signals= None
 
@@ -478,8 +475,8 @@ class ERPparamGroup(ERPparam):
                 self._check_loaded_settings(data)
 
             # If power spectra data is part of loaded data, collect to add to object
-            if 'signals' in data.keys():
-                signals.append(data['signals'])
+            if 'signal' in data.keys():
+                signals.append(data['signal'])
 
             # If results part of current data added, check and update object results
             if set(OBJ_DESC['results']).issubset(set(data.keys())):
@@ -495,7 +492,7 @@ class ERPparamGroup(ERPparam):
             self.signals = np.array(signals)
 
         # Reset peripheral data from last loaded result, keeping times info
-        self._reset_data_results(clear_signals=True, clear_results=True)
+        self._reset_data_results(clear_signal=True, clear_results=True)
 
 
     def get_ERPparam(self, ind, regenerate=True):
