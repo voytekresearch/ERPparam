@@ -672,7 +672,7 @@ class ERPparam():
 
         # Regenerate model components, based on what is available
         if regenerate:
-            if self.time_range and self.fs:
+            if self.fs:
                 self._regenerate_time_vector()
             if np.all(self.time) and np.all(self.gaussian_params_):
                 self._regenerate_model()

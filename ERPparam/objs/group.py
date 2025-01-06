@@ -487,7 +487,7 @@ class ERPparamGroup(ERPparam):
                 self.group_results.append(self._get_results())
 
         # Reconstruct time vector, if information is available to do so
-        if self.time_range:
+        if self.fs:
             self._regenerate_time_vector()
 
         # Add power spectra data, if they were loaded
