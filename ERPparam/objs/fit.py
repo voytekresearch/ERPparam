@@ -238,6 +238,7 @@ class ERPparam():
 
         if clear_time:
             self.time = None
+            self.time_range = None
             self.fs = None
 
         if clear_signal:
