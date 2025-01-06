@@ -283,7 +283,7 @@ class ERPparam():
         self._reset_data_results(clear_time=self.has_data,
                                 clear_signal=self.has_data,
                                 clear_results=self.has_model and clear_results)
-        self.time, self.signal, self.time_range, self.baseline_signal, self.baseline, self.uncropped_signal, self.uncropped_time, self.fs, self.time_res = \
+        self.time, self.signal, self.time_range, self.baseline_signal, self.baseline, self.cropped_signal, self.cropped_time, self.fs, self.time_res = \
             self._prepare_data(time, signal, time_range, baseline, signal_dim=1) 
 
 
@@ -437,10 +437,6 @@ class ERPparam():
             #         then the fit signal will be the sigmoid-removed signal
             self.gaussian_params_ = self._fit_peaks(np.copy(self._signal_minus_offset))
 
-            # Calculate the peak fit
-            #   Note: if no peaks are found, this creates a flat (all zero) peak fit
-            self._peak_fit = sim_erp(self.time, np.ndarray.flatten(self.gaussian_params_), 
-                                        peak_mode='gaussian')
             
             # Now that we have the sigmoid and the peak fits, we want to
             # get the multigaussian sigmoid and re-generate fit
@@ -448,19 +444,24 @@ class ERPparam():
             #         the first gaussian params with the re-estimated gaussian params
             if self.offset_setting:
                 # get the sigmoid + peaks signal, and apply curve_fit again
-                self._full_fit = self._peak_fit + self._sigmoid_fit
-                initial_sigmultigauss_params = np.hstack([self.offset_params_ , self.gaussian_params_]) 
-                final_sigmultigauss_params = self._fit_sigmultigauss(time,self.signal, initial_sigmultigauss_params)
+                initial_sigmultigauss_params = np.ndarray.flatten(np.vstack([self.offset_params_ , self.gaussian_params_])) 
+                final_sigmultigauss_params = self._fit_sigmultigauss(self.time,self.signal, initial_sigmultigauss_params)
 
                 # use our final estimated parameters to generate full model fit, and the separate sigmoid and gaussian peaks
                 self._full_fit = sigmoid_multigauss(self.time, *final_sigmultigauss_params)
-                self.offset_params_ = final_sigmultigauss_params[:2] # get sigmoid params alone
+                self.offset_params_ = final_sigmultigauss_params[:3] # get sigmoid params alone
                 self._sigmoid_fit = sigmoid_function(self.time, *self.offset_params_) # re-generate sigmoid
-                self.gaussian_params_ = final_sigmultigauss_params[2:] # get gauss params alone
+                self.gaussian_params_ = final_sigmultigauss_params[3:].reshape(-1,3) # get gauss params alone, and reshape to (n peaks,3)
                 self._peak_fit = sim_erp(self.time, np.ndarray.flatten(self.gaussian_params_), 
                                         peak_mode='gaussian') # re-generate peaks fit
             else:
+                # Calculate the peak fit
+                #   Note: if no peaks are found, this creates a flat (all zero) peak fit
+                self._peak_fit = sim_erp(self.time, np.ndarray.flatten(self.gaussian_params_), 
+                                            peak_mode='gaussian')
                 self._full_fit = self._peak_fit
+                self.offset_params_ = None
+                self._sigmoid_fit = None
 
             # Convert gaussian definitions to peak parameters
             self.peak_params_  = self._create_peak_params(self.gaussian_params_)
@@ -774,7 +775,7 @@ class ERPparam():
         
         # guesses that we need are the  amplitude, latency, slope
         amplitude_guess = np.mean(signal)
-        latency = time[0]
+        latency = 0 #time[0]
         slope = 8
 
         return np.asarray([amplitude_guess, latency, slope])
@@ -787,12 +788,12 @@ class ERPparam():
         bounds_sigmoid = ([np.min(signal), time[0], -np.inf],[np.max(signal), time[-1], np.inf])
         print(bounds_sigmoid)
 
-        params_g , cov = curve_fit(sigmoid_function, time, signal, maxfev = self._maxfev, p0 = p0_sigmoid)#, bounds=bounds_sigmoid)
+        params_g , cov = curve_fit(sigmoid_function, time, signal, maxfev = self._maxfev, p0 = p0_sigmoid, bounds=bounds_sigmoid)
         return params_g
     
     def _fit_sigmultigauss(self, time, signal, params):
         
-        params_multigauss = curve_fit(sigmoid_multigauss, time, signal, maxfev = self._maxfev, p0 = params)
+        params_multigauss, cov = curve_fit(sigmoid_multigauss, time, signal, maxfev = self._maxfev, p0 = params)
 
         return params_multigauss
 
@@ -899,7 +900,9 @@ class ERPparam():
                 guess_std = self._gauss_std_limits[1]
 
             # Collect guess parameters and subtract this guess gaussian from the data
-            guess = np.vstack((guess, (guess_time, guess_height, guess_std)))
+                ## check whether this guess is within our time_range for fitting, and if not, then don't add it to our list of guesses
+            if ((guess_time > self.time_range[0]) and (guess_time < self.time_range[1])):
+                guess = np.vstack((guess, (guess_time, guess_height, guess_std)))
             peak_gauss = gaussian_function(self.time, guess_time, guess_height, guess_std)
             iter_signal = iter_signal - peak_gauss
 
@@ -1311,15 +1314,14 @@ class ERPparam():
                 baseline = [time.min(), time.max()]
         _, baseline_signal = trim_spectrum(time, signal, baseline)
 
-        # get the uncropped signal, for later plotting 
-        uncropped_signal = signal.copy()
-        uncropped_time = time.copy()
         # Check time range, trim the signal range if requested
         if time_range:
-            time, signal = trim_spectrum(time, signal, time_range)
+            cropped_time, cropped_signal = trim_spectrum(time, signal, time_range)
+        else:
+            cropped_time, cropped_signal = time, signal
 
         # Calculate temporal resolution, and actual time range of the data
-        time_range = [time.min(), time.max()]
+        time_range = [cropped_time.min(), cropped_time.max()]
         time_res = np.abs(time[1] - time[0])
         fs = 1 / time_res
 
@@ -1338,7 +1340,7 @@ class ERPparam():
                              "This will cause the fitting to yield NaNs. ")
                 raise DataError(error_msg)
             
-        return time, signal, time_range, baseline_signal, baseline, uncropped_signal, uncropped_time, fs, time_res
+        return time, signal, time_range, baseline_signal, baseline, cropped_signal, cropped_time, fs, time_res
 
 
     def _add_from_dict(self, data):

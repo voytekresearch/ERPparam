@@ -92,15 +92,21 @@ def sigmoid_multigauss(time, amplitude=1, latency=0, slope=1, *params):
     
     """
 
-    # sigmoid function
-    sigmoid = amplitude / (1 + np.exp(-slope * (time - latency)))
+    # # sigmoid function
+    # sigmoid = amplitude / (1 + np.exp(-slope * (time - latency)))
 
-    # gaussian function
-    for ii in range(0, len(params), 3):
-        ctr, hgt, wid = params[ii:ii+3]
-        sigmoid = sigmoid + hgt * np.exp(-(time-ctr)**2 / (2*wid**2))
+    # # gaussian function
+    # for ii in range(0, len(params), 3):
+    #     ctr, hgt, wid = params[ii:ii+3]
+    #     sigmoid = sigmoid + hgt * np.exp(-(time-ctr)**2 / (2*wid**2))
 
-    return sigmoid
+    # return sigmoid
+
+    sigmoid = sigmoid_function(time, amplitude, latency, slope)
+    gauss = gaussian_function(time, *params)
+    sigmulti = sigmoid+gauss
+
+    return sigmulti
 
 def linear_function(xs, *params):
     """Linear fitting function.

@@ -31,7 +31,7 @@ def plot_ERPparam(model, ax=None, y_label=None):
         fig, ax = plt.subplots(1,1, figsize=PLT_FIGSIZES['signal'])
 
     # plot signal
-    ax.plot(model.uncropped_time, model.uncropped_signal, alpha=0.75, label='ERP', color=PLT_COLORS['data'])
+    ax.plot(model.time, model.signal, alpha=0.75, label='ERP', color=PLT_COLORS['data'])
 
     # plot fit
     if model._peak_fit is not None:
