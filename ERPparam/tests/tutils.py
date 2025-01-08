@@ -27,7 +27,7 @@ def get_tfm():
     erp_params = np.ravel(np.column_stack([erp_latency, erp_amplitude, erp_width]))
 
     #xs, ys = simulate_erp(freq_range, ap_params, gaussian_params)
-    xs, ys = simulate_erp(time_range, erp_params, fs=fs)
+    xs, ys = simulate_erp(time_range, erp_params, fs=fs, nlv=0.1)
 
     tfm = ERPparam(verbose=False, max_n_peaks=4)
     tfm.fit(xs, ys)
@@ -39,7 +39,7 @@ def get_tfg():
     """Get a ERPparamGroup object, with some fit power spectra, for testing."""
 
     n_signals = 3
-    xs, ys = simulate_erps(n_signals, *default_group_params())
+    xs, ys = simulate_erps(n_signals, *default_group_params(), nlvs=0.1)
 
     tfg = ERPparamGroup(verbose=False, max_n_peaks=4)
     tfg.fit(xs, ys)
