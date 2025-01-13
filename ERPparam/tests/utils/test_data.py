@@ -19,44 +19,38 @@ def test_trim_spectrum():
     assert np.array_equal(f_out, np.array([2., 3., 4.]))
     assert np.array_equal(p_out, np.array([3., 4., 5.]))
 
-def test_interpolate_spectrum():
+def test_interpolate_spectrum(tfm):
 
     # Test with single buffer exclusion zone
-    times, signals = simulate_erp(\
-        [1, 75], [1, 1], [[10, 0.5, 1.0], [60, 2, 0.1]])
+    exclude = [0.05, 0.15]
 
-    exclude = [58, 62]
-
-    times_out, signals_out = interpolate_spectrum(times, signals, exclude)
+    times = tfm.time
+    signal = tfm.signal
+    times_out, signal_out = interpolate_spectrum(times, signal, exclude)
 
     assert np.array_equal(times, times_out)
-    assert np.all(signals)
-    assert signals.shape == signals_out.shape
+    assert np.all(signal)
+    assert signal.shape == signal_out.shape
     mask = np.logical_and(times >= exclude[0], times <= exclude[1])
-    assert signals[mask].sum() > signals_out[mask].sum()
+    assert signal[mask].sum() > signal_out[mask].sum()
 
     # Test with multiple buffer exclusion zones
-    times, signals = simulate_erp(\
-        [1, 150], [1, 100, 1], [[10, 0.5, 1.0], [60, 1, 0.1], [120, 0.5, 0.1]])
+    exclude = [[0.05, 0.15], [0.4, 0.6]]
 
-    exclude = [[58, 62], [118, 122]]
-
-    times_out, signals_out = interpolate_spectrum(times, signals, exclude)
+    times_out, signal_out = interpolate_spectrum(times, signal, exclude)
     assert np.array_equal(times, times_out)
-    assert np.all(signals)
-    assert signals.shape == signals_out.shape
+    assert np.all(signal)
+    assert signal.shape == signal_out.shape
 
     for f_range in exclude:
         mask = np.logical_and(times >= f_range[0], times <= f_range[1])
-        assert signals[mask].sum() > signals_out[mask].sum()
+        assert signal[mask].sum() > signal_out[mask].sum()
 
-def test_subsample_spectra():
+def test_subsample_spectra(tfg):
 
     # Simulate spectra, each with unique osc peak (for checking)
-    n_sim = 10
-    oscs = [[10 + ind, 0.25, 0.5] for ind in range(n_sim)]
-    times, signals = simulate_erps(\
-        n_sim, [1, 50], [1, 1], oscs)
+    n_sim = len(tfg)
+    signals = tfg.signals
 
     # Test with int input
     n_select = 2
