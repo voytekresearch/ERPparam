@@ -10,7 +10,7 @@ import numpy as np
 from ERPparam.core.utils import nearest_ind
 from ERPparam.core.modutils import safe_import, check_dependency
 from ERPparam.sim.gen import sim_erp
-from ERPparam.utils.data import trim_spectrum
+from ERPparam.utils.data import trim_signal
 from ERPparam.utils.params import compute_fwhm
 from ERPparam.plts.signals import plot_signals
 from ERPparam.plts.settings import PLT_FIGSIZES, PLT_COLORS

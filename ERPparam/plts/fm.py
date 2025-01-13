@@ -10,7 +10,7 @@ import numpy as np
 from ERPparam.core.utils import nearest_ind
 from ERPparam.core.modutils import safe_import, check_dependency
 from ERPparam.sim.gen import sim_erp
-from ERPparam.utils.data import trim_spectrum
+from ERPparam.utils.data import trim_signal
 from ERPparam.utils.params import compute_fwhm
 from ERPparam.plts.signals import plot_signals
 from ERPparam.plts.settings import PLT_FIGSIZES, PLT_COLORS
@@ -187,7 +187,7 @@ def _add_peaks_outline(fm, ax, **plot_kwargs):
 
         # Generate a peak reconstruction for each peak, and trim to desired range
         peak_line = sim_erp(fm.time, peak)
-        peak_time, peak_line = trim_spectrum(fm.time, peak_line, peak_range)
+        peak_time, peak_line = trim_signal(fm.time, peak_line, peak_range)
 
         # Plot the peak outline
         ax.plot(peak_time, peak_line, **plot_kwargs)
