@@ -8,7 +8,7 @@ import numpy as np
 ###################################################################################################
 ###################################################################################################
 
-DATA_URL = 'https://raw.githubusercontent.com/fooof-tools/fooof/main/data/'
+DATA_URL = 'https://raw.githubusercontent.com/voytekresearch/ERPparam/main/data/'
 
 def check_data_folder(folder):
     """Check if a data folder exists, and create if not.
@@ -40,7 +40,7 @@ def check_data_file(filename, folder, url=DATA_URL):
         urlretrieve(url + filename, filename=filepath)
 
 
-def fetch_fooof_data(filename, folder='data', url=DATA_URL):
+def fetch_ERPparam_data(filename, folder='data', url=DATA_URL):
     """Download a data file for FOOOF.
 
     Parameters
@@ -62,7 +62,7 @@ def fetch_fooof_data(filename, folder='data', url=DATA_URL):
     check_data_file(filename, folder, url)
 
 
-def load_fooof_data(filename, folder='data', url=DATA_URL):
+def load_ERPparam_data(filename, folder='data', url=DATA_URL):
     """Download, if not already available, and load an example data file for fooof.
 
     Parameters
@@ -84,7 +84,7 @@ def load_fooof_data(filename, folder='data', url=DATA_URL):
     This function assumes that data files are numpy (npy) files.
     """
 
-    fetch_fooof_data(filename, folder, url)
+    fetch_ERPparam_data(filename, folder, url)
     data = np.load(os.path.join(folder, filename))
 
     return data

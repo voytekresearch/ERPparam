@@ -33,7 +33,7 @@ def test_load_ERPparam():
 def test_load_ERPparamgroup():
 
     file_name = 'test_ERPparamgroup_all'
-    tfg = load_ERPparamgroup(file_name, TEST_DATA_PATH)
+    tfg = load_ERPparamGroup(file_name, TEST_DATA_PATH)
 
     assert isinstance(tfg, ERPparamGroup)
 
@@ -41,6 +41,6 @@ def test_load_ERPparamgroup():
     assert len(tfg.group_results) > 0
     for setting in OBJ_DESC['settings']:
         assert getattr(tfg, setting) is not None
-    assert tfg.power_spectra is not None
+    assert tfg.signals is not None
     for meta_dat in OBJ_DESC['meta_data']:
         assert getattr(tfg, meta_dat) is not None

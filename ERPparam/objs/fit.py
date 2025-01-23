@@ -63,7 +63,7 @@ from ERPparam.core.strings import (gen_settings_str, gen_results_fm_str,
 from ERPparam.core.corrections import correct_overlapping_peaks
 
 from ERPparam.plts.model import plot_ERPparam
-from ERPparam.utils.data import trim_spectrum
+from ERPparam.utils.data import trim_signal
 from ERPparam.utils.params import compute_gauss_std
 from ERPparam.data import ERPparamResults, ERPparamSettings, ERPparamMetaData
 from ERPparam.data.conversions import model_to_dataframe
@@ -137,7 +137,8 @@ class ERPparam():
     """
     # pylint: disable=attribute-defined-outside-init
 
-    def __init__(self, peak_width_limits=(0.01, 10), max_n_peaks=20, peak_threshold=2.0, min_peak_height=0.0, verbose=True):
+    def __init__(self, peak_width_limits=(0.01, 10), max_n_peaks=20, 
+                 min_peak_height=0.0, peak_threshold=2.0, verbose=True):
         
         self.peak_width_limits = peak_width_limits
         self.max_n_peaks = max_n_peaks
@@ -238,6 +239,7 @@ class ERPparam():
 
         if clear_time:
             self.time = None
+            self.time_range = None
             self.fs = None
 
         if clear_signal:
@@ -676,7 +678,7 @@ class ERPparam():
 
         # Regenerate model components, based on what is available
         if regenerate:
-            if self.time_range and self.fs:
+            if self.fs:
                 self._regenerate_time_vector()
             if np.all(self.time) and np.all(self.gaussian_params_):
                 self._regenerate_model()
@@ -1253,14 +1255,14 @@ class ERPparam():
             # signal as the baseline
             else: 
                 baseline = [time.min(), time.max()]
-        _, baseline_signal = trim_spectrum(time, signal, baseline)
+        _, baseline_signal = trim_signal(time, signal, baseline)
 
         # get the uncropped signal, for later plotting 
         uncropped_signal = signal.copy()
         uncropped_time = time.copy()
         # Check time range, trim the signal range if requested
         if time_range:
-            time, signal = trim_spectrum(time, signal, time_range)
+            time, signal = trim_signal(time, signal, time_range)
 
         # Calculate temporal resolution, and actual time range of the data
         time_range = [time.min(), time.max()]

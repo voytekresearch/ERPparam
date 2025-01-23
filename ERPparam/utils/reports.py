@@ -27,7 +27,7 @@ def methods_report_info(ERPparam_obj=None, concise=False):
     if ERPparam_obj:
         print(gen_version_str(concise))
         print(gen_settings_str(ERPparam_obj, concise=concise))
-        print(gen_freq_range_str(ERPparam_obj, concise=concise))
+        print(gen_time_range_str(ERPparam_obj, concise=concise))
 
 def methods_report_text(ERPparam_obj=None):
     """Prints out a text template of methods reporting information.

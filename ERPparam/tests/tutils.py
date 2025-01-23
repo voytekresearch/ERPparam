@@ -19,9 +19,6 @@ plt = safe_import('.pyplot', 'matplotlib')
 def get_tfm():
     """Get a ERPparam object, with a fit power spectrum, for testing."""
 
-    #freq_range = [3, 50]
-    #ap_params = [50, 2]
-    #gaussian_params = [10, 0.5, 2, 20, 0.3, 4]
     time_range = (-0.5, 2)
     fs = 1000
     erp_latency = [0.1, 0.2, 0.5]
@@ -30,29 +27,37 @@ def get_tfm():
     erp_params = np.ravel(np.column_stack([erp_latency, erp_amplitude, erp_width]))
 
     #xs, ys = simulate_erp(freq_range, ap_params, gaussian_params)
-    xs, ys = simulate_erp(time_range, erp_params, fs=fs)
+    xs, ys = simulate_erp(time_range, erp_params, fs=fs, nlv=0.1)
 
     tfm = ERPparam(verbose=False, max_n_peaks=4)
     tfm.fit(xs, ys)
-    print('HAS DATTA: '+str(tfm.has_data))
 
     return tfm
+
 
 def get_tfg():
     """Get a ERPparamGroup object, with some fit power spectra, for testing."""
 
     n_signals = 3
-    xs, ys = simulate_erps(n_signals, *default_group_params())
+    xs, ys = simulate_erps(n_signals, *default_group_params(), nlvs=0.1)
 
-    tfg = ERPparamGroup(verbose=False, peak_threshold=1.5, max_n_peaks=3)
+    tfg = ERPparamGroup(verbose=False, max_n_peaks=4)
     tfg.fit(xs, ys)
 
     return tfg
+
 
 def get_tbands():
     """Get a bands object, for testing."""
 
     return Bands({'theta' : (4, 8), 'alpha' : (8, 12), 'beta' : (13, 30)})
+
+
+def get_twindow():
+    """Get a time window list, for testing."""
+
+    return [0, 10]
+
 
 def get_tresults():
     """Get a ERPparamResults objet, for testing."""

@@ -9,6 +9,7 @@ They serve rather as 'smoke tests', for if anything fails completely.
 import numpy as np
 from pytest import raises
 
+from ERPparam import ERPparam
 from ERPparam.core.items import OBJ_DESC
 from ERPparam.core.errors import FitError
 from ERPparam.core.utils import group_three
@@ -66,6 +67,7 @@ def test_ERPparam_fit():
     xs, ys = simulate_erp(time_range, erp_params, nlv)
 
     tfm = ERPparam(verbose=False, max_n_peaks=4)
+    tfm._gauss_overlap_thresh = 2.0
     tfm.fit(xs, ys)
     print(tfm.peak_params_)
 
@@ -177,7 +179,7 @@ def test_ERPparam_load():
     for setting in OBJ_DESC['settings']:
         if setting != 'aperiodic_mode':
             assert getattr(tfm, setting) is None
-    assert getattr(tfm, 'power_spectrum') is None
+    assert getattr(tfm, 'signal') is None
 
     # Test loading just settings
     tfm = ERPparam(verbose=False)
@@ -188,13 +190,13 @@ def test_ERPparam_load():
     # Test that results and data are None
     for result in OBJ_DESC['results']:
         assert np.all(np.isnan(getattr(tfm, result)))
-    assert tfm.power_spectrum is None
+    assert tfm.signal is None
 
     # Test loading just data
     tfm = ERPparam(verbose=False)
     file_name_dat = 'test_ERPparam_dat'
     tfm.load(file_name_dat, TEST_DATA_PATH)
-    assert tfm.power_spectrum is not None
+    assert tfm.signal is not None
     # Test that settings and results are None
     for setting in OBJ_DESC['settings']:
         assert getattr(tfm, setting) is None

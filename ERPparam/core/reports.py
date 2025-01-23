@@ -106,7 +106,7 @@ def save_report_fg(fg, file_name, file_path=None, add_settings=True):
 
     # Aperiodic parameters plot
     ax1 = plt.subplot(grid[1, 0])
-    plot_fg_ap(fg, ax1)
+    plot_fg_pks(fg, ax1,)
 
     # Goodness of fit plot
     ax2 = plt.subplot(grid[1, 1])
