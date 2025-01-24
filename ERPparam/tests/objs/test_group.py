@@ -56,8 +56,6 @@ def test_fg_has_data(tfg):
     ntfg = ERPparamGroup()
     assert not ntfg.has_data
 
-    
-
 def test_fg_has_model(tfg):
     """Test the has_model property attribute, with and without model fits."""
 
@@ -90,7 +88,7 @@ def test_fg_fit_nk():
     """Test ERPparamGroup fit, no noise. Intialize empty Group obj, then feed data into fit func. """
 
     n_signals = 2
-    xs, ys = simulate_erps(n_signals, *default_group_params(), nlvs=0)
+    xs, ys = simulate_erps(n_signals, *default_group_params())
 
     tfg = ERPparamGroup(verbose=False)
     tfg.fit(xs, ys)
@@ -105,7 +103,7 @@ def test_fg_fit_nk_noise():
     """Test ERPparamGroup fit, on noisy data, to make sure nothing breaks."""
 
     n_signals = 5
-    xs, ys = simulate_erps(n_signals, *default_group_params(), nlvs=0.10)
+    xs, ys = simulate_erps(n_signals, *default_group_params())
 
     tfg = ERPparamGroup(max_n_peaks=8, verbose=False)
     tfg.fit(xs, ys)
@@ -124,14 +122,7 @@ def test_fg_fail():
     """
 
     # Create some noisy spectra that will be hard to fit    
-    time_range = (-0.5, 2)
-    erp_latency = [0.1, 0.5]
-    erp_amplitude = [2, -1.5]
-    erp_width = [0.03, 0.05]
-    erp_params =  param_sampler( [np.ravel(np.column_stack([erp_latency, erp_amplitude, erp_width])),
-                                np.ravel(np.column_stack([erp_latency[1], erp_amplitude[1], erp_width[1]])),
-                                np.ravel(np.column_stack([erp_latency[0], erp_amplitude[0], erp_width[0]]))
-                                ] )
+    time_range, erp_params, _ = default_group_params()
     nlv = 0.3
 
     xs, ys = simulate_erps(3, time_range, erp_params, nlv)
@@ -283,7 +274,7 @@ def test_fg_load():
     for setting in OBJ_DESC['settings']:
         if setting != 'aperiodic_mode':
             assert getattr(tfg, setting) is None
-    assert tfg.power_spectra is None
+    assert tfg.signals is None
 
     # Test loading just settings
     tfg = ERPparamGroup(verbose=False)
@@ -293,12 +284,12 @@ def test_fg_load():
     # Test that results and data are None
     for result in OBJ_DESC['results']:
         assert np.all(np.isnan(getattr(tfg, result)))
-    assert tfg.power_spectra is None
+    assert tfg.signals is None
 
     # Test loading just data
     tfg = ERPparamGroup(verbose=False)
     tfg.load(file_name_dat, TEST_DATA_PATH)
-    assert tfg.power_spectra is not None
+    assert tfg.signals is not None
     # Test that settings and results are None
     for setting in OBJ_DESC['settings']:
         assert getattr(tfg, setting) is None
@@ -312,7 +303,7 @@ def test_fg_load():
     assert len(tfg.group_results) > 0
     for setting in OBJ_DESC['settings']:
         assert getattr(tfg, setting) is not None
-    assert tfg.power_spectra is not None
+    assert tfg.signals is not None
     for meta_dat in OBJ_DESC['meta_data']:
         assert getattr(tfg, meta_dat) is not None
 

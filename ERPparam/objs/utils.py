@@ -75,33 +75,35 @@ def average_fg(fg, bands, avg_method='mean', regenerate=True):
     elif avg_method == 'median':
         avg_func = np.nanmedian
 
-    # Aperiodic parameters: extract & average
-    ap_params = avg_func(fg.get_params('aperiodic_params'), 0)
-
-    # Periodic parameters: extract & average
+    # Parameters: extract & average
     peak_params = []
     gauss_params = []
+    shape_params = []
 
     for band_def in bands.definitions:
 
         peaks = get_band_peak_fg(fg, band_def, attribute='peak_params')
         gauss = get_band_peak_fg(fg, band_def, attribute='gaussian_params')
+        shape = get_band_peak_fg(fg, band_def, attribute='shape_params')
 
         # Check if there are any extracted peaks - if not, don't add
         #   Note that we only check peaks, but gauss should be the same
         if not np.all(np.isnan(peaks)):
             peak_params.append(avg_func(peaks, 0))
             gauss_params.append(avg_func(gauss, 0))
+            shape_params.append(avg_func(shape, 0))
 
     peak_params = np.array(peak_params)
     gauss_params = np.array(gauss_params)
+    shape_params = np.array(shape_params)
 
     # Goodness of fit measures: extract & average
     r2 = avg_func(fg.get_params('r_squared'))
     error = avg_func(fg.get_params('error'))
 
     # Collect all results together, to be added to ERPparam object
-    results = ERPparamResults(ap_params, peak_params, r2, error, gauss_params)
+    results = ERPparamResults(peak_params, r2, error, gauss_params, 
+                              shape_params, fg.get_params('peak_indices'))
 
     # Create the new ERPparam object, with settings, data info & results
     fm = ERPparam()
@@ -157,7 +159,7 @@ def combine_ERPparams(ERPparams):
     #   We check how many frequencies by accessing meta data, in case of no frequency vector
     meta_data = ERPparams[0].get_meta_data()
     n_freqs = len(gen_time_vector(meta_data.time_range, meta_data.fs))
-    temp_power_spectra = np.empty([0, n_freqs])
+    temp_signals = np.empty([0, n_freqs])
 
     # Add ERPparam results from each ERPparam object to group
     for f_obj in ERPparams:
@@ -165,18 +167,18 @@ def combine_ERPparams(ERPparams):
         # Add ERPparamGroup object
         if isinstance(f_obj, ERPparamGroup):
             fg.group_results.extend(f_obj.group_results)
-            if f_obj.power_spectra is not None:
-                temp_power_spectra = np.vstack([temp_power_spectra, f_obj.power_spectra])
+            if f_obj.signal is not None:
+                temp_signals = np.vstack([temp_signals, f_obj.signal])
 
         # Add ERPparam object
         else:
             fg.group_results.append(f_obj.get_results())
-            if f_obj.power_spectrum is not None:
-                temp_power_spectra = np.vstack([temp_power_spectra, f_obj.power_spectrum])
+            if f_obj.signal is not None:
+                temp_signals = np.vstack([temp_signals, f_obj.signal])
 
-    # If the number of collected power spectra is consistent, then add them to object
-    if len(fg) == temp_power_spectra.shape[0]:
-        fg.power_spectra = temp_power_spectra
+    # If the number of collected signals is consistent, then add them to object
+    if len(fg) == temp_signals.shape[0]:
+        fg.signal = temp_signals
 
     # Set the check data mode, as True if any of the inputs have it on, False otherwise
     fg.set_check_data_mode(any(getattr(f_obj, '_check_data') for f_obj in ERPparams))
@@ -187,19 +189,19 @@ def combine_ERPparams(ERPparams):
     return fg
 
 
-def fit_ERPparam_3d(fg, freqs, power_spectra, freq_range=None, n_jobs=1):
+def fit_ERPparam_3d(fg, time, signals, time_range=None, n_jobs=1):
     """Fit ERPparam models across a 3d array of power spectra.
 
     Parameters
     ----------
     fg : ERPparamGroup
         Object to fit with, initialized with desired settings.
-    freqs : 1d array
-        Frequency values for the power spectra, in linear space.
-    power_spectra : 3d array
-        Power values, in linear space, with shape as: [n_conditions, n_power_spectra, n_freqs].
-    freq_range : list of [float, float], optional
-        Desired frequency range to fit. If not provided, fits the entire given range.
+    time : 1d array
+        Time vector for the signal.
+    signal : 1d array
+        Evoked response, voltage values.
+    time_range : list of [float, float]
+        Time range of the signal to be fit, as [earliest_time, latest_time].
     n_jobs : int, optional, default: 1
         Number of jobs to run in parallel.
         1 is no parallelization. -1 uses all available cores.
@@ -207,23 +209,23 @@ def fit_ERPparam_3d(fg, freqs, power_spectra, freq_range=None, n_jobs=1):
     Returns
     -------
     fgs : list of ERPparamGroups
-        Collected ERPparamGroups after fitting across power spectra, length of n_conditions.
+        Collected ERPparamGroups after fitting across signals, length of n_conditions.
 
 
     Examples
     --------
-    Fit a 3d array of power spectra, assuming `freqs` and `spectra` are already defined:
+    Fit a 3d array of signals, assuming `time` and `signals` are already defined:
 
     >>> from ERPparam import ERPparamGroup
     >>> fg = ERPparamGroup(peak_width_limits=[1, 6], min_peak_height=0.1)
-    >>> fgs = fit_ERPparam_3d(fg, freqs, power_spectra, freq_range=[3, 30])  # doctest:+SKIP
+    >>> fgs = fit_ERPparam_3d(fg, time, signals, time_range=[0, 1])  # doctest:+SKIP
     """
 
     # Reshape 3d data to 2d and fit, in order to fit with a single group model object
-    shape = np.shape(power_spectra)
-    powers_2d = np.reshape(power_spectra, (shape[0] * shape[1], shape[2]))
+    shape = np.shape(signals)
+    powers_2d = np.reshape(signals, (shape[0] * shape[1], shape[2]))
 
-    fg.fit(freqs, powers_2d, freq_range, n_jobs)
+    fg.fit(time, powers_2d, time_range, n_jobs=n_jobs)
 
     # Reorganize 2d results into a list of model group objects, to reflect original shape
     fgs = [fg.get_group(range(dim_a * shape[1], (dim_a + 1) * shape[1])) \

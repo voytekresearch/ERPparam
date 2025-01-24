@@ -62,7 +62,7 @@ from ERPparam.core.strings import (gen_settings_str, gen_results_fm_str,
                                 gen_issue_str, gen_width_warning_str)
 
 from ERPparam.plts.model import plot_ERPparam
-from ERPparam.utils.data import trim_spectrum
+from ERPparam.utils.data import trim_signal
 from ERPparam.utils.params import compute_gauss_std
 from ERPparam.data import ERPparamResults, ERPparamSettings, ERPparamMetaData
 from ERPparam.data.conversions import model_to_dataframe
@@ -144,7 +144,7 @@ class ERPparam():
         self.max_n_peaks = max_n_peaks
         self.min_peak_height = min_peak_height
         self.peak_threshold = peak_threshold
-        self.peak_mode = 'gaussian'
+        self.peak_mode = peak_mode
         self.verbose = verbose
 
         # Threshold for how far a peak has to be from edge to keep.
@@ -240,6 +240,7 @@ class ERPparam():
 
         if clear_time:
             self.time = None
+            self.time_range = None
             self.fs = None
 
         if clear_signal:
@@ -675,7 +676,7 @@ class ERPparam():
 
         # Regenerate model components, based on what is available
         if regenerate:
-            if self.time_range and self.fs:
+            if self.fs:
                 self._regenerate_time_vector()
             if np.all(self.time) and np.all(self.gaussian_params_):
                 self._regenerate_model()
@@ -1264,14 +1265,14 @@ class ERPparam():
             # signal as the baseline
             else: 
                 baseline = [time.min(), time.max()]
-        _, baseline_signal = trim_spectrum(time, signal, baseline)
+        _, baseline_signal = trim_signal(time, signal, baseline)
 
         # get the uncropped signal, for later plotting 
         uncropped_signal = signal.copy()
         uncropped_time = time.copy()
         # Check time range, trim the signal range if requested
         if time_range:
-            time, signal = trim_spectrum(time, signal, time_range)
+            time, signal = trim_signal(time, signal, time_range)
 
         # Calculate temporal resolution, and actual time range of the data
         time_range = [time.min(), time.max()]
