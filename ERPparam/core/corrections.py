@@ -25,7 +25,7 @@ def correct_overlapping_peaks(signal, peak_indices):
         if overlap_start[i_peak]:
             peak_indices[i_peak][0] = idx_trough[i_peak]
         if overlap_end[i_peak]:
-            peak_indices[i_peak][2] = idx_trough[i_peak]
+            peak_indices[i_peak][2] = idx_trough[i_peak+1]
             
     return peak_indices
 
