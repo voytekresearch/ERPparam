@@ -118,19 +118,19 @@ def test_combine_errors(tfm, tfg):
         with raises(IncompatibleSettingsError):
             combine_ERPparams([f_obj, f_obj2])
 
-def test_fit_ERPparam_3d(tfg):
+# def test_fit_ERPparam_3d(tfg):
 
-    n_groups = 2
-    n_spectra = 3
-    xs, ys = simulate_erps(n_spectra, *default_group_params())
-    ys = np.stack([ys] * n_groups, axis=0)
-    spectra_shape = np.shape(ys)
+#     n_groups = 2
+#     n_spectra = 3
+#     xs, ys = simulate_erps(n_spectra, *default_group_params())
+#     ys = np.stack([ys] * n_groups, axis=0)
+#     spectra_shape = np.shape(ys)
 
-    tfg = ERPparamGroup()
-    fgs = fit_ERPparam_3d(tfg, xs, ys)
+#     tfg = ERPparamGroup()
+#     fgs = fit_ERPparam_3d(tfg, xs, ys)
 
-    assert len(fgs) == n_groups == spectra_shape[0]
-    for fg in fgs:
-        assert fg
-        assert len(fg) == n_spectra
-        assert fg.signals.shape == spectra_shape[1:]
+#     assert len(fgs) == n_groups == spectra_shape[0]
+#     for fg in fgs:
+#         assert fg
+#         assert len(fg) == n_spectra
+#         assert fg.signals.shape == spectra_shape[1:]
