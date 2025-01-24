@@ -32,10 +32,10 @@ def test_interpolate_signal(tfm):
     assert np.all(signal)
     assert signal.shape == signal_out.shape
     mask = np.logical_and(times >= exclude[0], times <= exclude[1])
-    assert signal[mask].sum() > signal_out[mask].sum()
+    assert np.abs(signal[mask].sum()) > np.abs(signal_out[mask].sum())
 
     # Test with multiple buffer exclusion zones
-    exclude = [[0.05, 0.15], [0.4, 0.6]]
+    exclude = [[0.05, 0.15], [0.15, 0.25]]
 
     times_out, signal_out = interpolate_signal(times, signal, exclude)
     assert np.array_equal(times, times_out)
@@ -44,7 +44,7 @@ def test_interpolate_signal(tfm):
 
     for f_range in exclude:
         mask = np.logical_and(times >= f_range[0], times <= f_range[1])
-        assert signal[mask].sum() > signal_out[mask].sum()
+        assert np.abs(signal[mask].sum()) > np.abs(signal_out[mask].sum())
 
 def test_subsample_signal(tfg):
 
