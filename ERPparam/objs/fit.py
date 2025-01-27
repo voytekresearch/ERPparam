@@ -997,7 +997,11 @@ class ERPparam():
         model_peak_index = np.argmax(np.abs(model_compoment))
         peak_range_indices = int(np.floor(peak_params[2] * self.fs))
         index_low = model_peak_index - peak_range_indices
+        if index_low < 0:
+            index_low = 0
         index_high = model_peak_index + peak_range_indices
+        if index_high > len(self.signal):
+            index_high = len(self.signal)
         if peak_params[1]>0:
             peak_index = np.argmax(self.signal[index_low:index_high]) + index_low
         else:
