@@ -773,10 +773,11 @@ class ERPparam():
             gaussian_params = self._fit_peak_guess(guess)
             gaussian_params = gaussian_params[gaussian_params[:, 0].argsort()]
 
-            # drop overlapping peaks, again after fitting
+            # drop overlapping peaks, again after fitting, and sort again
             gaussian_params_pos = self._drop_peak_overlap(gaussian_params[gaussian_params[:, 1] > 0])
             gaussian_params_neg = self._drop_peak_overlap(gaussian_params[gaussian_params[:, 1] < 0])
             gaussian_params = np.vstack((gaussian_params_pos, gaussian_params_neg))
+            gaussian_params = gaussian_params[gaussian_params[:, 0].argsort()]
 
             # drop peaks below threshold
             gaussian_params = gaussian_params[np.abs(gaussian_params[:, 1]) >= self.min_peak_height]
