@@ -55,7 +55,7 @@ def test_ERPparam_n_peaks(tfm):
     assert tfm.n_peaks_
 
 def test_ERPparam_fit():
-    """Test ERPparam fit, no knee."""
+    """Test ERPparam fit."""
 
     time_range, erp_params, nlv = default_params()
     xs, ys = simulate_erp(time_range, erp_params, nlv)
@@ -80,7 +80,6 @@ def test_ERPparam_fit_noise():
 
     # No accuracy checking here - just checking that it ran
     assert tfm.has_model
-
 
 def test_ERPparam_fit_measures():
     """Test goodness of fit & error metrics, post model fitting."""
@@ -242,7 +241,7 @@ def test_add_settings():
     tfm = get_tfm()
 
     # Test adding settings
-    ERPparam_settings = ERPparamSettings([1, 4], 6, 0, 2)
+    ERPparam_settings = ERPparamSettings([1, 4], 6, 0, 2, "gaussian")
     tfm.add_settings(ERPparam_settings)
     for setting in OBJ_DESC['settings']:
         assert getattr(tfm, setting) == getattr(ERPparam_settings, setting)
