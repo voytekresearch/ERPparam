@@ -756,7 +756,15 @@ class ERPparam():
         guess_neg = self._drop_peak_cf(guess_neg)
         guess_neg = self._drop_peak_overlap(guess_neg)
 
-        guess = np.vstack((guess_pos, guess_neg))
+        # Combine positive and negative peaks (if any) into a single array
+        if len(guess_pos) == 0:
+            guess = guess_neg
+        elif len(guess_neg) == 0:
+            guess = guess_pos
+        elif len(guess_pos) == 0 and len(guess_neg) == 0:
+            guess = []
+        else:
+            guess = np.vstack((guess_pos, guess_neg))
 
         # If there are peak guesses, check them, fit the peaks, and sort results
         if len(guess) > 0:
