@@ -61,7 +61,7 @@ def test_ERPparam_fit():
     xs, ys = simulate_erp(time_range, erp_params, nlv)
 
     tfm = ERPparam(verbose=False, max_n_peaks=4)
-    tfm.fit(xs, ys)
+    tfm.fit(xs, ys, time_range=[0, time_range[1]])
 
     # Check model results - gaussian parameters
     for ii, gauss in enumerate(group_three(erp_params)):
@@ -76,7 +76,7 @@ def test_ERPparam_fit_noise():
     xs, ys = simulate_erp(time_range, erp_params, nlv)
 
     tfm = ERPparam(max_n_peaks=2, verbose=False)
-    tfm.fit(xs, ys)
+    tfm.fit(xs, ys, time_range=[0, time_range[1]])
 
     # No accuracy checking here - just checking that it ran
     assert tfm.has_model
