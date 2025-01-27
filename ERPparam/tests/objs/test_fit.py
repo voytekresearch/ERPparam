@@ -9,6 +9,7 @@ They serve rather as 'smoke tests', for if anything fails completely.
 import numpy as np
 from pytest import raises
 
+from ERPparam import ERPparam
 from ERPparam.core.items import OBJ_DESC
 from ERPparam.core.errors import FitError
 from ERPparam.core.utils import group_three
@@ -20,7 +21,7 @@ from ERPparam.data import ERPparamSettings, ERPparamMetaData, ERPparamResults
 pd = safe_import('pandas')
 
 from ERPparam.tests.settings import TEST_DATA_PATH
-from ERPparam.tests.tutils import get_tfm, plot_test
+from ERPparam.tests.tutils import get_tfm, plot_test, default_params
 
 from ERPparam.objs.fit import *
 
@@ -56,18 +57,11 @@ def test_ERPparam_n_peaks(tfm):
 def test_ERPparam_fit():
     """Test ERPparam fit, no knee."""
 
-    time_range = (-0.5, 2)
-    erp_latency = [0.1, 0.2]
-    erp_amplitude = [2, -1.5]
-    erp_width = [0.03, 0.05]
-    erp_params = np.ravel(np.column_stack([erp_latency, erp_amplitude, erp_width]))
-    nlv = 0.0 # no noise
-
+    time_range, erp_params, nlv = default_params()
     xs, ys = simulate_erp(time_range, erp_params, nlv)
 
     tfm = ERPparam(verbose=False, max_n_peaks=4)
     tfm.fit(xs, ys)
-    print(tfm.peak_params_)
 
     # Check model results - gaussian parameters
     for ii, gauss in enumerate(group_three(erp_params)):
@@ -76,11 +70,7 @@ def test_ERPparam_fit():
 def test_ERPparam_fit_noise():
     """Test ERPparam fit on noisy data, to make sure nothing breaks."""
 
-    time_range = (-0.5, 2)
-    erp_latency = [0.1, 0.2]
-    erp_amplitude = [2, -1.5]
-    erp_width = [0.03, 0.05]
-    erp_params = np.ravel(np.column_stack([erp_latency, erp_amplitude, erp_width]))
+    time_range, erp_params, _ = default_params()
     nlv = 0.3
 
     xs, ys = simulate_erp(time_range, erp_params, nlv)
@@ -119,14 +109,7 @@ def test_ERPparam_checks():
     """Test various checks, errors and edge cases in ERPparam.
     This tests all the input checking done in `_prepare_data`.
     """
-    time_range = (-0.5, 2)
-    erp_latency = [0.1, 0.2]
-    erp_amplitude = [2, -1.5]
-    erp_width = [0.03, 0.05]
-    erp_params = np.ravel(np.column_stack([erp_latency, erp_amplitude, erp_width]))
-    nlv = 0
-
-    xs, ys = simulate_erp(time_range, erp_params, nlv)
+    xs, ys = simulate_erp(*default_params())
 
     tfm = ERPparam(verbose=False)
 
@@ -177,7 +160,7 @@ def test_ERPparam_load():
     for setting in OBJ_DESC['settings']:
         if setting != 'aperiodic_mode':
             assert getattr(tfm, setting) is None
-    assert getattr(tfm, 'power_spectrum') is None
+    assert getattr(tfm, 'signal') is None
 
     # Test loading just settings
     tfm = ERPparam(verbose=False)
@@ -188,13 +171,13 @@ def test_ERPparam_load():
     # Test that results and data are None
     for result in OBJ_DESC['results']:
         assert np.all(np.isnan(getattr(tfm, result)))
-    assert tfm.power_spectrum is None
+    assert tfm.signal is None
 
     # Test loading just data
     tfm = ERPparam(verbose=False)
     file_name_dat = 'test_ERPparam_dat'
     tfm.load(file_name_dat, TEST_DATA_PATH)
-    assert tfm.power_spectrum is not None
+    assert tfm.signal is not None
     # Test that settings and results are None
     for setting in OBJ_DESC['settings']:
         assert getattr(tfm, setting) is None
@@ -373,14 +356,7 @@ def test_ERPparam_report(skip_if_no_mpl):
     """Check that running the top level model method runs."""
 
     tfm = ERPparam(verbose=False)
-    time_range = (-0.5, 2)
-    erp_latency = [0.1, 0.2]
-    erp_amplitude = [2, -1.5]
-    erp_width = [0.03, 0.05]
-    erp_params = np.ravel(np.column_stack([erp_latency, erp_amplitude, erp_width]))
-    nlv = 0.0
-
-    tfm.report(*simulate_erp(time_range, erp_params, nlv))
+    tfm.report(*simulate_erp(*default_params()))
 
     assert tfm
 
@@ -391,14 +367,7 @@ def test_ERPparam_fit_failure():
     tfm = ERPparam(verbose=False)
     tfm._maxfev = 5
 
-    time_range = (-0.5, 2)
-    erp_latency = [0.1, 0.2]
-    erp_amplitude = [2, -1.5]
-    erp_width = [0.03, 0.05]
-    erp_params = np.ravel(np.column_stack([erp_latency, erp_amplitude, erp_width]))
-    nlv = 0.0
-
-    tfm.fit(*simulate_erp(time_range, erp_params, nlv))
+    tfm.fit(*simulate_erp(*default_params()))
 
     # Check after failing out of fit, all results are reset
     for result in OBJ_DESC['results']:
@@ -412,7 +381,7 @@ def test_ERPparam_fit_failure():
     tfm._fit_peaks = raise_runtime_error
 
     # Run a ERPparam fit - this should raise an error, but continue in try/except
-    tfm.fit(*simulate_erp(time_range, erp_params, nlv))
+    tfm.fit(*simulate_erp(*default_params()))
 
     # Check after failing out of fit, all results are reset
     for result in OBJ_DESC['results']:
@@ -427,15 +396,8 @@ def test_ERPparam_debug():
     tfm.set_debug_mode(True)
     assert tfm._debug is True
 
-    time_range = (-0.5, 2)
-    erp_latency = [0.1, 0.2]
-    erp_amplitude = [2, -1.5]
-    erp_width = [0.03, 0.05]
-    erp_params = np.ravel(np.column_stack([erp_latency, erp_amplitude, erp_width]))
-    nlv = 0.0
-
     with raises(FitError):
-        tfm.fit(*simulate_erp(time_range, erp_params, nlv))
+        tfm.fit(*simulate_erp(*default_params()))
 
 def test_ERPparam_check_data():
     """Test ERPparam in with check data mode turned off, including with NaN data."""

@@ -7,7 +7,7 @@ import numpy as np
 ###################################################################################################
 ###################################################################################################
 
-def trim_spectrum(time, signal, t_range):
+def trim_signal(time, signal, t_range):
     """Extract a time range from signals.
 
     Parameters
@@ -53,7 +53,7 @@ def trim_spectrum(time, signal, t_range):
     return time_ext, signal_ext
 
 
-def interpolate_spectrum(time, signals, interp_range, buffer=3):
+def interpolate_signal(time, signals, interp_range, buffer=3):
     """Interpolate a time region in a ERP signal.
 
     Parameters
@@ -103,7 +103,7 @@ def interpolate_spectrum(time, signals, interp_range, buffer=3):
     if isinstance(interp_range[0], list):
         buffer = repeat(buffer) if isinstance(buffer, int) else buffer
         for interp_zone, cur_buffer in zip(interp_range, buffer):
-            time, signals = interpolate_spectrum(time, signals, interp_zone, cur_buffer)
+            time, signals = interpolate_signal(time, signals, interp_zone, cur_buffer)
 
     # Assuming list of two floats, interpolate a single time range
     else:
@@ -133,7 +133,7 @@ def interpolate_spectrum(time, signals, interp_range, buffer=3):
     return time, signals
 
 
-def subsample_spectra(signals, selection, return_inds=False):
+def subsample_signal(signals, selection, return_inds=False):
     """Subsample a group of power signals.
 
     Parameters

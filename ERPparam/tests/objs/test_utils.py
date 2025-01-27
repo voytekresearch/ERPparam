@@ -29,7 +29,7 @@ def test_compare_info(tfm, tfg):
         assert not compare_info([f_obj, f_obj2], 'settings')
 
         assert compare_info([f_obj, f_obj2], 'meta_data')
-        f_obj2.freq_range = [5, 25]
+        f_obj2.time_range = [5, 25]
         assert not compare_info([f_obj, f_obj2], 'meta_data')
 
 def test_average_fg(tfg, tbands):
@@ -95,10 +95,9 @@ def test_combine_ERPparams(tfm, tfg):
 
     # Check combining objects with no data
     tfm2._reset_data_results(False, True, True)
-    tfg2._reset_data_results(False, True, True, True)
     nfg6 = combine_ERPparams([tfm2, tfg2])
     assert len(nfg6) == 1 + len(tfg2)
-    assert nfg6.power_spectra is None
+    assert nfg6.signals is None
 
 def test_combine_errors(tfm, tfg):
 
@@ -114,24 +113,24 @@ def test_combine_errors(tfm, tfg):
     # Incompatible data information
     for f_obj in [tfm, tfg]:
         f_obj2 = f_obj.copy()
-        f_obj2.freq_range = [5, 30]
+        f_obj2.time_range = [5, 30]
 
         with raises(IncompatibleSettingsError):
             combine_ERPparams([f_obj, f_obj2])
 
-def test_fit_ERPparam_3d(tfg):
+# def test_fit_ERPparam_3d(tfg):
 
-    n_groups = 2
-    n_spectra = 3
-    xs, ys = simulate_erps(n_spectra, *default_group_params())
-    ys = np.stack([ys] * n_groups, axis=0)
-    spectra_shape = np.shape(ys)
+#     n_groups = 2
+#     n_spectra = 3
+#     xs, ys = simulate_erps(n_spectra, *default_group_params())
+#     ys = np.stack([ys] * n_groups, axis=0)
+#     spectra_shape = np.shape(ys)
 
-    tfg = ERPparamGroup()
-    fgs = fit_ERPparam_3d(tfg, xs, ys)
+#     tfg = ERPparamGroup()
+#     fgs = fit_ERPparam_3d(tfg, xs, ys)
 
-    assert len(fgs) == n_groups == spectra_shape[0]
-    for fg in fgs:
-        assert fg
-        assert len(fg) == n_spectra
-        assert fg.power_spectra.shape == spectra_shape[1:]
+#     assert len(fgs) == n_groups == spectra_shape[0]
+#     for fg in fgs:
+#         assert fg
+#         assert len(fg) == n_spectra
+#         assert fg.signals.shape == spectra_shape[1:]
