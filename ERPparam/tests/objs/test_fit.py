@@ -150,7 +150,7 @@ def test_ERPparam_load():
     # Test loading just results
     tfm = ERPparam(verbose=False)
     file_name_res = 'test_ERPparam_res'
-    tfm.load(file_name_res, TEST_DATA_PATH)
+    tfm.load(file_name_res, TEST_DATA_PATH, regenerate=False)
     # Check that result attributes get filled
     for result in OBJ_DESC['results']:
         assert not np.all(np.isnan(getattr(tfm, result)))
@@ -175,7 +175,7 @@ def test_ERPparam_load():
     # Test loading just data
     tfm = ERPparam(verbose=False)
     file_name_dat = 'test_ERPparam_dat'
-    tfm.load(file_name_dat, TEST_DATA_PATH)
+    tfm.load(file_name_dat, TEST_DATA_PATH, regenerate=False)
     assert tfm.signal is not None
     # Test that settings and results are None
     for setting in OBJ_DESC['settings']:
