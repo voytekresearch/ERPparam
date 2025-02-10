@@ -104,7 +104,7 @@ class ERPparam():
     fs : float
         Sampling frequency.
     peak_params_ : 2d array
-        Fitted parameter values for the peaks. Each row is a peak, as [CT, PW, BW].
+        Fitted parameter values for the peaks. Each row is a peak, as [CT, PW, BW, SK].
     gaussian_params_ : 2d array
         Parameters that define the gaussian fit(s).
         Each row is a gaussian, as [mean, height, standard deviation].
@@ -252,14 +252,17 @@ class ERPparam():
 
         if clear_results:
 
-            self.gaussian_params_ = np.ones([0,3])*np.nan
-            self.peak_params_ = np.ones([0,3])*np.nan
+            self.peak_params_ = np.ones([0,4])*np.nan
             self.shape_params_ = np.ones([0,7])*np.nan
             self.r_squared_ = np.nan
             self.error_ = np.nan
             self.peak_indices_ = np.full(3, np.nan)
-
             self._peak_fit = None
+
+            if self.peak_mode=='skewed_gaussian':
+                self.gaussian_params_ = np.ones([0,4])*np.nan
+            else:
+                self.gaussian_params_ = np.ones([0,3])*np.nan
 
 
     def add_data(self, time, signal, time_range=None, baseline=None, clear_results=True):
@@ -433,8 +436,11 @@ class ERPparam():
 
             # Calculate the peak fit
             #   Note: if no peaks are found, this creates a flat (all zero) peak fit
-            self._peak_fit = sim_erp(self.time, np.ndarray.flatten(self.gaussian_params_), 
-                                        peak_mode=self.peak_mode)
+            if self.peak_mode == 'skewed_gaussian':
+                params = np.ndarray.flatten(self.gaussian_params_)
+            else:
+                params = np.ndarray.flatten(self.gaussian_params_[:, :3])
+            self._peak_fit = sim_erp(self.time, params, peak_mode=self.peak_mode)
 
             # Convert gaussian definitions to peak parameters
             self.peak_params_  = self._create_peak_params(self.gaussian_params_)
@@ -541,7 +547,7 @@ class ERPparam():
         ----------
         name : {'peak_params', 'gaussian_params', 'shape_params', 'error', 'r_squared'}
             Name of the data field to extract.
-        col : {'CT', 'PW', 'BW'}, {'MN','HT','SD'}, {FWHM, rise_time, decay_time, symmetry,
+        col : {'CT', 'PW', 'BW', 'SK'}, {'MN','HT','SD', 'SK'}, {FWHM, rise_time, decay_time, symmetry,
             sharpness, sharpness_rise, sharpness_decay} or int, optional
             Column name / index to extract from selected data, if requested.
             Only used for name of {'peak_params', 'gaussian_params', 'shape_params}, 
@@ -614,10 +620,12 @@ class ERPparam():
                                            'sharpness_decay': 'sharpness of the decay (normalized to be dimensionless 0-1)'},
                             'peak_params': {'CT': "Center time of the peak, calculated from the raw signal", 
                                             'PW': 'Peak amplitude, calculate from the raw signal', 
-                                            'BW': 'Bandwidth of the peak, 2-sided (ie, both halves from the peak center), calculated from the raw signal'},
+                                            'BW': 'Bandwidth of the peak, 2-sided (ie, both halves from the peak center), calculated from the raw signal',
+                                            'SK': 'Skewness of the peak'},
                             'gaussian_params':{'MN':'mean of the gaussian',
                                                'HT':'height of the gaussian',
-                                               'SD':'gaussian width'}
+                                               'SD':'gaussian width',
+                                               'SK':'skewness of the gaussian'},
                             }
 
             return ERPparamResults(**{key.strip('_') : getattr(self, key) \
@@ -787,7 +795,7 @@ class ERPparam():
         else:
             if self.peak_mode == 'skewed_gaussian':
                 gaussian_params = np.empty([0, 4])
-            elif self.peak_mode == 'gaussian':
+            else:
                 gaussian_params = np.empty([0, 3])
 
         return gaussian_params
@@ -804,7 +812,7 @@ class ERPparam():
         -------
         gaussian_params : 2d array
             Parameters that define the gaussian fit(s).
-            Each row is a gaussian, as [mean, height, standard deviation].
+            Each row is a gaussian, as [mean, height, standard deviation, [skew]].
         """
 
         # Initialize matrix of guess parameters for gaussian fitting
@@ -951,6 +959,7 @@ class ERPparam():
             gaussian_params = np.array(group_four(gaussian_params))
         elif self.peak_mode == "gaussian":
             gaussian_params = np.array(group_three(gaussian_params))
+            gaussian_params = np.hstack((gaussian_params, np.ones((gaussian_params.shape[0], 1))*np.nan)) # add NaNs for skewness
             
         return gaussian_params
 
@@ -966,7 +975,7 @@ class ERPparam():
         Returns
         -------
         peak_params : 2d array
-            Fitted parameter values for the peaks, with each row as [CT, PW, BW].
+            Fitted parameter values for the peaks, with each row as [CT, PW, BW, SK].
 
         Notes
         -----
@@ -982,15 +991,22 @@ class ERPparam():
         Performing this conversion requires that the model has been run.
         """
 
-        peak_params = np.empty((len(gaus_params), 3))
+        peak_params = np.empty((len(gaus_params), 4))
 
         for ii, peak in enumerate(gaus_params):
 
-            # find the index of the signal the the time closest to the Gaussian center
+            # find the index of the signal at the time closest to the Gaussian center
             peak_index = np.argmin(np.abs(self.time - peak[0]))
 
+            # compute skewness
+            if self.peak_mode == "skewed_gaussian":
+                skew = peak[3]
+            else:
+                skew = np.nan
+
             # Collect peak parameter data
-            peak_params[ii] = [self.time[peak_index], self.signal[peak_index], peak[2] * 2]
+            peak_params[ii] = [self.time[peak_index], self.signal[peak_index], 
+                               peak[2] * 2, skew]
 
         return peak_params
 
@@ -1001,8 +1017,11 @@ class ERPparam():
         """
 
         # get index of peak (find extreme value within a range around the model peak)
-        model_compoment = sim_erp(self.time, gaussian_params, 
-                                  peak_mode=self.peak_mode)
+        if self.peak_mode == "skewed_gaussian":
+            params = gaussian_params
+        else:
+            params = gaussian_params[:3]
+        model_compoment = sim_erp(self.time, params, peak_mode=self.peak_mode)
         model_peak_index = np.argmax(np.abs(model_compoment))
         peak_range_indices = int(np.floor(peak_params[2] * self.fs))
         index_low = model_peak_index - peak_range_indices
@@ -1406,6 +1425,15 @@ class ERPparam():
 
     def _regenerate_model(self):
         """Regenerate model fit from parameters."""
-        self._peak_fit = sim_erp(
-            self.time,  np.ndarray.flatten(self.gaussian_params_), 
-            peak_mode=self.peak_mode)
+        gaussian_params = self.gaussian_params_
+        if self.peak_mode == "skewed_gaussian":
+            params = np.ndarray.flatten(gaussian_params)
+        else:
+            # check if 1 or 2d
+            if gaussian_params.ndim == 1:
+                params = np.ndarray.flatten(gaussian_params[:3])
+            else:
+                params = np.ndarray.flatten(gaussian_params[:, :3])
+        print(f"Regenerating model with params: {params}")
+                                        
+        self._peak_fit = sim_erp(self.time,  params, peak_mode=self.peak_mode)

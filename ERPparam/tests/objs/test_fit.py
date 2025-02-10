@@ -64,8 +64,11 @@ def test_ERPparam_fit():
     tfm.fit(xs, ys, time_range=[0, time_range[1]])
 
     # Check model results - gaussian parameters
+    print(tfm.peak_params_)
     for ii, gauss in enumerate(group_three(erp_params)):
-        assert np.allclose(gauss, tfm.peak_params_[ii], [2.0, 0.5, 1.0])
+        assert np.allclose(gauss[:3], tfm.peak_params_[ii, :3], 
+                           [2.0, 0.5, 1.0])
+        assert np.isnan(tfm.peak_params_[ii, 3])
 
 def test_ERPparam_fit_noise():
     """Test ERPparam fit on noisy data, to make sure nothing breaks."""

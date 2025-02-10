@@ -97,7 +97,7 @@ def test_fg_fit_nk():
     assert out
     assert len(out) == n_signals
     assert isinstance(out[0], ERPparamResults)
-    assert np.all(out[1].peak_params)
+    assert np.all(out[1].peak_params[:, :3])
 
 def test_fg_fit_nk_noise():
     """Test ERPparamGroup fit, on noisy data, to make sure nothing breaks."""
@@ -332,7 +332,10 @@ def test_fg_report(skip_if_no_mpl):
     assert tfm1
     # Check that regenerated model is created
     for result in OBJ_DESC['results']:
-        assert np.all(getattr(tfm1, result))
+        if (result == 'gaussian_params_') or (result == 'peak_params_'):
+            assert np.all(getattr(tfm1, result)[:, :3])
+        else:
+            assert np.all(getattr(tfm1, result))
 
     # Test when object has no data (clear a copy of tfg)
     new_tfg = tfg.copy()

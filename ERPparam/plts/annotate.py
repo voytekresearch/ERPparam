@@ -71,7 +71,10 @@ def plot_annotated_peak_search(fm):
         ax.set_title('Iteration #' + str(ind+1), fontsize=16)
 
         if ind < fm.n_peaks_:
-            gauss = peak_func(fm.time, *gaussian_params[ind, :])
+            if fm.peak_mode=='gaussian':
+                gauss = peak_func(fm.time, *gaussian_params[ind, :3])
+            else:
+                gauss = peak_func(fm.time, *gaussian_params[ind, :])
             plot_signals(fm.time, gauss, ax=ax, label='Gaussian Fit',
                          color=PLT_COLORS['periodic'], linestyle=':', linewidth=3.0)
 
@@ -139,7 +142,7 @@ def plot_annotated_model(fm, annotate_peaks=True, ax=None):
         # Extract largest peak, to annotate, grabbing gaussian params
         gauss = get_band_peak_fm(fm, fm.time_range, attribute='gaussian_params')
 
-        peak_ctr, peak_hgt, peak_wid = gauss
+        peak_ctr, peak_hgt, peak_wid, _ = gauss
         bw_time = [peak_ctr - 0.5 * compute_fwhm(peak_wid),
                     peak_ctr + 0.5 * compute_fwhm(peak_wid)]
 
