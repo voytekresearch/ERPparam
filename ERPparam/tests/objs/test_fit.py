@@ -12,7 +12,7 @@ from pytest import raises
 from ERPparam import ERPparam
 from ERPparam.core.items import OBJ_DESC
 from ERPparam.core.errors import FitError
-from ERPparam.core.utils import group_three
+from ERPparam.core.utils import group_three, group_four
 from ERPparam.core.modutils import safe_import
 from ERPparam.core.errors import DataError, NoDataError, InconsistentDataError
 from ERPparam.sim import gen_time_vector, simulate_erp
@@ -83,6 +83,23 @@ def test_ERPparam_fit_noise():
 
     # No accuracy checking here - just checking that it ran
     assert tfm.has_model
+
+def test_ERPparam_fit_skew():
+    """Test ERPparam fit with peak_mode='skewed_gaussian'."""
+
+    time_range, erp_params_d, nlv = default_params()
+    erp_params_d = erp_params_d.reshape(-1, 3)
+    for skew in [-2, 0 , 2]:
+        erp_params = np.column_stack((erp_params_d, 
+                                      skew*np.ones(erp_params_d.shape[0]))).flatten()
+        xs, ys = simulate_erp(time_range, erp_params, nlv, 
+                            peak_mode='skewed_gaussian')
+
+        tfm = ERPparam(verbose=False, max_n_peaks=4, peak_mode='skewed_gaussian')
+        tfm.fit(xs, ys, time_range=[0, time_range[1]])
+
+        # Check model results exists
+        assert tfm.has_model
 
 def test_ERPparam_fit_measures():
     """Test goodness of fit & error metrics, post model fitting."""
