@@ -78,31 +78,6 @@ def skewed_gaussian(xs, *params):
     return ys
 
 
-def gaussian_cdf(xs, *params):
-    """Cumulative distribution function (CDF) of a Gaussian PDF.
-
-    Parameters
-    ----------
-    xs : 1d array
-        Input x-axis values.
-    *params : float
-        Parameters that define skewed gaussian function:
-        * ctr: center of gaussian
-        * hgt: height of gaussian
-        * wid: width of gaussian
-
-    Returns
-    -------
-    ys : 1d array
-        Output values for skewed gaussian function.
-    """
-
-    gf = gaussian_pdf(xs, *params)
-    ys = np.cumsum(gf) / np.sum(gf) 
-
-    return ys
-
-
 def gaussian_function(xs, *params):
     """Gaussian fitting function.
 
