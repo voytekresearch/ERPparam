@@ -97,13 +97,20 @@ def average_fg(fg, bands, avg_method='mean', regenerate=True):
     gauss_params = np.array(gauss_params)
     shape_params = np.array(shape_params)
 
+    # Offset parameters: extract & average
+    if fg.fit_offset:
+        offset_params = avg_func(fg.get_params('offset_params'), 0)
+    else:
+        offset_params = None
+
     # Goodness of fit measures: extract & average
     r2 = avg_func(fg.get_params('r_squared'))
     error = avg_func(fg.get_params('error'))
 
     # Collect all results together, to be added to ERPparam object
-    results = ERPparamResults(peak_params, r2, error, gauss_params, 
-                              shape_params, fg.get_params('peak_indices'))
+    results = ERPparamResults(peak_params, shape_params, r2, error, 
+                              gauss_params, offset_params, 
+                              fg.get_params('peak_indices'))
 
     # Create the new ERPparam object, with settings, data info & results
     fm = ERPparam()
