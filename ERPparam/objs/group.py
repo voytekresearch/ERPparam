@@ -195,6 +195,7 @@ class ERPparamGroup(ERPparam):
             Length of list of empty lists to initialize. If 0, creates a single empty list.
         """
         format_dict = { 'gaussian_params_' : np.ones([0,3])*np.nan,
+                        'offset_params_' : np.ones([0,3])*np.nan,
                         'peak_params_' : np.ones([0,3])*np.nan,
                         'shape_params_' : np.ones([0,7])*np.nan,
                         'r_squared_': np.nan,
