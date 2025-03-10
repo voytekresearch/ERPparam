@@ -145,7 +145,7 @@ class ERPparam():
         self.min_peak_height = min_peak_height
         self.peak_threshold = peak_threshold
         self.verbose = verbose
-        self.offset_setting = fit_offset
+        self.fit_offset = fit_offset
 
         # Threshold for how far a peak has to be from edge to keep.
         #   This is defined in units of gaussian standard deviation
@@ -424,7 +424,7 @@ class ERPparam():
                                    "values in the data, which preclude model fitting.")
 
             # If we're fitting a sigmoid to the data, fit this first 
-            if self.offset_setting: # if true, fit the sigmoid
+            if self.fit_offset: # if true, fit the sigmoid
                 self.offset_params_ = self._fit_offset(self.time,self.signal)
                 self._sigmoid_fit = sigmoid_function(self.time, *self.offset_params_)
                 ## subtract sigmoid from signal before peak fitting
@@ -444,7 +444,7 @@ class ERPparam():
             # get the multigaussian sigmoid and re-generate fit
             #   Note: if we are fitting the offset, we want to replace 
             #         the first gaussian params with the re-estimated gaussian params
-            if self.offset_setting:
+            if self.fit_offset:
                 # get the sigmoid + peaks signal, and apply curve_fit again
                 initial_sigmultigauss_params = np.ndarray.flatten(np.vstack([self.offset_params_ , self.gaussian_params_])) 
                 final_sigmultigauss_params = self._fit_sigmultigauss(self.time,self.signal, initial_sigmultigauss_params)
