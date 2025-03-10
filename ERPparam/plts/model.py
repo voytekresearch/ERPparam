@@ -7,15 +7,9 @@ This file contains plotting functions that take as input a ERPparam object.
 
 import numpy as np
 
-from ERPparam.core.utils import nearest_ind
 from ERPparam.core.modutils import safe_import, check_dependency
-from ERPparam.sim.gen import sim_erp
-from ERPparam.utils.data import trim_signal
-from ERPparam.utils.params import compute_fwhm
-from ERPparam.plts.signals import plot_signals
 from ERPparam.plts.settings import PLT_FIGSIZES, PLT_COLORS
-from ERPparam.plts.utils import check_ax, check_plot_kwargs, savefig
-from ERPparam.plts.style import style_plot, style_ERP_plot
+from ERPparam.plts.style import style_ERP_plot
 
 plt = safe_import('.pyplot', 'matplotlib')
 
@@ -31,18 +25,29 @@ def plot_ERPparam(model, ax=None, y_label=None):
         fig, ax = plt.subplots(1,1, figsize=PLT_FIGSIZES['signal'])
 
     # plot signal
-    ax.plot(model.time, model.signal, alpha=0.75, label='ERP', color=PLT_COLORS['data'])
-
-    # plot fit
-    if model._peak_fit is not None:
-        # plot full model fit
-        ax.plot(model.time, model._peak_fit, linestyle='--', color=PLT_COLORS['model'], label='Gaussian fit')
+    ax.plot(model.time, model.signal, alpha=0.75, label='ERP', 
+            color=PLT_COLORS['data'], linewidth=3)
     
-        # plot peak and half-mag points
+    # plot full model fit
+    ax.plot(model.time, model._full_fit, linestyle='--', 
+            color=PLT_COLORS['model'], label='Model fit')
+
+    # plot peak and half-mag points    
+    if model._peak_fit is not None:
         ax.scatter(model.time[model.peak_indices_[:,1]], model.signal[model.peak_indices_[:,1]], color='r', label='Peak fit')
         half_mag_indices = np.concatenate((model.peak_indices_[:,0], model.peak_indices_[:,2]))
         ax.scatter(model.time[half_mag_indices], model.signal[half_mag_indices], color='b', label='Half-mag fit')
-    
+
+    # plot Gaussian and sigmoid fit, if available
+    if model.fit_offset:
+        # plot gaussian fit
+        ax.plot(model.time, model._peak_fit, linestyle='--', 
+                color=PLT_COLORS['peak'], label='Gaussian fit')
+        
+        # plot sigmoid fit
+        ax.plot(model.time, model._sigmoid_fit, linestyle='--', 
+                color=PLT_COLORS['offset'], label='Offset fit')
+        
     # label
     if y_label is not None:
         ax.set(xlabel="Time (s)", ylabel=y_label)
