@@ -24,12 +24,12 @@ def get_description():
     - descriptors : descriptors of the object status and model results
     """
 
-    attributes = {'results' : ['gaussian_params_', 'peak_params_', 'shape_params_', 'peak_indices_', 'r_squared_', 'error_'],
+    attributes = {'results' : ['gaussian_params_', 'offset_params_', 'peak_params_', 'shape_params_', 'peak_indices_', 'r_squared_', 'error_'],
                   'settings' : ['peak_width_limits', 'max_n_peaks', 'min_peak_height', 
-                                'peak_threshold'],
+                                'peak_threshold', 'fit_offset'],
                   'data' : ['signal', 'time'],
                   'meta_data' : ['time_range', 'fs'],
-                  'arrays' : ['time', 'signal', 'peak_params_', 'gaussian_params_', 'shape_params_'],
+                  'arrays' : ['time', 'signal', 'peak_params_', 'gaussian_params_', 'offset_params_', 'shape_params_'],
                   'model_components' : ['_peak_fit'],
                   'descriptors' : ['has_data', 'has_model', 'n_peaks_']
                   }

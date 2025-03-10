@@ -13,8 +13,11 @@ from collections import namedtuple
 ###################################################################################################
 ###################################################################################################
 
-class ERPparamSettings(namedtuple('ERPparamSettings', ['peak_width_limits', 'max_n_peaks',
-                                                 'min_peak_height', 'peak_threshold'])):
+class ERPparamSettings(namedtuple('ERPparamSettings', ['peak_width_limits', 
+                                                       'max_n_peaks',
+                                                       'min_peak_height', 
+                                                       'peak_threshold',
+                                                       'fit_offset'])):
     """User defined settings for the fitting algorithm.
 
     Parameters
@@ -27,6 +30,8 @@ class ERPparamSettings(namedtuple('ERPparamSettings', ['peak_width_limits', 'max
         Absolute threshold for detecting peaks, in units of the input data.
     peak_threshold : float
         Relative threshold for detecting peaks, in units of standard deviation of the input data.
+    fit_offset : bool
+        Whether to fit an offset to the model.
 
     Notes
     -----
@@ -52,8 +57,10 @@ class ERPparamMetaData(namedtuple('ERPparamMetaData', ['time_range', 'fs'])):
     __slots__ = ()
 
 
-class ERPparamResults(namedtuple('ERPparamResults', ['peak_params', 'r_squared', 'error', 
-                                                     'gaussian_params','shape_params',
+class ERPparamResults(namedtuple('ERPparamResults', ['peak_params', 
+                                                     'shape_params','r_squared', 
+                                                     'error', 'gaussian_params',
+                                                     'offset_params',
                                                      'peak_indices'])):
     """Model results from parameterizing a power spectrum.
 
@@ -61,6 +68,10 @@ class ERPparamResults(namedtuple('ERPparamResults', ['peak_params', 'r_squared',
     ----------
     peak_params : 2d array
         Fitted parameter values for the peaks. Each row is a peak, as [CF, PW, BW].
+    shape_params : 2d array
+        ERP shape parameters 
+        Each row is a waveform, as [FWHM, rise-time, decay-time, rise-decay symmetry,
+        sharpness, rising sharpeness, decaying sharpeness].
     r_squared : float
         R-squared of the fit between the full model fit and the input data.
     error : float
@@ -68,10 +79,8 @@ class ERPparamResults(namedtuple('ERPparamResults', ['peak_params', 'r_squared',
     gaussian_params : 2d array
         Parameters that define the gaussian fit( s).
         Each row is a gaussian, as [mean, height, standard deviation].
-    shape_params : 2d array
-        ERP shape parameters 
-        Each row is a waveform, as [FWHM, rise-time, decay-time, rise-decay symmetry,
-        sharpness, rising sharpeness, decaying sharpeness].
+    offset_params : 1d array
+        Parameters that define the offset fit [amplitude, latency, slope].
     peak_indices : 1d array
         Indices of the peaks in the input data.
 
