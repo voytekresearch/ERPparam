@@ -89,7 +89,7 @@ def test_ERPparam_fit_measures():
 
     # Hack fake data with known properties: total error magnitude 2
     tfm.signal = np.array([1, 2, 3, 4, 5])
-    tfm._peak_fit = np.array([1, 2, 5, 4, 5])
+    tfm._full_fit = np.array([1, 2, 5, 4, 5])
 
     # Check default goodness of fit and error measures
     tfm._calc_r_squared()
