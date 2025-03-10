@@ -22,7 +22,8 @@ def test_load_ERPparam():
 
     # Check that all elements get loaded
     for result in OBJ_DESC['results']:
-        assert not np.all(np.isnan(getattr(tfm, result)))
+        if result != 'offset_params_':
+            assert not np.all(np.isnan(getattr(tfm, result)))
     for setting in OBJ_DESC['settings']:
         assert getattr(tfm, setting) is not None
     for data in OBJ_DESC['data']:

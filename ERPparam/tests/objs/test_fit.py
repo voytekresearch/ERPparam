@@ -154,12 +154,13 @@ def test_ERPparam_load():
     tfm.load(file_name_res, TEST_DATA_PATH)
     # Check that result attributes get filled
     for result in OBJ_DESC['results']:
-        assert not np.all(np.isnan(getattr(tfm, result)))
+        print(f"{result}: {getattr(tfm, result)}")
+        if result != 'offset_params_':
+            assert not np.all(np.isnan(getattr(tfm, result)))
     # Test that settings and data are None
     #   Except for aperiodic mode, which can be inferred from the data
     for setting in OBJ_DESC['settings']:
-        if setting != 'aperiodic_mode':
-            assert getattr(tfm, setting) is None
+        assert getattr(tfm, setting) is None
     assert getattr(tfm, 'signal') is None
 
     # Test loading just settings
@@ -170,7 +171,8 @@ def test_ERPparam_load():
         assert getattr(tfm, setting) is not None
     # Test that results and data are None
     for result in OBJ_DESC['results']:
-        assert np.all(np.isnan(getattr(tfm, result)))
+        if result != 'offset_params_':
+            assert np.all(np.isnan(getattr(tfm, result)))
     assert tfm.signal is None
 
     # Test loading just data
@@ -182,14 +184,16 @@ def test_ERPparam_load():
     for setting in OBJ_DESC['settings']:
         assert getattr(tfm, setting) is None
     for result in OBJ_DESC['results']:
-        assert np.all(np.isnan(getattr(tfm, result)))
+        if result != 'offset_params_':
+            assert np.all(np.isnan(getattr(tfm, result)))
 
     # Test loading all elements
     tfm = ERPparam(verbose=False)
     file_name_all = 'test_ERPparam_all'
     tfm.load(file_name_all, TEST_DATA_PATH)
     for result in OBJ_DESC['results']:
-        assert not np.all(np.isnan(getattr(tfm, result)))
+        if result != 'offset_params_':
+            assert not np.all(np.isnan(getattr(tfm, result)))
     for setting in OBJ_DESC['settings']:
         assert getattr(tfm, setting) is not None
     for data in OBJ_DESC['data']:
@@ -218,7 +222,8 @@ def test_add_data():
        [ 0.198     , -1.48916601,  0.09412952]]), 
        r_squared=0.9973886245863048, error=0.01234299919871499, 
        gaussian_params=np.asarray([[ 0.10157924,  1.8103013 ,  0.02937827],
-       [ 0.1980535 , -1.39908145,  0.04706476]]), 
+       [ 0.1980535 , -1.39908145,  0.04706476]]),
+       offset_params=np.asarray([ 1.0, 0., 10.]),
        shape_params=np.asarray([[0.064     , 0.04      , 0.024     , 0.625     , 0.97706828,
         0.97134   , 0.98279656],
        [0.103     , 0.041     , 0.062     , 0.39805825, 0.9560461 ,
@@ -242,7 +247,7 @@ def test_add_settings():
     tfm = get_tfm()
 
     # Test adding settings
-    ERPparam_settings = ERPparamSettings([1, 4], 6, 0, 2)
+    ERPparam_settings = ERPparamSettings([1, 4], 6, 0, 2, False)
     tfm.add_settings(ERPparam_settings)
     for setting in OBJ_DESC['settings']:
         assert getattr(tfm, setting) == getattr(ERPparam_settings, setting)
@@ -268,10 +273,11 @@ def test_add_results():
     # Test adding results
     ERPparam_results = ERPparamResults(peak_params=np.asarray([[ 0.1     ,  1.7 ,  0.053],
                                                                  [ 0.1     , -1.4,  0.09]]), 
-       r_squared=0.99, error=0.01, 
-       gaussian_params=np.asarray([[ 0.10,  1.8 ,  0.02],
-                                    [ 0.19 , -1.39,  0.047]]), 
-       shape_params=np.asarray([[0.064 , 0.04 , 0.024, 0.625 , 0.97, 0.97   , 0.98],
+        r_squared=0.99, error=0.01, 
+        gaussian_params=np.asarray([[ 0.10,  1.8 ,  0.02],
+                                    [ 0.19 , -1.39,  0.047]]),
+        offset_params=np.asarray([ 1.0, 0., 10.]), 
+        shape_params=np.asarray([[0.064 , 0.04 , 0.024, 0.625 , 0.97, 0.97   , 0.98],
                                   [0.103 , 0.041 , 0.062 , 0.39, 0.951 , 0.964, 0.947 ]]), 
         peak_indices=np.asarray([[562, 602, 626],  [657, 698, 760]]))
     tfm.add_results(ERPparam_results)

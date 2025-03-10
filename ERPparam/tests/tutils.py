@@ -62,6 +62,8 @@ def get_tresults():
                         r_squared=0.97, error=0.01,
                         gaussian_params=np.array([[10.0, 1.25, 1.0], [20.0, 1.0, 1.5]]),
                         # [mean, height, standard deviation]
+                        offset_params=np.array([1., 0., 10.]),
+                        # [ampluitude, latency, slope]
                         peak_indices=np.array([[1,2,3],[4,5,6]])
                         )
 

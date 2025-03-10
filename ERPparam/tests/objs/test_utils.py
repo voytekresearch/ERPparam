@@ -22,6 +22,7 @@ def test_compare_info(tfm, tfg):
     for f_obj in [tfm, tfg]:
 
         f_obj2 = f_obj.copy()
+        print(f_obj.fit_offset, f_obj2.fit_offset)
 
         assert compare_info([f_obj, f_obj2], 'settings')
         f_obj2.peak_width_limits = [2, 4]

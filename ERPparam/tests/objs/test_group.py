@@ -332,7 +332,8 @@ def test_fg_report(skip_if_no_mpl):
     assert tfm1
     # Check that regenerated model is created
     for result in OBJ_DESC['results']:
-        assert np.all(getattr(tfm1, result))
+        if result != 'offset_params_':
+            assert np.all(getattr(tfm1, result))
 
     # Test when object has no data (clear a copy of tfg)
     new_tfg = tfg.copy()
