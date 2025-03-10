@@ -249,6 +249,7 @@ class ERPparam():
         if clear_results:
 
             self.gaussian_params_ = np.ones([0,3])*np.nan
+            self.offset_params_ = np.ones([0,3])*np.nan
             self.peak_params_ = np.ones([0,3])*np.nan
             self.shape_params_ = np.ones([0,7])*np.nan
             self.r_squared_ = np.nan
@@ -328,6 +329,7 @@ class ERPparam():
         """
 
         self.gaussian_params_ = ERPparam_result.gaussian_params
+        self.offset_params_ = ERPparam_result.offset_params
         self.peak_params_ = ERPparam_result.peak_params
         self.shape_params_ = ERPparam_result.shape_params
         self.peak_indices_ = ERPparam_result.peak_indices
@@ -646,7 +648,10 @@ class ERPparam():
                                             'BW': 'Bandwidth of the peak, 2-sided (ie, both halves from the peak center), calculated from the raw signal'},
                             'gaussian_params':{'MN':'mean of the gaussian',
                                                'HT':'height of the gaussian',
-                                               'SD':'gaussian width'}
+                                               'SD':'gaussian width'},
+                            'offset_params':{'amplitude': 'amplitude of the sigmoid',
+                                             'latency': 'latency of the sigmoid',
+                                             'slope': 'slope of the sigmoid'}
                             }
 
             return ERPparamResults(**{key.strip('_') : getattr(self, key) \
@@ -1406,3 +1411,9 @@ class ERPparam():
         """Regenerate model fit from parameters."""
         self._peak_fit = sim_erp(
             self.time,  np.ndarray.flatten(self.gaussian_params_))
+        if self.fit_offset:
+            self._sigmoid_fit = sigmoid_function(self.time, self.offset_params_)
+            self._full_fit = self._sigmoid_fit + self._peak_fit
+        else:
+            self._sigmoid_fit = None
+            self._full_fit = self._peak_fit
