@@ -425,7 +425,6 @@ class ERPparam():
 
             # If we're fitting a sigmoid to the data, fit this first 
             if self.offset_setting: # if true, fit the sigmoid
-                print('fitting sigmoid')
                 self.offset_params_ = self._fit_offset(self.time,self.signal)
                 self._sigmoid_fit = sigmoid_function(self.time, *self.offset_params_)
                 ## subtract sigmoid from signal before peak fitting
@@ -789,7 +788,6 @@ class ERPparam():
         p0_sigmoid = self._generate_guess_sigmoid(time, signal)
         # bounds in order of amplitude, latency, slope 
         bounds_sigmoid = ([np.min(signal), time[0], -np.inf],[np.max(signal), time[-1], np.inf])
-        print(bounds_sigmoid)
 
         params_g , cov = curve_fit(sigmoid_function, time, signal, maxfev = self._maxfev, p0 = p0_sigmoid, bounds=bounds_sigmoid)
         return params_g
