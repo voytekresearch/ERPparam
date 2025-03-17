@@ -950,18 +950,29 @@ class ERPparam():
         return peak_params
 
 
+    def _get_peak_range(self, peak_params, gaussian_params):
+        model_compoment = sim_erp(self.time, gaussian_params, 
+                            peak_mode=self.peak_mode)
+        model_peak_index = np.argmax(np.abs(model_compoment))
+        peak_range_indices = int(np.floor(peak_params[2] * self.fs))
+        index_low = model_peak_index - peak_range_indices
+        index_high = model_peak_index + peak_range_indices
+
+        if index_low < 0:
+            index_low = 0
+        if index_high > len(self.time):
+            index_high = len(self.time)
+
+        return index_low, index_high
+
+
     def _get_peak_indices(self, peak_params, gaussian_params):
         """
         Find the indices of the peak and the half magnitude points.
         """
 
         # get index of peak (find extreme value within a range around the model peak)
-        model_compoment = sim_erp(self.time, gaussian_params, 
-                                  peak_mode=self.peak_mode)
-        model_peak_index = np.argmax(np.abs(model_compoment))
-        peak_range_indices = int(np.floor(peak_params[2] * self.fs))
-        index_low = model_peak_index - peak_range_indices
-        index_high = model_peak_index + peak_range_indices
+        index_low, index_high = self._get_peak_range(peak_params, gaussian_params)
         if peak_params[1]>0:
             peak_index = np.argmax(self.signal[index_low:index_high]) + index_low
         else:
