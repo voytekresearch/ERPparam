@@ -910,9 +910,9 @@ class ERPparam():
         #      (cf_high_peak1, height_high_peak1, bw_high_peak, 0, *repeated for n_peaks*))
         #     ^where each value sets the bound on the specified parameter
         if self.peak_mode == "skewed_gaussian":
-            lo_bound = [[peak[0] - 2 * self._cf_bound * peak[2], np.min((self.signal)), self._gauss_std_limits[0], 0]
+            lo_bound = [[peak[0] - 2 * self._cf_bound * peak[2], np.min((self.signal)), self._gauss_std_limits[0], -30]
                         for peak in guess]
-            hi_bound = [[peak[0] + 2 * self._cf_bound * peak[2], np.max((self.signal)), self._gauss_std_limits[1], 10]
+            hi_bound = [[peak[0] + 2 * self._cf_bound * peak[2], np.max((self.signal)), self._gauss_std_limits[1], 30]
                         for peak in guess]
         elif self.peak_mode == "gaussian":
             lo_bound = [[peak[0] - 2 * self._cf_bound * peak[2], np.min((self.signal)), self._gauss_std_limits[0]]
