@@ -64,9 +64,8 @@ def test_ERPparam_fit():
     tfm.fit(xs, ys, time_range=[0, time_range[1]])
 
     # Check model results - gaussian parameters
-    print(tfm.peak_params_)
     for ii, gauss in enumerate(group_three(erp_params)):
-        assert np.allclose(gauss[:3], tfm.peak_params_[ii, :3], 
+        assert np.allclose(gauss, tfm.peak_params_[ii, :3], 
                            [2.0, 0.5, 1.0])
         assert np.isnan(tfm.peak_params_[ii, 3])
 
@@ -85,21 +84,21 @@ def test_ERPparam_fit_noise():
     assert tfm.has_model
 
 def test_ERPparam_fit_skew():
-    """Test ERPparam fit with peak_mode='skewed_gaussian'."""
+    """Test ERPparam fit on skewed data with peak_mode='skewed_gaussian'."""
 
     time_range, erp_params_d, nlv = default_params()
-    erp_params_d = erp_params_d.reshape(-1, 3)
-    for skew in [-2, 0 , 2]:
-        erp_params = np.column_stack((erp_params_d, 
-                                      skew*np.ones(erp_params_d.shape[0]))).flatten()
+    for skew in [-2, 0, 2]:
+        erp_params = np.concatenate([erp_params_d[:3], [skew]])
         xs, ys = simulate_erp(time_range, erp_params, nlv, 
                             peak_mode='skewed_gaussian')
 
-        tfm = ERPparam(verbose=False, max_n_peaks=4, peak_mode='skewed_gaussian')
+        tfm = ERPparam(verbose=False, max_n_peaks=2, peak_mode='skewed_gaussian')
         tfm.fit(xs, ys, time_range=[0, time_range[1]])
 
-        # Check model results exists
-        assert tfm.has_model
+        # Check model results - gaussian parameters
+        for ii, gauss in enumerate(group_four(erp_params)):
+            assert np.allclose(gauss, tfm.peak_params_[ii], 
+                            [2.0, 1.0, 1.0, 2.0])
 
 def test_ERPparam_fit_measures():
     """Test goodness of fit & error metrics, post model fitting."""
