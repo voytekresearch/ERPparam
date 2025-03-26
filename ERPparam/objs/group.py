@@ -386,7 +386,7 @@ class ERPparamGroup(ERPparam):
             raise NoModelError("No model fit results are available, can not proceed.")
 
         # Allow for shortcut alias, without adding `_params`
-        if name in ['peak', 'gaussian', 'shape']:
+        if name in ['peak', 'gaussian', 'shape', 'offset']:
             name = name + '_params'
             
         # If col specified as string, get mapping back to integer
@@ -400,7 +400,6 @@ class ERPparamGroup(ERPparam):
         # As a special case, peak_params are pulled out in a way that appends
         #  an extra column, indicating which ERPparam run each peak comes from
         if name in ('peak_params', 'gaussian_params'):
-
             # Collect peak data, appending the index of the model it comes from
             gather_params = [getattr(data, name) for data in (self.group_results)]
             out = np.vstack([np.insert(p, 3, index, axis=1) if p.size != 0
@@ -413,8 +412,8 @@ class ERPparamGroup(ERPparam):
             #  This last column is the 'index' column (ERPparam object source)
             if col is not None:
                 col = [col, -1]
-        elif name in ('shape_params'):
 
+        elif name=='shape_params':
             # Collect peak data, appending the index of the model it comes from
             out = np.vstack([np.insert(getattr(data, name), 7, index, axis=1)
                              for index, data in enumerate(self.group_results)])
@@ -423,6 +422,15 @@ class ERPparamGroup(ERPparam):
             #  This last column is the 'index' column (ERPparam object source)
             if col is not None:
                 col = [col, -1]
+
+        elif name=='offset_params':
+            if self.fit_offset:
+                out = np.vstack([np.insert(getattr(data, name), 3, index, axis=0)
+                                for index, data in enumerate(self.group_results)])
+                if col is not None:
+                    col = [col, -1]
+            else:
+                out = np.array([np.nan for data in self.group_results])
         else:
             out = np.array([getattr(data, name) for data in self.group_results])
 
