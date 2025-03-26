@@ -68,7 +68,8 @@ def sigmoid_function(time, amplitude=1, latency=0, slope=1):
     return sigmoid
 
 
-def sigmoid_multigauss(time, amplitude=1, latency=0, slope=1, *params):
+def sigmoid_multigauss(time, amplitude=1, latency=0, slope=1, *params,
+                       peak_mode='gaussian'):
     """
     Sigmoid function
 
@@ -84,6 +85,8 @@ def sigmoid_multigauss(time, amplitude=1, latency=0, slope=1, *params):
         Slope of the sigmoid function. The default is 1.
     *params : float
         Parameters that define gaussian function.
+    peak_mode : {'gaussian'}, optional
+        Which kind of component to generate
 
     Returns
     -------
@@ -92,21 +95,13 @@ def sigmoid_multigauss(time, amplitude=1, latency=0, slope=1, *params):
     
     """
 
-    # # sigmoid function
-    # sigmoid = amplitude / (1 + np.exp(-slope * (time - latency)))
-
-    # # gaussian function
-    # for ii in range(0, len(params), 3):
-    #     ctr, hgt, wid = params[ii:ii+3]
-    #     sigmoid = sigmoid + hgt * np.exp(-(time-ctr)**2 / (2*wid**2))
-
-    # return sigmoid
-
     sigmoid = sigmoid_function(time, amplitude, latency, slope)
-    gauss = gaussian_function(time, *params)
-    sigmulti = sigmoid+gauss
+    peak_function = get_pe_func(peak_mode)
+    gauss = peak_function(time, *params)
+    sigmulti = sigmoid + gauss
 
     return sigmulti
+
 
 def linear_function(xs, *params):
     """Linear fitting function.
