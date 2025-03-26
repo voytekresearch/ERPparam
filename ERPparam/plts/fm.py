@@ -65,7 +65,7 @@ def plot_fm(fm, plot_peaks=None, add_legend=True, ax=None, data_kwargs=None,
 
         # Plot the periodic components of the model fit
         if plot_peaks:
-            _add_peaks(fm, 'dot', ax, peak_kwargs)
+            _add_peaks(fm, plot_peaks, ax, peak_kwargs)
 
     # Apply default style to plot
     style_ERP_plot(ax)
@@ -126,7 +126,7 @@ def _add_peaks_shade(fm, ax, **plot_kwargs):
         Keyword arguments to pass into the ``fill_between``.
     """
 
-    defaults = {'color' : PLT_COLORS['periodic'], 'alpha' : 0.25}
+    defaults = {'color' : PLT_COLORS['peak'], 'alpha' : 0.25}
     plot_kwargs = check_plot_kwargs(plot_kwargs, defaults)
 
     for peak in fm.gaussian_params_:
@@ -149,7 +149,7 @@ def _add_peaks_dot(fm,  ax, **plot_kwargs):
         Keyword arguments to pass into the plot call.
     """
 
-    defaults = {'color' : PLT_COLORS['periodic'], 'alpha' : 0.6, 'lw' : 2.5, 'ms' : 6}
+    defaults = {'color' : PLT_COLORS['peak'], 'alpha' : 0.6, 'lw' : 2.5, 'ms' : 6}
     plot_kwargs = check_plot_kwargs(plot_kwargs, defaults)
 
     for peak in fm.peak_params_:
@@ -177,7 +177,7 @@ def _add_peaks_outline(fm, ax, **plot_kwargs):
         Keyword arguments to pass into the plot call.
     """
 
-    defaults = {'color' : PLT_COLORS['periodic'], 'alpha' : 0.7, 'lw' : 1.5}
+    defaults = {'color' : PLT_COLORS['peak'], 'alpha' : 0.7, 'lw' : 1.5}
     plot_kwargs = check_plot_kwargs(plot_kwargs, defaults)
 
     for peak in fm.gaussian_params_:
@@ -206,7 +206,7 @@ def _add_peaks_line(fm, ax, **plot_kwargs):
         Keyword arguments to pass into the plot call.
     """
 
-    defaults = {'color' : PLT_COLORS['periodic'], 'alpha' : 0.7, 'lw' : 1.4, 'ms' : 10}
+    defaults = {'color' : PLT_COLORS['peak'], 'alpha' : 0.7, 'lw' : 1.4, 'ms' : 10}
     plot_kwargs = check_plot_kwargs(plot_kwargs, defaults)
 
     ylims = ax.get_ylim()
@@ -236,7 +236,7 @@ def _add_peaks_width(fm, ax, **plot_kwargs):
     the peak, though what is literally plotted is the full-width half-max.
     """
 
-    defaults = {'color' : PLT_COLORS['periodic'], 'alpha' : 0.6, 'lw' : 2.5, 'ms' : 6}
+    defaults = {'color' : PLT_COLORS['peak'], 'alpha' : 0.6, 'lw' : 2.5, 'ms' : 6}
     plot_kwargs = check_plot_kwargs(plot_kwargs, defaults)
 
     for peak in fm.gaussian_params_:
