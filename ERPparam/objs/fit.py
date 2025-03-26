@@ -450,22 +450,8 @@ class ERPparam():
                 # get the sigmoid + peaks signal, and apply curve_fit again
                 initial_sigmultigauss_params = np.ndarray.flatten(np.vstack([self.offset_params_ , self.gaussian_params_])) 
                 final_sigmultigauss_params = self._fit_sigmultigauss(self.time,self.signal, initial_sigmultigauss_params)
-
-                # use our final estimated parameters to generate full model fit, and the separate sigmoid and gaussian peaks
-                self._full_fit = sigmoid_multigauss(self.time, *final_sigmultigauss_params)
                 self.offset_params_ = final_sigmultigauss_params[:3] # get sigmoid params alone
-                self._sigmoid_fit = sigmoid_function(self.time, *self.offset_params_) # re-generate sigmoid
                 self.gaussian_params_ = final_sigmultigauss_params[3:].reshape(-1,3) # get gauss params alone, and reshape to (n peaks,3)
-                self._peak_fit = sim_erp(self.time, np.ndarray.flatten(self.gaussian_params_), 
-                                        peak_mode='gaussian') # re-generate peaks fit
-            else:
-                # Calculate the peak fit
-                #   Note: if no peaks are found, this creates a flat (all zero) peak fit
-                self._peak_fit = sim_erp(self.time, np.ndarray.flatten(self.gaussian_params_), 
-                                            peak_mode='gaussian')
-                self._full_fit = self._peak_fit
-                self.offset_params_ = None
-                self._sigmoid_fit = None
 
             # Convert gaussian definitions to peak parameters
             self.peak_params_  = self._create_peak_params(self.gaussian_params_)
@@ -477,6 +463,21 @@ class ERPparam():
             self._drop_peaks_near_edge()
             self.peak_indices_ = self.peak_indices_.astype(int)
 
+            # Calculate the peak fit
+            #   Note: if no peaks are found, this creates a flat (all zero) peak fit
+            self._peak_fit = sim_erp(self.time, np.ndarray.flatten(self.gaussian_params_), 
+                                        peak_mode='gaussian')
+            if self.fit_offset:
+                # use our final estimated parameters to generate full model fit, and the separate sigmoid and gaussian peaks
+                self._full_fit = sigmoid_multigauss(self.time, *final_sigmultigauss_params)
+                self._sigmoid_fit = sigmoid_function(self.time, *self.offset_params_) # re-generate sigmoid
+            else:
+                # Calculate the peak fit
+                #   Note: if no peaks are found, this creates a flat (all zero) peak fit
+                self._full_fit = self._peak_fit
+                self.offset_params_ = None
+                self._sigmoid_fit = None
+            
             # Calculate R^2 and error of the model fit
             self._calc_r_squared()
             self._calc_error()

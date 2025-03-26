@@ -65,13 +65,9 @@ def model_to_dict(fit_results, peak_org=None):
         for label, param in zip(indices, band_peak):
             fr_dict[label.lower()] = param
 
-        # goodness-of-fit metrics
-        fr_dict['error'] = fit_results.error
-        fr_dict['r_squared'] = fit_results.r_squared
-
-        # goodness-of-fit metrics
-        fr_dict['error'] = fit_results.error
-        fr_dict['r_squared'] = fit_results.r_squared
+    # goodness-of-fit metrics
+    fr_dict['error'] = fit_results.error
+    fr_dict['r_squared'] = fit_results.r_squared
 
     return fr_dict
 
