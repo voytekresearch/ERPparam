@@ -201,6 +201,29 @@ def test_fg_fit_par():
     assert isinstance(out[0], ERPparamResults)
     assert np.all(out[1].gaussian_params)
 
+def test_fg_fit_skew():
+    """Test ERPparamGroup fit, with skewed gaussian peaks."""
+
+    n_signals = 2
+    time_range, erp_params_d, nlvs = default_group_params()
+
+    for skew in [-2, 0, 2]:
+        erp_params_i = next(erp_params_d)
+        chunks = [erp_params_i[i:i+3] for i in range(0, len(erp_params_i), 3)]
+        erp_params = np.concatenate([np.append(chunk, skew) for chunk in chunks])
+        xs, ys = simulate_erps(n_signals, time_range, erp_params, nlvs, 
+                            peak_mode='skewed_gaussian')
+
+        tfg = ERPparamGroup(verbose=False)
+        tfg.fit(xs, ys, n_jobs=2)
+        out = tfg.get_results()
+
+        assert out
+        assert len(out) == n_signals
+        assert isinstance(out[0], ERPparamResults)
+        assert np.all(out[1].gaussian_params)
+        assert np.all(out[1].shape_params)
+
 def test_fg_print(tfg):
     """Check print method (alias)."""
 
