@@ -24,6 +24,7 @@ def test_gen_times():
 
 def test_gen_erp():
 
+    # basic test
     time_range = (-0.5, 2)
     erp_latency = [0.1, 0.2]
     erp_amplitude = [2, -1.5]
@@ -37,6 +38,13 @@ def test_gen_erp():
     assert np.all(ys)
     assert len(xs) == len(ys)
 
+    # test with offset
+    offset_params = [1, 0.5, 0.1]
+    xs, ys = simulate_erp(time_range, erp_params, nlv, 
+                          offset_params=offset_params)
+    assert np.all(xs)
+    assert np.all(ys)
+    assert len(xs) == len(ys)
 
 def test_gen_erp_return_params():
 
@@ -55,6 +63,7 @@ def test_gen_erp_return_params():
 
 def test_gen_group_erps():
 
+    # basic test
     n_sigs = 3
 
     xs, ys = simulate_erps(n_sigs, *default_group_params())
@@ -64,6 +73,14 @@ def test_gen_group_erps():
     assert ys.ndim == 2
     assert ys.shape[0] == n_sigs
 
+    # test with offset
+    offset_params = [1, 0.5, 0.1]
+    xs, ys = simulate_erps(n_sigs, *default_group_params(), 
+                           offset_params=offset_params)
+    assert np.all(xs)
+    assert np.all(ys)
+    assert ys.ndim == 2
+    assert ys.shape[0] == n_sigs
 
 def test_gen_group_power_spectra_return_params():
 
@@ -109,12 +126,15 @@ def test_gen_noise():
 
 def test_gen_signal_values():
 
+    # basic test
     xs = gen_time_vector([0, 50], 1000)
     pe_params = [10, 2, 0.01]
     nlv = 0.1
-    fs =1000
-
-    ys, time = gen_signal(xs, [0, 50], pe_params,fs, nlv)
-
+    fs = 1000
+    ys, time = gen_signal(xs, [0, 50], pe_params, fs, nlv)
     assert np.all(ys)
 
+    # test with offset
+    offset_params = [1, 0.5, 0.1]
+    ys, time = gen_signal(xs, [0, 50], pe_params, fs, nlv, offset_params)
+    assert np.all(ys)
