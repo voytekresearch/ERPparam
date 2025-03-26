@@ -4,7 +4,7 @@ import numpy as np
 
 from ERPparam import Bands
 from ERPparam.core.info import (get_peak_indices, get_shape_indices, 
-                                get_gauss_indices)
+                                get_gauss_indices, get_offset_indices)
 from ERPparam.core.modutils import safe_import, check_dependency
 from ERPparam.analysis.periodic import get_band_peak
 
@@ -63,6 +63,13 @@ def model_to_dict(fit_results, peak_org=None):
         if band_peak[0] == np.nan:
             band_peak = [np.nan] * 13
         for label, param in zip(indices, band_peak):
+            fr_dict[label.lower()] = param
+
+    # offset parameters
+    offset_params = fit_results.offset_params
+    offset_indices = get_offset_indices()
+    if not offset_params is None:
+        for label, param in zip(offset_indices, offset_params):
             fr_dict[label.lower()] = param
 
     # goodness-of-fit metrics

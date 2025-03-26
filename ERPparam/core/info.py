@@ -96,6 +96,23 @@ def get_shape_indices():
 
     return indices
 
+def get_offset_indices():
+    """Get a mapping from column labels to indices for offset parameters.
+
+    Returns
+    -------
+    indices : dict
+        Mapping of the column labels and indices for the offset parameters.
+    """
+
+    indices = {
+        'amplitude' : 0,
+        'latency' : 1,
+        'slope' : 2,
+    }
+
+    return indices
+
 
 def get_indices(param_type='peak_params'):
     """Get a mapping from column labels to indices for all parameters.
