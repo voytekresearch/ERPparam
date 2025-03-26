@@ -77,7 +77,7 @@ def simulate_erp(time_range,  params, nlv=0.005, fs=1000,
                                 peak_mode=peak_mode)
 
     if return_params:
-        sim_params = collect_sim_params(params, nlv)
+        sim_params = collect_sim_params(params, nlv, peak_mode=peak_mode)
         return time, signal, sim_params
     else:
         return time, signal
@@ -130,7 +130,7 @@ def simulate_erps(n_signals, time_range, params, nlvs=0.005, fs=1000,
     for ind, pe, nlv in zip(range(n_signals), pe_params, nlvs):
         signals[ind, :], time = gen_signal(time, time_range, pe, fs, nlv,
                                             peak_mode=peak_mode)
-        sim_params[ind] = collect_sim_params(pe, nlv)
+        sim_params[ind] = collect_sim_params(pe, nlv, peak_mode=peak_mode)
 
     if return_params:
         return time, signals, sim_params
