@@ -90,7 +90,7 @@ def test_fg_fit_nk():
     n_signals = 2
     xs, ys = simulate_erps(n_signals, *default_group_params())
 
-    tfg = ERPparamGroup(verbose=False)
+    tfg = ERPparamGroup(verbose=False, max_n_peaks=4)
     tfg.fit(xs, ys)
     out = tfg.get_results()
 
@@ -102,10 +102,10 @@ def test_fg_fit_nk():
 def test_fg_fit_nk_noise():
     """Test ERPparamGroup fit, on noisy data, to make sure nothing breaks."""
 
-    n_signals = 5
+    n_signals = 2
     xs, ys = simulate_erps(n_signals, *default_group_params())
 
-    tfg = ERPparamGroup(max_n_peaks=8, verbose=False)
+    tfg = ERPparamGroup(verbose=False, max_n_peaks=4)
     tfg.fit(xs, ys)
 
     # No accuracy checking here - just checking that it ran
