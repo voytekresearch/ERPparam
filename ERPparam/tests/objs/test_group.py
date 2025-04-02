@@ -111,6 +111,24 @@ def test_fg_fit_nk_noise():
     # No accuracy checking here - just checking that it ran
     assert tfg.has_model
 
+def test_fg_fit_offset():
+    """Test ERPparamGroup fit, with 0ffset. """
+
+    n_signals = 2
+    offset_params = np.array([1.0, 0.0, 10.0])
+    xs, ys = simulate_erps(n_signals, *default_group_params(),
+                            offset_params=offset_params)
+
+    tfg = ERPparamGroup(verbose=False,  max_n_peaks=4, fit_offset=True)
+    tfg._maxfev = 1000 
+    tfg.fit(xs, ys)
+    out = tfg.get_results()
+
+    assert out
+    assert len(out) == n_signals
+    assert isinstance(out[0], ERPparamResults)
+    assert np.all(out[1].peak_params)
+
 def test_fg_fit_progress(tfg):
     """Test running ERPparamGroup fitting, with a progress bar."""
 
