@@ -14,7 +14,7 @@ from pytest import raises
 
 from ERPparam.core.items import OBJ_DESC
 from ERPparam.core.modutils import safe_import
-from ERPparam.core.errors import DataError, NoDataError, InconsistentDataError
+from ERPparam.core.errors import NoDataError
 from ERPparam.data import ERPparamResults
 from ERPparam.sim import simulate_erps
 from ERPparam.sim.params import param_sampler
@@ -85,7 +85,7 @@ def test_null_inds(tfg):
     assert tfg.null_inds_ == []
 
 def test_fg_fit_nk():
-    """Test ERPparamGroup fit, no noise. Intialize empty Group obj, then feed data into fit func. """
+    """Test ERPparamGroup fit, no noise. """
 
     n_signals = 2
     xs, ys = simulate_erps(n_signals, *default_group_params())
@@ -220,20 +220,7 @@ def test_get_results(tfg):
     assert tfg.get_results()
 
 def test_get_params(tfg):
-    # """Check get_params method."""
-
-    # for dname in ['aperiodic_params', 'peak_params', 'error', 'r_squared', 'gaussian_params']:
-    #     assert np.any(tfg.get_params(dname))
-
-    #     if dname == 'aperiodic_params':
-    #         for dtype in ['offset', 'exponent']:
-    #             assert np.any(tfg.get_params(dname, dtype))
-
-    #     if dname == 'peak_params':
-    #         for dtype in ['CF', 'PW', 'BW']:
-    #             assert np.any(tfg.get_params(dname, dtype))
-
-    """Test the get_params method."""
+    """Check get_params method."""
 
     for dname in ['peak_params', 'peak','shape','shape_params',
                   'error', 'r_squared', 'gaussian_params', 'gaussian']:
@@ -270,10 +257,8 @@ def test_fg_load():
     tfg.load(file_name_res, TEST_DATA_PATH)
     assert len(tfg.group_results) > 0
     # Test that settings and data are None
-    #   Except for aperiodic mode, which can be inferred from the data
     for setting in OBJ_DESC['settings']:
-        if setting != 'aperiodic_mode':
-            assert getattr(tfg, setting) is None
+        assert getattr(tfg, setting) is None
     assert tfg.signals is None
 
     # Test loading just settings

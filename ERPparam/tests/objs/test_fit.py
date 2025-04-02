@@ -55,7 +55,7 @@ def test_ERPparam_n_peaks(tfm):
     assert tfm.n_peaks_
 
 def test_ERPparam_fit():
-    """Test ERPparam fit, no knee."""
+    """Test ERPparam fit."""
 
     time_range, erp_params, nlv = default_params()
     xs, ys = simulate_erp(time_range, erp_params, nlv)
