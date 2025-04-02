@@ -81,6 +81,23 @@ def test_ERPparam_fit_noise():
     # No accuracy checking here - just checking that it ran
     assert tfm.has_model
 
+def test_ERPparam_fit_offset():
+    """Test ERPparam fit with offset."""
+
+    time_range, erp_params, _ = default_params()
+    offset_params = np.array([1.0, 0.0, 10.0])
+
+    xs, ys = simulate_erp(time_range, erp_params, offset_params=offset_params)
+
+    tfm = ERPparam(verbose=False, max_n_peaks=4, fit_offset=True)
+    tfm.fit(xs, ys)
+
+    # Check model results - gaussian parameters
+    for ii, gauss in enumerate(group_three(erp_params)):
+        assert np.allclose(gauss, tfm.gaussian_params_[ii], [1.0, 1.0, 1.0])
+
+    # Check model results - offset parameters
+    assert np.allclose(offset_params, tfm.offset_params_, [1.0, 1.0, 1.0])
 
 def test_ERPparam_fit_measures():
     """Test goodness of fit & error metrics, post model fitting."""
