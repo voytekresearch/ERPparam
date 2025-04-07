@@ -782,13 +782,18 @@ class ERPparam():
     def _generate_guess_sigmoid(self, time, signal):
 
         # set bounds (amplitude, latency, slope)
-        bounds = ([np.min(signal[time > 0]), time[0], -np.inf],
-                  [np.max(signal[time > 0]), time[-1], np.inf])
+        # bounds = ([np.min(signal[time > 0]), time[0], -np.inf],
+        #           [np.max(signal[time > 0]), time[-1], np.inf])
+        signal_duration = time[-1] - time[0]
+        slope_min = 8 / signal_duration # transition from 1-99% amplitude over duration of signal
+        slope_max = np.log(np.finfo(float).max) / signal_duration # this avoid numerical overflow in exponent
+        bounds = ([np.min(signal[time > 0]), time[0], slope_min],
+                  [np.max(signal[time > 0]), time[-1], slope_max])
         
         # determine guesses
         amplitude = np.mean(signal[time > 0]) # mean of the signal after time 0
         latency = 0 # stimulus onset time
-        slope = 8 / (np.max(time) - np.min(time)) # transition from 1-99% amplitude over duration of signal
+        slope = slope_min
         guess = np.asarray([amplitude, latency, slope])
 
         return guess, bounds
