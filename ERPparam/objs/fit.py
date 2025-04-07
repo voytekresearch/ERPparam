@@ -780,27 +780,32 @@ class ERPparam():
 
 
     def _generate_guess_sigmoid(self, time, signal):
-        
-        # guesses that we need are the  amplitude, latency, slope
-        amplitude_guess = np.mean(signal)
-        latency = 0 #time[0]
-        slope = 8
 
-        return np.asarray([amplitude_guess, latency, slope])
+        # set bounds (amplitude, latency, slope)
+        bounds = ([np.min(signal[time > 0]), time[0], -np.inf],
+                  [np.max(signal[time > 0]), time[-1], np.inf])
+        
+        # determine guesses
+        amplitude = np.mean(signal[time > 0]) # mean of the signal after time 0
+        latency = 0 # stimulus onset time
+        slope = 8 / (np.max(time) - np.min(time)) # transition from 1-99% amplitude over duration of signal
+        guess = np.asarray([amplitude, latency, slope])
+
+        return guess, bounds
 
 
     def _fit_offset(self, time, signal):
 
-        p0_sigmoid = self._generate_guess_sigmoid(time, signal)
-        # bounds in order of amplitude, latency, slope 
-        bounds_sigmoid = ([np.min(signal), time[0], -np.inf],[np.max(signal), time[-1], np.inf])
+        guess, bounds = self._generate_guess_sigmoid(time, signal)
+        params, _ = curve_fit(sigmoid_function, time, signal, p0=guess,
+                              maxfev=self._maxfev, bounds=bounds)
 
-        params_g , cov = curve_fit(sigmoid_function, time, signal, maxfev = self._maxfev, p0 = p0_sigmoid, bounds=bounds_sigmoid)
-        return params_g
+        return params
     
     def _fit_sigmultigauss(self, time, signal, params):
         
-        params_multigauss, cov = curve_fit(sigmoid_multigauss, time, signal, maxfev = self._maxfev, p0 = params)
+        params_multigauss, _ = curve_fit(sigmoid_multigauss, time, signal, 
+                                         maxfev=self._maxfev, p0=params)
 
         return params_multigauss
 
@@ -960,7 +965,8 @@ class ERPparam():
         # Fit the peaks
         try:
             gaussian_params, _ = curve_fit(gaussian_function, self.time, signal,
-                                        p0=guess, maxfev=self._maxfev, bounds=gaus_param_bounds)
+                                        p0=guess, maxfev=self._maxfev, 
+                                        bounds=gaus_param_bounds)
         except RuntimeError as excp:
             error_msg = ("Model fitting failed due to not finding "
                          "parameters in the peak component fit.")
