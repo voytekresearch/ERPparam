@@ -4,7 +4,7 @@ import numpy as np
 
 from ERPparam.core.utils import nearest_ind
 from ERPparam.core.errors import NoModelError
-from ERPparam.core.funcs import gaussian_function
+from ERPparam.core.funcs import get_pe_func
 from ERPparam.core.modutils import safe_import, check_dependency
 
 #from ERPparam.sim.gen import gen_aperiodic
@@ -42,6 +42,9 @@ def plot_annotated_peak_search(fm):
     # Sort parameters by peak height
     gaussian_params = fm.gaussian_params_[fm.gaussian_params_[:, 1].argsort()][::-1]
 
+    # get peak function
+    peak_func = get_pe_func(fm.peak_mode)
+
     # Loop through the iterative search for each peak
     for ind in range(fm.n_peaks_ + 1):
 
@@ -68,8 +71,10 @@ def plot_annotated_peak_search(fm):
         ax.set_title('Iteration #' + str(ind+1), fontsize=16)
 
         if ind < fm.n_peaks_:
-
-            gauss = gaussian_function(fm.time, *gaussian_params[ind, :])
+            if fm.peak_mode=='gaussian':
+                gauss = peak_func(fm.time, *gaussian_params[ind, :3])
+            else:
+                gauss = peak_func(fm.time, *gaussian_params[ind, :])
             plot_signals(fm.time, gauss, ax=ax, label='Gaussian Fit',
                          color=PLT_COLORS['periodic'], linestyle=':', linewidth=3.0)
 
@@ -137,7 +142,7 @@ def plot_annotated_model(fm, annotate_peaks=True, ax=None):
         # Extract largest peak, to annotate, grabbing gaussian params
         gauss = get_band_peak_fm(fm, fm.time_range, attribute='gaussian_params')
 
-        peak_ctr, peak_hgt, peak_wid = gauss
+        peak_ctr, peak_hgt, peak_wid, _ = gauss
         bw_time = [peak_ctr - 0.5 * compute_fwhm(peak_wid),
                     peak_ctr + 0.5 * compute_fwhm(peak_wid)]
 

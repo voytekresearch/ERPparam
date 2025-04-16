@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from ERPparam.core.utils import group_three, check_flat
+from ERPparam.core.utils import group_three, group_four, check_flat
 from ERPparam.core.info import get_indices
 from ERPparam.core.funcs import infer_ap_func
 from ERPparam.core.errors import InconsistentDataError
@@ -12,7 +12,7 @@ from ERPparam.data import SimParams
 ###################################################################################################
 ###################################################################################################
 
-def collect_sim_params(peak_params, nlv):
+def collect_sim_params(peak_params, nlv, peak_mode='gaussian'):
     """Collect simulation parameters into a SimParams object.
 
     Parameters
@@ -21,19 +21,24 @@ def collect_sim_params(peak_params, nlv):
         Parameters of the peak parameters of the ERP.
     nlv : float
         Noise level of the signal.
+    peak_mode : {'gaussian'}, optional
+        Which kind of component to generate.
 
     Returns
     -------
     SimParams
         Object containing the simulation parameters.
     """
-    #print(check_flat(peak_params))
-    #print(group_three(check_flat(peak_params)))
-    grouped_params = group_three(check_flat(peak_params))
-    sorted_grouped_params = sorted(grouped_params, key=lambda x: x[0])
-    #print(sorted_grouped_params)
-    #print(sorted(group_three(check_flat(peak_params))))
 
+    if peak_mode == 'gaussian':
+        grouped_params = group_three(check_flat(peak_params))
+        sorted_grouped_params = sorted(grouped_params, key=lambda x: x[0])
+    elif peak_mode == 'skewed_gaussian':
+        grouped_params = group_four(check_flat(peak_params))
+        sorted_grouped_params = sorted(grouped_params, key=lambda x: x[0])
+    else:
+        raise ValueError("Peak mode not recognized.")
+        
     return SimParams(sorted_grouped_params,
                      nlv)
 

@@ -13,7 +13,7 @@ from ERPparam.data.data import *
 
 def test_ERPparam_settings():
 
-    settings = ERPparamSettings([1, 8], 8, 0.25, 2) #['peak_width_limits', 'max_n_peaks','min_peak_height', 'peak_threshold']
+    settings = ERPparamSettings([1, 8], 8, 0.25, 2, 'gaussian') #['peak_width_limits', 'max_n_peaks','min_peak_height', 'peak_threshold']
     assert settings
 
     for field in OBJ_DESC['settings']:

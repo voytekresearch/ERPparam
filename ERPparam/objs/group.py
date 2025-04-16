@@ -194,8 +194,8 @@ class ERPparamGroup(ERPparam):
         length : int, optional, default: 0
             Length of list of empty lists to initialize. If 0, creates a single empty list.
         """
-        format_dict = { 'gaussian_params_' : np.ones([0,3])*np.nan,
-                        'peak_params_' : np.ones([0,3])*np.nan,
+        format_dict = { 'gaussian_params_' : np.ones([0,4])*np.nan,
+                        'peak_params_' : np.ones([0,4])*np.nan,
                         'shape_params_' : np.ones([0,7])*np.nan,
                         'r_squared_': np.nan,
                         'error_' : np.nan,
@@ -358,11 +358,15 @@ class ERPparamGroup(ERPparam):
         ----------
         name : { 'peak_params', 'gaussian_params','shape_params', 'error', 'r_squared'}
             Name of the data field to extract across the group.
-        col : {'CT', 'PW', 'BW'}, {'MN','HT','SD'}, {fwhm, rise_time, decay_time, symmetry,
-            sharpness, sharpness_rise, sharpness_decay} or int, optional
-            Column name / index to extract from selected data, if requested.
-            Only used for name of {'peak_params', 'gaussian_params', 'shape_params}, 
-            respectively.
+        col :   {'CT', 'PW', 'BW' 'SK'}, 
+                {'MN','HT','SD', 'SK'}, 
+                {fwhm, rise_time, decay_time, symmetry, sharpness, sharpness_rise, 
+                    sharpness_decay}, or
+                int, optional
+                Column name / index to extract from selected data, if requested.
+                Only used for name of {'peak_params', 'gaussian_params', 'shape_params}, 
+                respectively.
+
         Returns
         -------
         out : ndarray
@@ -402,8 +406,8 @@ class ERPparamGroup(ERPparam):
 
             # Collect peak data, appending the index of the model it comes from
             gather_params = [getattr(data, name) for data in (self.group_results)]
-            out = np.vstack([np.insert(p, 3, index, axis=1) if p.size != 0
-                             else  np.insert([np.nan]*3, 3, index, axis=0) 
+            out = np.vstack([np.insert(p, 4, index, axis=1) if p.size != 0
+                             else  np.insert([np.nan]*4, 4, index, axis=0) 
                              for index, p in enumerate(gather_params)])
             # out = np.vstack([np.insert(getattr(data, name), 3, index, axis=1)
             #                  for index, data in enumerate(self.group_results)])

@@ -87,8 +87,10 @@ def compute_pointwise_error_fg(fg, plot_errors=True, return_errors=False, **plt_
     errors = np.zeros_like(fg.signals[:,:-1]) # crop out last timepoint because simulation crops the signal 
 
     for ind, (res, data) in enumerate(zip(fg, fg.signals)):
-
-        _, model = simulate_erp(fg.time_range, res.gaussian_params.flatten(), nlv=0, fs=fg.fs)
+        if fg.peak_mode == 'gaussian':
+            _, model = simulate_erp(fg.time_range, res.gaussian_params[:,:3].flatten(), nlv=0, fs=fg.fs)
+        else:
+            _, model = simulate_erp(fg.time_range, res.gaussian_params.flatten(), nlv=0, fs=fg.fs)
         errors[ind, :] = np.abs(model - data[:-1])
 
     mean = np.mean(errors, 0)
