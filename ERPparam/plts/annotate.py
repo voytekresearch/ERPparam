@@ -24,7 +24,7 @@ mpatches = safe_import('.patches', 'matplotlib')
 
 @savefig
 @check_dependency(plt, 'matplotlib')
-def plot_annotated_peak_search(fm):
+def plot_annotated_peak_search(fm, join_ax=False):
     """Plot a series of plots illustrating the peak search from a flattened ERP.
 
     Parameters
@@ -40,32 +40,35 @@ def plot_annotated_peak_search(fm):
     ylim = np.max(np.abs([min(flatspec) - 0.1 * np.abs(min(flatspec)), max(flatspec) + 0.1 * max(flatspec)]))
 
     # Sort parameters by peak height
-    gaussian_params = fm.gaussian_params_[fm.gaussian_params_[:, 1].argsort()][::-1]
+    gaussian_params = fm.gaussian_params_#[fm.gaussian_params_[:, 1].argsort()][::-1]
 
     # get peak function
     peak_func = get_pe_func(fm.peak_mode)
 
+    n_plots = fm.n_peaks_ + 1
     # Loop through the iterative search for each peak
-    for ind in range(fm.n_peaks_ + 1):
+    for ind in range(n_plots):
 
-        # This forces the creation of a new plotting axes per iteration
-        ax = check_ax(None, PLT_FIGSIZES['signal'])
+        if join_ax and ind==0:
+            print('all')
+            _ , ax_all = plt.subplots(ncols=n_plots, figsize= (int(PLT_FIGSIZES['signal'][0]*n_plots), PLT_FIGSIZES['signal'][1]) )
+            ax = ax_all[0]
+        elif join_ax and ind != 0:
+            ax = ax_all[ind]
+        elif not join_ax:
+            # This forces the creation of a new plotting axes per iteration
+            ax = check_ax(None, PLT_FIGSIZES['signal'])
 
         plot_signals(fm.time, flatspec, ax=ax, linewidth=2.5,
                      label='Signal', color=PLT_COLORS['data'])
-        plot_signals(fm.time, [fm.peak_threshold * np.std(fm.signal)]*len(fm.time), ax=ax,
+        plot_signals(fm.time, [fm.peak_threshold * np.std(fm.baseline_signal)]*len(fm.time), ax=ax,
                      label='Relative Threshold', color='orange', linewidth=2.5, linestyle='dashed')
-        plot_signals(fm.time, -1*(np.asarray([fm.peak_threshold * np.std(fm.signal)]*len(fm.time))), ax=ax,
+        plot_signals(fm.time, -1*(np.asarray([fm.peak_threshold * np.std(fm.baseline_signal)]*len(fm.time))), ax=ax,
                       color='orange', linewidth=2.5, linestyle='dashed')
         plot_signals(fm.time, [fm.min_peak_height]*len(fm.time), ax=ax,
                      label='Absolute Threshold', color='red', linewidth=2.5, linestyle='dashed')
         plot_signals(fm.time, -1*(np.asarray([fm.min_peak_height]*len(fm.time))), ax=ax,
                       color='red', linewidth=2.5, linestyle='dashed')
-
-        # Annotate the peak with the largest amplitude
-        extremum = np.argmax(np.abs(flatspec))
-        ax.plot(fm.time[extremum], flatspec[extremum], '.', label='Extremum', 
-                color=PLT_COLORS['periodic'], alpha=0.75, markersize=30)
 
         ax.set_ylim([-ylim, ylim])
         ax.set_title('Iteration #' + str(ind+1), fontsize=16)
@@ -77,6 +80,11 @@ def plot_annotated_peak_search(fm):
                 gauss = peak_func(fm.time, *gaussian_params[ind, :])
             plot_signals(fm.time, gauss, ax=ax, label='Gaussian Fit',
                          color=PLT_COLORS['periodic'], linestyle=':', linewidth=3.0)
+            
+            # Annotate the peak with the largest amplitude
+            extremum = np.argmax(np.abs(gauss))
+            ax.plot(fm.time[extremum], flatspec[extremum], '.', label='Extremum', 
+                    color=PLT_COLORS['periodic'], alpha=0.75, markersize=30)
 
             flatspec = flatspec - gauss
 
