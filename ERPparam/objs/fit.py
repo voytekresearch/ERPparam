@@ -97,6 +97,10 @@ class ERPparam():
         Evoked response, voltage values.
     time_range : list of [float, float]
         Time range of the signal to be fit, as [earliest_time, latest_time].
+    uncropped_signal : 1d array
+        Original full-length signal, unaltered by time_range
+    uncropped_time : 1d array
+        Original full-length time-vector, unaltered by time_range. Used for plotting
     baseline: list of [float, float]
         Time range of the signal from which to estimate the noise threshold at which iterative peak fitting stops (typically a pre-stimulus window).
         Input as [earliest_time, latest_time].
@@ -287,7 +291,7 @@ class ERPparam():
         self._reset_data_results(clear_time=self.has_data,
                                 clear_signal=self.has_data,
                                 clear_results=self.has_model and clear_results)
-        self.time, self.signal, self.time_range, self.baseline_signal, self.baseline, self.cropped_signal, self.cropped_time, self.fs, self.time_res = \
+        self.time, self.signal, self.time_range, self.baseline_signal, self.baseline, self.uncropped_signal, self.uncropped_time, self.fs, self.time_res = \
             self._prepare_data(time, signal, time_range, baseline, signal_dim=1) 
 
 
@@ -1334,12 +1338,13 @@ class ERPparam():
 
         # Check time range, trim the signal range if requested
         if time_range:
-            cropped_time, cropped_signal = trim_signal(time, signal, time_range)
+            uncropped_time, uncropped_signal = time, signal
+            time, signal = trim_signal(time, signal, time_range)
         else:
-            cropped_time, cropped_signal = time, signal
+            uncropped_time, uncropped_signal = time, signal
+            time_range = [time.min(), time.max()]
 
         # Calculate temporal resolution, and actual time range of the data
-        time_range = [cropped_time.min(), cropped_time.max()]
         time_res = np.abs(time[1] - time[0])
         fs = 1 / time_res
 
@@ -1358,7 +1363,7 @@ class ERPparam():
                              "This will cause the fitting to yield NaNs. ")
                 raise DataError(error_msg)
             
-        return time, signal, time_range, baseline_signal, baseline, cropped_signal, cropped_time, fs, time_res
+        return time, signal, time_range, baseline_signal, baseline, uncropped_signal, uncropped_time, fs, time_res
 
 
     def _add_from_dict(self, data):
