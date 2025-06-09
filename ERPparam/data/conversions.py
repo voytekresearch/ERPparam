@@ -62,7 +62,7 @@ def model_to_dict(fit_results, peak_org=None):
         for band, f_range in peak_org:
             band_peak = get_band_peak_arr(peaks, f_range)
             if band_peak[0] == np.nan:
-                band_peak = [np.nan] * 13
+                band_peak = [np.nan] * peaks.shape[1]
             for label, param in zip(indices, band_peak):
                 fr_dict[band + '_' + label.lower()] = param
 
