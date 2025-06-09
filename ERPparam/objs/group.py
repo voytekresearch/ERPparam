@@ -40,8 +40,8 @@ class ERPparamGroup(ERPparam):
         Absolute threshold for detecting peaks, in units of the input data.
     peak_threshold : float, optional, default: 2.0
         Relative threshold for detecting peaks, in units of standard deviation of the input data.
-    skewed_gaussian : bool, optional, default: True
-        Whether to use a skewed gaussian model for the ERP components.
+    peak_mode : str, optional, default: 'gaussian'
+        Whether to use a skewed gaussian model for the ERP components. "gaussian" is for the base gaussian function, "skewed_gaussian" for skewed gaussians
     verbose : bool, optional, default: True
         Verbosity mode. If True, prints out warnings and general status updates.
 
@@ -309,7 +309,7 @@ class ERPparamGroup(ERPparam):
             self._reset_group_results(len(self.signals))
             for ind, signal in \
                 _progress(enumerate(self.signals), progress, len(self)):
-                self._fit(time=self.time, signal=signal, time_range=self.time_range, baseline=self.baseline)
+                self._fit(time=None, signal=signal, time_range=self.time_range, baseline=self.baseline)
                 self.group_results[ind] = self._get_results()
 
         # Run in parallel
