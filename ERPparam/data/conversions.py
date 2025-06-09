@@ -6,7 +6,7 @@ from ERPparam import Bands
 from ERPparam.core.info import (get_peak_indices, get_shape_indices, 
                                 get_gauss_indices)
 from ERPparam.core.modutils import safe_import, check_dependency
-from ERPparam.analysis.periodic import get_band_peak
+from ERPparam.analysis.periodic import get_band_peak_arr
 
 pd = safe_import('pandas')
 
@@ -58,12 +58,13 @@ def model_to_dict(fit_results, peak_org=None):
             for pe_label, pe_param in zip(indices, peak):
                 fr_dict[pe_label.lower() + '_' + str(ind)] = pe_param
 
-    elif isinstance(peak_org, list):
-        band_peak = get_band_peak(peaks, peak_org)
-        if band_peak[0] == np.nan:
-            band_peak = [np.nan] * 13
-        for label, param in zip(indices, band_peak):
-            fr_dict[label.lower()] = param
+    elif isinstance(peak_org, Bands):
+        for band, f_range in peak_org:
+            band_peak = get_band_peak_arr(peaks, f_range)
+            if band_peak[0] == np.nan:
+                band_peak = [np.nan] * 13
+            for label, param in zip(indices, band_peak):
+                fr_dict[band + '_' + label.lower()] = param
 
     # goodness-of-fit metrics
     fr_dict['error'] = fit_results.error
