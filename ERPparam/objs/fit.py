@@ -86,6 +86,11 @@ class ERPparam():
     peak_threshold : float, optional, default: 2.0
         Relative threshold for detecting peaks.
         This threshold is defined in relative units of the signal (standard deviation).
+    gauss_overlap : float, optional, default: 0.75
+        Degree of overlap between gaussians for one to be dropped
+        This is defined in units of gaussian standard deviation
+    maxfev : int, optional, default: 500
+        The maximum number of calls to the curve fitting function
     verbose : bool, optional, default: True
         Verbosity mode. If True, prints out warnings and general status updates.
 
@@ -138,6 +143,7 @@ class ERPparam():
 
     def __init__(self, peak_width_limits=(0.01, 10), max_n_peaks=20, 
                  min_peak_height=0.0, peak_threshold=2.0, peak_mode='gaussian',
+                 gauss_overlap = 0.75, maxfev = 500,
                  verbose=True):
         
         self.peak_width_limits = peak_width_limits
@@ -146,17 +152,14 @@ class ERPparam():
         self.peak_threshold = peak_threshold
         self.peak_mode = peak_mode
         self.verbose = verbose
+        self._gauss_overlap_thresh = gauss_overlap
+        self._maxfev = maxfev
 
         # Threshold for how far a peak has to be from edge to keep.
         #   This is defined in units of gaussian standard deviation
         self._bw_std_edge = 1.0
-        # Degree of overlap between gaussians for one to be dropped
-        #   This is defined in units of gaussian standard deviation
-        self._gauss_overlap_thresh = 0.75
         # Parameter bounds for center when fitting gaussians, in terms of +/- std dev
         self._cf_bound = 1.5
-        # The maximum number of calls to the curve fitting function
-        self._maxfev = 500
         # The error metric to calculate, post model fitting. See `_calc_error` for options
         #   Note: this is for checking error post fitting, not an objective function for fitting
         self._error_metric = 'MAE'
