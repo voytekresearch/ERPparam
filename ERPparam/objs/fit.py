@@ -374,7 +374,7 @@ class ERPparam():
         if (not self.has_model): 
             if ((signal is not None) and (time is not None)):
                 self.fit(time, signal, time_range=time_range, baseline=baseline)
-            elif (signal is None) or (time is None):
+            elif (not self.has_data) and ((signal is None) or (time is None)):
                 raise NoDataError("No data available to fit, can not proceed.")
             
         elif self.has_model:
