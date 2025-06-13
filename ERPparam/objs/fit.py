@@ -59,7 +59,7 @@ from ERPparam.core.funcs import gaussian_function, skewed_gaussian_function, get
 from ERPparam.core.errors import (FitError, NoModelError, DataError,
                                NoDataError, InconsistentDataError)
 from ERPparam.core.strings import (gen_settings_str, gen_results_fm_str,
-                                gen_issue_str, gen_width_warning_str)
+                                gen_issue_str, gen_width_warning_str, gen_model_exists_str)
 
 from ERPparam.plts.model import plot_ERPparam
 from ERPparam.utils.data import trim_signal
@@ -267,7 +267,6 @@ class ERPparam():
             else:
                 self.gaussian_params_ = np.ones([0,3])*np.nan
 
-
     def add_data(self, time, signal, time_range=None, baseline=None, clear_results=True):
         """Add data (time, and signal values) to the current object.
 
@@ -372,8 +371,14 @@ class ERPparam():
         -----
         Data is optional, if data has already been added to the object.
         """
-        if (not self.has_model) and (signal != None) and (time != None):
-            self.fit(time, signal, time_range=time_range, baseline=baseline)
+        if (not self.has_model): 
+            if ((signal is not None) and (time is not None)):
+                self.fit(time, signal, time_range=time_range, baseline=baseline)
+            elif (signal is None) or (time is None):
+                raise NoDataError("No data available to fit, can not proceed.")
+            
+        elif self.has_model:
+            print(gen_model_exists_str(self))
 
         self.plot(**plot_kwargs)
         self.print_results(concise=False)
