@@ -372,8 +372,9 @@ class ERPparam():
         -----
         Data is optional, if data has already been added to the object.
         """
+        if (not self.has_model) and (signal != None) and (time != None):
+            self.fit(time, signal, time_range=time_range, baseline=baseline)
 
-        self.fit(time, signal, time_range=time_range, baseline=baseline)
         self.plot(**plot_kwargs)
         self.print_results(concise=False)
 
