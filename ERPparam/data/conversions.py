@@ -34,20 +34,16 @@ def model_to_dict(fit_results, peak_org=None):
     fr_dict = {}
 
     # concatenate peak and shape parameters
-    peak_params = fit_results.peak_params
     shape_params = fit_results.shape_params
     gaussian_params = fit_results.gaussian_params
-    peaks = np.hstack((peak_params, shape_params, gaussian_params))
+    peaks = np.hstack((shape_params, gaussian_params))
 
     # get indices for peak and shape parameters
-    peak_indices = get_peak_indices()
     shape_indices = get_shape_indices()
     gauss_indices = get_gauss_indices()
-    for key in shape_indices.keys():
-        shape_indices[key] += len(peak_indices)
     for key in gauss_indices.keys():
-        gauss_indices[key] += (len(peak_indices) + len(shape_indices))
-    indices = {**peak_indices, **shape_indices, **gauss_indices}
+        gauss_indices[key] += ( len(shape_indices))
+    indices = {**shape_indices, **gauss_indices}
 
     if isinstance(peak_org, int):
         if len(peaks) < peak_org:
