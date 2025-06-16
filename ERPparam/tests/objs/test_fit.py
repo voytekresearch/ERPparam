@@ -408,7 +408,6 @@ def test_ERPparam_fit_failure():
     ## Induce a runtime error, and check it runs through
     tfm = ERPparam(verbose=False)
     tfm._maxfev = 5
-
     tfm.fit(*simulate_erp(*default_params()))
 
     # Check after failing out of fit, all results are reset

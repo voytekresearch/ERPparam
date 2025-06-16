@@ -131,10 +131,9 @@ def sigmoid_function(time, amplitude=1, latency=0, slope=1):
     return sigmoid
 
 
-def sigmoid_multigauss(time, amplitude=1, latency=0, slope=1, *params,
-                       peak_mode='gaussian'):
+def sigmoid_multigauss(time, amplitude=1, latency=0, slope=1, *params):
     """
-    Sigmoid function
+    Sigmoid function with gaussian
 
     Parameters
     ----------
@@ -148,8 +147,37 @@ def sigmoid_multigauss(time, amplitude=1, latency=0, slope=1, *params,
         Slope of the sigmoid function. The default is 1.
     *params : float
         Parameters that define gaussian function.
-    peak_mode : {'gaussian'}, optional
-        Which kind of component to generate
+
+    Returns
+    -------
+    sigmoid : numpy array
+        Sigmoid function output  
+    
+    """
+    sigmoid = sigmoid_function(time, amplitude, latency, slope)
+    peak_function = get_pe_func('gaussian')
+    gauss = peak_function(time, *params)
+    sigmulti = sigmoid + gauss
+
+    return sigmulti
+
+
+def sigmoid_multigauss_skew(time, amplitude=1, latency=0, slope=1, *params):
+    """
+    Sigmoid function with skewed gaussian
+
+    Parameters
+    ----------
+    time : numpy array
+        Input data
+    amplitude : float, optional
+        Amplitude of the sigmoid function. The default is 1.
+    latency : float, optional
+        Latency of the sigmoid function. The default is 0.
+    slope : float, optional
+        Slope of the sigmoid function. The default is 1.
+    *params : float
+        Parameters that define gaussian function.
 
     Returns
     -------
@@ -159,7 +187,7 @@ def sigmoid_multigauss(time, amplitude=1, latency=0, slope=1, *params,
     """
 
     sigmoid = sigmoid_function(time, amplitude, latency, slope)
-    peak_function = get_pe_func(peak_mode)
+    peak_function = get_pe_func('skewed_gaussian')
     gauss = peak_function(time, *params)
     sigmulti = sigmoid + gauss
 

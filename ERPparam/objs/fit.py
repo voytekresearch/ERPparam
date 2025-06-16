@@ -55,7 +55,9 @@ from ERPparam.core.io import save_fm, load_json
 from ERPparam.core.reports import save_report_fm
 from ERPparam.core.modutils import copy_doc_func_to_method
 from ERPparam.core.utils import group_three, group_four, check_array_dim
-from ERPparam.core.funcs import gaussian_function, skewed_gaussian_function, get_pe_func, sigmoid_multigauss, sigmoid_function
+from ERPparam.core.funcs import (gaussian_function, skewed_gaussian_function, 
+                                 sigmoid_multigauss, sigmoid_multigauss_skew, 
+                                 sigmoid_function)
 from ERPparam.core.errors import (FitError, NoModelError, DataError,
                                NoDataError, InconsistentDataError)
 from ERPparam.core.strings import (gen_settings_str, gen_results_fm_str,
@@ -466,8 +468,7 @@ class ERPparam():
             #         the first gaussian params with the re-estimated gaussian params
             if self.fit_offset:
                 # get the sigmoid + peaks signal, and apply curve_fit again
-                initial_sigmultigauss_params = np.ndarray.flatten(np.vstack([self.offset_params_ , self.gaussian_params_])) 
-                final_sigmultigauss_params = self._fit_sigmultigauss(self.time,self.signal, initial_sigmultigauss_params)
+                final_sigmultigauss_params = self._fit_sigmultigauss()
                 self.offset_params_ = final_sigmultigauss_params[:3] # get sigmoid params alone
                 self.gaussian_params_ = final_sigmultigauss_params[3:].reshape(-1,3) # get gauss params alone, and reshape to (n peaks,3)
 
@@ -831,10 +832,17 @@ class ERPparam():
 
         return params
     
-    def _fit_sigmultigauss(self, time, signal, params):
-        
-        params_multigauss, _ = curve_fit(sigmoid_multigauss, time, signal, 
-                                         maxfev=self._maxfev, p0=params)
+    def _fit_sigmultigauss(self):
+        if self.peak_mode == 'gaussian':
+            params = np.hstack([self.offset_params_, np.ndarray.flatten(self.gaussian_params_[:, :3])])
+            params_multigauss, _ = curve_fit(sigmoid_multigauss, self.time, 
+                                             self.signal, maxfev=self._maxfev, 
+                                             p0=params)
+        elif self.peak_mode == 'skewed_gaussian':
+            params = np.hstack([self.offset_params_, np.ndarray.flatten(self.gaussian_params_)])
+            params_multigauss, _ = curve_fit(sigmoid_multigauss_skew, self.time,
+                                             self.signal, maxfev=self._maxfev, 
+                                             p0=params)
 
         return params_multigauss
 
@@ -984,6 +992,8 @@ class ERPparam():
         ----------
         guess : 2d array, shape=[n_peaks, 3/4]
             Guess parameters for gaussian fits to peaks, as gaussian parameters.
+        signal : 1d array
+            The signal data to fit.
 
         Returns
         -------
@@ -998,14 +1008,14 @@ class ERPparam():
         #      (cf_high_peak1, height_high_peak1, bw_high_peak, 0, *repeated for n_peaks*))
         #     ^where each value sets the bound on the specified parameter
         if self.peak_mode == "skewed_gaussian":
-            lo_bound = [[peak[0] - 2 * self._cf_bound * peak[2], np.min((self.signal)), self._gauss_std_limits[0], -30]
+            lo_bound = [[peak[0] - 2 * self._cf_bound * peak[2], np.min((signal)), self._gauss_std_limits[0], -30]
                         for peak in guess]
-            hi_bound = [[peak[0] + 2 * self._cf_bound * peak[2], np.max((self.signal)), self._gauss_std_limits[1], 30]
+            hi_bound = [[peak[0] + 2 * self._cf_bound * peak[2], np.max((signal)), self._gauss_std_limits[1], 30]
                         for peak in guess]
         elif self.peak_mode == "gaussian":
-            lo_bound = [[peak[0] - 2 * self._cf_bound * peak[2], np.min((self.signal)), self._gauss_std_limits[0]]
+            lo_bound = [[peak[0] - 2 * self._cf_bound * peak[2], np.min((signal)), self._gauss_std_limits[0]]
                         for peak in guess]
-            hi_bound = [[peak[0] + 2 * self._cf_bound * peak[2], np.max((self.signal)), self._gauss_std_limits[1]]
+            hi_bound = [[peak[0] + 2 * self._cf_bound * peak[2], np.max((signal)), self._gauss_std_limits[1]]
                         for peak in guess]
 
         # Check that CT bounds are within time range
@@ -1027,10 +1037,10 @@ class ERPparam():
         # Fit the peaks
         try:
             if self.peak_mode == "skewed_gaussian":
-                gaussian_params, _ = curve_fit(skewed_gaussian_function, self.time, self.signal,
+                gaussian_params, _ = curve_fit(skewed_gaussian_function, self.time, signal,
                                                p0=guess, maxfev=self._maxfev, bounds=gaus_param_bounds)
             elif self.peak_mode == "gaussian":
-                gaussian_params, _ = curve_fit(gaussian_function, self.time, self.signal,
+                gaussian_params, _ = curve_fit(gaussian_function, self.time, signal,
                                             p0=guess, maxfev=self._maxfev, bounds=gaus_param_bounds)
         except RuntimeError as excp:
             error_msg = ("Model fitting failed due to not finding "

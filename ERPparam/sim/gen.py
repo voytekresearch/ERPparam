@@ -226,7 +226,15 @@ def gen_signal(time, time_range, erp_params, fs, nlv, peak_mode='gaussian',
 
     """
 
-    pe_vals = sim_erp(time, erp_params, peak_mode=peak_mode)
+    # Generate ERP
+    erp = sim_erp(time, erp_params, peak_mode=peak_mode)
+
+    # Generate offset shift (sigmoid function)
+    if offset_params is not None:
+        offset = sigmoid_function(time, *offset_params)
+    else:
+        offset = np.zeros(len(erp))
+
     if nlv != 0:
         noise = sim_noise(time_range, erp_params, fs, nlv)
     else:
