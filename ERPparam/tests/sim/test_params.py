@@ -26,6 +26,17 @@ def test_collect_sim_params():
     sp = collect_sim_params(pe, nlv)
     assert array_equal(sp.peak_params, [[10, 1, 1], [20, 1, 1]])
 
+    # check for peak_mode argument
+    pe = [10, 1, 1]
+    sp = collect_sim_params(pe, nlv, peak_mode='gaussian')
+    assert array_equal(sp.peak_params, [pe])
+    assert sp.nlv == nlv
+
+    pe = [10, 1, 1, 0]
+    sp = collect_sim_params(pe, nlv, peak_mode='skewed_gaussian')
+    assert array_equal(sp.peak_params, [pe])
+    assert sp.nlv == nlv   
+
 
 def test_stepper():
 

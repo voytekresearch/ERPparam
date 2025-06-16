@@ -12,7 +12,7 @@ from pytest import raises
 from ERPparam import ERPparam
 from ERPparam.core.items import OBJ_DESC
 from ERPparam.core.errors import FitError
-from ERPparam.core.utils import group_three
+from ERPparam.core.utils import group_three, group_four
 from ERPparam.core.modutils import safe_import
 from ERPparam.core.errors import DataError, NoDataError, InconsistentDataError
 from ERPparam.sim import gen_time_vector, simulate_erp
@@ -61,11 +61,13 @@ def test_ERPparam_fit():
     xs, ys = simulate_erp(time_range, erp_params, nlv)
 
     tfm = ERPparam(verbose=False, max_n_peaks=4)
-    tfm.fit(xs, ys)
+    tfm.fit(xs, ys, time_range=[0, time_range[1]])
 
     # Check model results - gaussian parameters
     for ii, gauss in enumerate(group_three(erp_params)):
-        assert np.allclose(gauss, tfm.peak_params_[ii], [2.0, 0.5, 1.0])
+        assert np.allclose(gauss, tfm.peak_params_[ii, :3], 
+                           [2.0, 0.5, 1.0])
+        assert np.isnan(tfm.peak_params_[ii, 3])
 
 def test_ERPparam_fit_noise():
     """Test ERPparam fit on noisy data, to make sure nothing breaks."""
@@ -76,10 +78,27 @@ def test_ERPparam_fit_noise():
     xs, ys = simulate_erp(time_range, erp_params, nlv)
 
     tfm = ERPparam(max_n_peaks=2, verbose=False)
-    tfm.fit(xs, ys)
+    tfm.fit(xs, ys, time_range=[0, time_range[1]])
 
     # No accuracy checking here - just checking that it ran
     assert tfm.has_model
+
+def test_ERPparam_fit_skew():
+    """Test ERPparam fit on skewed data with peak_mode='skewed_gaussian'."""
+
+    time_range, erp_params_d, nlv = default_params()
+    for skew in [-2, 0, 2]:
+        erp_params = np.concatenate([erp_params_d[:3], [skew]])
+        xs, ys = simulate_erp(time_range, erp_params, nlv, 
+                            peak_mode='skewed_gaussian')
+
+        tfm = ERPparam(verbose=False, max_n_peaks=2, peak_mode='skewed_gaussian')
+        tfm.fit(xs, ys, time_range=[0, time_range[1]])
+
+        # Check model results - gaussian parameters
+        for ii, gauss in enumerate(group_four(erp_params)):
+            assert np.allclose(gauss, tfm.peak_params_[ii], 
+                            [2.0, 1.0, 1.0, 2.0])
 
 def test_ERPparam_fit_offset():
     """Test ERPparam fit with offset."""
@@ -168,7 +187,7 @@ def test_ERPparam_load():
     # Test loading just results
     tfm = ERPparam(verbose=False)
     file_name_res = 'test_ERPparam_res'
-    tfm.load(file_name_res, TEST_DATA_PATH)
+    tfm.load(file_name_res, TEST_DATA_PATH, regenerate=False)
     # Check that result attributes get filled
     for result in OBJ_DESC['results']:
         print(f"{result}: {getattr(tfm, result)}")
@@ -195,7 +214,7 @@ def test_ERPparam_load():
     # Test loading just data
     tfm = ERPparam(verbose=False)
     file_name_dat = 'test_ERPparam_dat'
-    tfm.load(file_name_dat, TEST_DATA_PATH)
+    tfm.load(file_name_dat, TEST_DATA_PATH, regenerate=False)
     assert tfm.signal is not None
     # Test that settings and results are None
     for setting in OBJ_DESC['settings']:
@@ -264,7 +283,7 @@ def test_add_settings():
     tfm = get_tfm()
 
     # Test adding settings
-    ERPparam_settings = ERPparamSettings([1, 4], 6, 0, 2, False)
+    ERPparam_settings = ERPparamSettings([1, 4], 6, 0, 2, "gaussian", False)
     tfm.add_settings(ERPparam_settings)
     for setting in OBJ_DESC['settings']:
         assert getattr(tfm, setting) == getattr(ERPparam_settings, setting)

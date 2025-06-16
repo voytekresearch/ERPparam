@@ -189,8 +189,6 @@ def apply_custom_style(ax, **kwargs):
         ax.legend(prop={'size': kwargs.pop('legend_size', LEGEND_SIZE)},
                   loc=kwargs.pop('legend_loc', LEGEND_LOC))
 
-    plt.tight_layout()
-
 
 def apply_style(ax, axis_styler=apply_axis_style, line_styler=apply_line_style,
                 collection_styler=apply_collection_style, custom_styler=apply_custom_style,

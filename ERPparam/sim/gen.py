@@ -41,8 +41,8 @@ def gen_time_vector(time_range, fs):
     return time
 
 
-def simulate_erp(time_range,  params, nlv=0.005, fs=1000, return_params=False, 
-                 offset_params=None):
+def simulate_erp(time_range,  params, nlv=0.005, fs=1000, 
+                 peak_mode='gaussian', offset_params=None, return_params=False):
     """Generate a simulated ERP.
 
     Parameters
@@ -56,11 +56,13 @@ def simulate_erp(time_range,  params, nlv=0.005, fs=1000, return_params=False,
         Noise level to add to generated ERP.
     fs : float
         Sampling frequency for desired time vector.
-    return_params : bool, optional, default: False
-        Whether to return the parameters for the simulated ERP.
+    peak_mode : {'gaussian'}, optional
+        Which kind of component to generate.
     offset_params : list of float or generator, optional, default: None
         Parameters for the offset component.
         Length of 3 (amplitude, latency, slope).
+    return_params : bool, optional, default: False
+        Whether to return the parameters for the simulated ERP.
 
     Returns
     -------
@@ -74,10 +76,11 @@ def simulate_erp(time_range,  params, nlv=0.005, fs=1000, return_params=False,
     """
 
     time = gen_time_vector(time_range, fs)[:-1]
-    signal, time = gen_signal(time, time_range, params, fs, nlv, offset_params)
+    signal, time = gen_signal(time, time_range, params, fs, nlv,
+                              peak_mode=peak_mode, offset_params=offset_params)
 
     if return_params:
-        sim_params = collect_sim_params(params, nlv)
+        sim_params = collect_sim_params(params, nlv, peak_mode=peak_mode)
         return time, signal, sim_params
     else:
         return time, signal
@@ -85,7 +88,7 @@ def simulate_erp(time_range,  params, nlv=0.005, fs=1000, return_params=False,
 
 
 def simulate_erps(n_signals, time_range, params, nlvs=0.005, fs=1000, 
-                  return_params=False,  offset_params=None):
+                  peak_mode='gaussian', offset_params=None, return_params=False):
     """Generate a group of simulated ERPs.
 
     Parameters
@@ -101,11 +104,13 @@ def simulate_erps(n_signals, time_range, params, nlvs=0.005, fs=1000,
         Noise level to add to generated ERPs.
     fs : float
         Sampling frequency for desired time vector.
-    return_params : bool, optional, default: False
-        Whether to return the parameters for the simulated ERPs.
+    peak_mode : {'gaussian'}, optional
+        Which kind of component to generate.
     offset_params : list of float or generator, optional, default: None
         Parameters for the offset component.
         Length of 3 (amplitude, latency, slope).
+    return_params : bool, optional, default: False
+        Whether to return the parameters for the simulated ERPs.
 
     Returns
     -------
@@ -130,8 +135,9 @@ def simulate_erps(n_signals, time_range, params, nlvs=0.005, fs=1000,
     # Simulate ERPs
     for ind, pe, nlv in zip(range(n_signals), pe_params, nlvs):
         signals[ind, :], time = gen_signal(time, time_range, pe, fs, nlv,
-                                             offset_params=offset_params)
-        sim_params[ind] = collect_sim_params(pe, nlv)
+                                           peak_mode=peak_mode,
+                                           offset_params=offset_params)
+        sim_params[ind] = collect_sim_params(pe, nlv, peak_mode=peak_mode)
 
     if return_params:
         return time, signals, sim_params
@@ -173,6 +179,8 @@ def sim_noise(time_range, params, fs, nlv):
         Times to create noise values.
     params : list of float
         Parameters of ERP components to scale noise to
+    fs : float
+        Sampling frequency for desired time vector.
     nlv : float
         Noise level to generate.
 
@@ -191,7 +199,8 @@ def sim_noise(time_range, params, fs, nlv):
     return noise_vals
 
 
-def gen_signal(time, time_range, erp_params, fs, nlv, offset_params=None):
+def gen_signal(time, time_range, erp_params, fs, nlv, peak_mode='gaussian', 
+               offset_params=None):
     """Generate simulated ERP.
 
     Parameters
@@ -200,8 +209,15 @@ def gen_signal(time, time_range, erp_params, fs, nlv, offset_params=None):
         Time vector to create values for.
     erp_params : list of float
         Parameters to create the ERP components.
+    fs : float
+        Sampling frequency for desired time vector.
     nlv : float
         Noise level to add to generated signal.
+    peak_mode : {'gaussian'}, optional
+        Which kind of component to generate.
+    offset_params : list of float or None, optional, default: None
+        Parameters for the offset component.
+        Length of 3 (amplitude, latency, slope).
 
     Returns
     -------
@@ -210,16 +226,7 @@ def gen_signal(time, time_range, erp_params, fs, nlv, offset_params=None):
 
     """
 
-    # Generate ERP
-    erp = sim_erp(time, erp_params)
-
-    # Generate offset shift (sigmoid function)
-    if offset_params is not None:
-        offset = sigmoid_function(time, *offset_params)
-    else:
-        offset = np.zeros(len(erp))
-
-    # Generate noise and correct for length
+    pe_vals = sim_erp(time, erp_params, peak_mode=peak_mode)
     if nlv != 0:
         noise = sim_noise(time_range, erp_params, fs, nlv)
     else:

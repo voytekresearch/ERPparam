@@ -17,6 +17,7 @@ class ERPparamSettings(namedtuple('ERPparamSettings', ['peak_width_limits',
                                                        'max_n_peaks',
                                                        'min_peak_height', 
                                                        'peak_threshold',
+                                                       'peak_mode',
                                                        'fit_offset'])):
     """User defined settings for the fitting algorithm.
 
@@ -30,6 +31,8 @@ class ERPparamSettings(namedtuple('ERPparamSettings', ['peak_width_limits',
         Absolute threshold for detecting peaks, in units of the input data.
     peak_threshold : float
         Relative threshold for detecting peaks, in units of standard deviation of the input data.
+    peak_mode : {'gaussian', 'skewed_gaussian'}
+        Mode for fitting the peaks.
     fit_offset : bool
         Whether to fit an offset to the model.
 

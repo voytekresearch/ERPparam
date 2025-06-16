@@ -97,6 +97,28 @@ def test_gen_group_power_spectra_return_params():
     assert array_equal(sp.peak_params, [pes])
     assert sp.nlv == nlv
 
+def test_gen_peaks_skewed():
+
+    xs = gen_time_vector([0, 1], 1000)
+
+    # positive skew
+    pe_params = [0.5, 1, 0.1, 4]
+    pe_vals = sim_erp(xs, pe_params, peak_mode='skewed_gaussian')
+    assert np.all(np.invert(np.isnan(pe_vals)))
+    assert np.isclose(xs[np.argmax(pe_vals)], 0.5, 1)
+    print(xs[np.argmax(pe_vals)])
+
+    # zero skew
+    pe_params = [0.5, 1, 0.1, 0]
+    pe_vals = sim_erp(xs, pe_params, peak_mode='skewed_gaussian')
+    assert np.all(np.invert(np.isnan(pe_vals)))
+    assert np.isclose(xs[np.argmax(pe_vals)], 0.5, 1)
+
+    # negative skew
+    pe_params = [0.5, 1, 0.1, -4]
+    pe_vals = sim_erp(xs, pe_params, peak_mode='skewed_gaussian')
+    assert np.all(np.invert(np.isnan(pe_vals)))
+    assert np.isclose(xs[np.argmax(pe_vals)], 0.5, 1)
 
 def test_gen_peaks():
 

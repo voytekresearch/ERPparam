@@ -114,6 +114,7 @@ def average_fg(fg, bands, avg_method='mean', regenerate=True):
 
     # Create the new ERPparam object, with settings, data info & results
     fm = ERPparam()
+    fm.time = fg.time
     fm.add_settings(fg.get_settings())
     fm.add_meta_data(fg.get_meta_data())
     fm.add_results(results)

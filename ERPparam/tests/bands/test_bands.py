@@ -37,12 +37,12 @@ def test_bands_errors():
 
 def test_bands_dunders(tbands):
 
-    assert tbands['theta']
-    assert tbands.alpha
+    assert tbands['p1']
+    assert tbands.p1
     assert repr(tbands)
-    assert len(tbands) == 3
+    assert len(tbands) == 2
 
 def test_bands_properties(tbands):
 
-    assert set(tbands.labels) == set(['theta', 'alpha', 'beta'])
-    assert tbands.n_bands == 3
+    assert set(tbands.labels) == set(['p1', 'p3'])
+    assert tbands.n_bands == 2

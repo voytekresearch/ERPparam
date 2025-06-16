@@ -141,6 +141,44 @@ def gen_settings_str(ERPparam_obj, description=False, concise=False):
 
     return output
 
+def gen_model_exists_str(ERPparam_obj, concise=False):
+    """Generate a string warning that a model already exists in the object, and the settings used.
+
+    Parameters
+    ----------
+    ERPparam_obj : ERPparam or ERPparamGroup
+        Object to access settings from.
+    concise : bool, optional, default: False
+        Whether to print the report in concise mode.
+
+    Notes
+    -----
+    If fit range is not available, will print out 'XX' for missing values.
+    """
+    assert ERPparam_obj.has_data
+    time_range = ERPparam_obj.time_range
+    baseline_ = ERPparam_obj.baseline 
+
+    str_lst = [
+
+        # Header
+        '=',
+        '',
+        'ERPparam Model already exists',
+        '',
+
+        # Frequency range information information
+        'The model was fit from {} to {}, using a baseline period of {} to {}. Time and signal inputs given here will be ignored. Re-fit the model or reset the data if neccessary.'.format(time_range[0], time_range[1], baseline_[0], baseline_[1]),
+
+        # Footer
+        '',
+        '='
+
+    ]
+
+    output = _format(str_lst, concise)
+
+    return output
 
 def gen_time_range_str(ERPparam_obj, concise=False):
     """Generate a string representation of the fit range that was used for the model.

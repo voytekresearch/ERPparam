@@ -12,7 +12,7 @@ from ERPparam.data.conversions import *
 ###################################################################################################
 ###################################################################################################
 
-def test_model_to_dict(tresults, twindow):
+def test_model_to_dict(tresults, tbands):
 
     out = model_to_dict(tresults, peak_org=1)
     assert isinstance(out, dict)
@@ -29,9 +29,9 @@ def test_model_to_dict(tresults, twindow):
     assert 'ct_2' in out
     assert np.isnan(out['ct_2'])
 
-    out = model_to_dict(tresults, peak_org=twindow)
-    assert 'ct' in out
-    assert out['ct'] == tresults.peak_params[0, 0]
+    out = model_to_dict(tresults, peak_org=tbands)
+    assert 'p1_ct' in out
+    assert out['p1_ct'] == tresults.peak_params[0, 0]
 
 
 def test_model_to_dataframe(tresults, skip_if_no_pandas):
