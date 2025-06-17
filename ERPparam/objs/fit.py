@@ -337,7 +337,7 @@ class ERPparam():
         """
 
         self.gaussian_params_ = ERPparam_result.gaussian_params
-        self.peak_params_ = ERPparam_result.peak_params
+        self.peak_params_ = ERPparam_result.shape_params[:,7:]
         self.shape_params_ = ERPparam_result.shape_params
         self.peak_indices_ = ERPparam_result.peak_indices
         self.r_squared_ = ERPparam_result.r_squared
@@ -454,7 +454,7 @@ class ERPparam():
             self.peak_indices_ = self.peak_indices_.astype(int)
 
             # Merge peak_params with shape params
-            self.shape_params_ = np.hstack([self.shape_params_, self.peak_params_]).flatten()
+            self.shape_params_ = np.hstack([self.shape_params_, self.peak_params_])
 
             # Calculate the peak fit
             #   Note: if no peaks are found, this creates a flat (all zero) peak fit

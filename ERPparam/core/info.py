@@ -49,6 +49,7 @@ def get_peak_indices():
         'CT' : 0,
         'PW' : 1,
         'BW' : 2,
+        'SK' : 3
     }
 
     return indices
