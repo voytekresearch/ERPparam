@@ -15,7 +15,7 @@ from collections import namedtuple
 
 class ERPparamSettings(namedtuple('ERPparamSettings', ['peak_width_limits', 'max_n_peaks',
                                                  'min_peak_height', 'peak_threshold',
-                                                 'peak_mode'])):
+                                                 'peak_mode', 'gauss_overlap_thresh', 'maxfev'])):
     """User defined settings for the fitting algorithm.
 
     Parameters
