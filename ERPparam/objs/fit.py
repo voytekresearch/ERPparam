@@ -337,7 +337,7 @@ class ERPparam():
         """
 
         self.gaussian_params_ = ERPparam_result.gaussian_params
-        # self.peak_params_ = ERPparam_result.peak_params
+        self.peak_params_ = ERPparam_result.peak_params
         self.shape_params_ = ERPparam_result.shape_params
         self.peak_indices_ = ERPparam_result.peak_indices
         self.r_squared_ = ERPparam_result.r_squared
@@ -453,6 +453,9 @@ class ERPparam():
             self._drop_peaks_near_edge()
             self.peak_indices_ = self.peak_indices_.astype(int)
 
+            # Merge peak_params with shape params
+            self.shape_params_ = np.hstack([self.shape_params_, self.peak_params_]).flatten()
+
             # Calculate the peak fit
             #   Note: if no peaks are found, this creates a flat (all zero) peak fit
             if self.peak_mode == 'skewed_gaussian':
@@ -556,7 +559,7 @@ class ERPparam():
         ----------
         name : {'gaussian_params', 'shape_params', 'error', 'r_squared'}
             Name of the data field to extract.
-        col : {'MN','HT','SD', 'SK'}, {FWHM, rise_time, decay_time, symmetry,
+        col : {'MN','HT','SD', 'SK'}, {CT, PW, BW, SK, FWHM, rise_time, decay_time, symmetry,
             sharpness, sharpness_rise, sharpness_decay} or int, optional
             Column name / index to extract from selected data, if requested.
             Only used for name of { 'gaussian_params', 'shape_params}, 
@@ -626,17 +629,17 @@ class ERPparam():
                                            'symmetry': 'rise time / FWHM', 
                                            'sharpness': 'peak sharpness (normalized to be dimensionless 0-1)', 
                                            'sharpness_rise': 'sharpness of the rise (normalized to be dimensionless 0-1)', 
-                                           'sharpness_decay': 'sharpness of the decay (normalized to be dimensionless 0-1)'},
+                                           'sharpness_decay': 'sharpness of the decay (normalized to be dimensionless 0-1)',
+                                           'CT': "Center time of the peak, calculated from the raw signal", 
+                                            'PW': 'Peak amplitude, calculate from the raw signal', 
+                                            'BW': 'Bandwidth of the peak, 2-sided (ie, both halves from the peak center), calculated from the raw signal',
+                                            'SK': 'Skewness of the peak'},
 
                             'gaussian_params':{'MN':'mean of the gaussian',
                                                'HT':'height of the gaussian',
                                                'SD':'gaussian width',
                                                'SK':'skewness of the gaussian'},
                             }
-                            # 'peak_params': {'CT': "Center time of the peak, calculated from the raw signal", 
-                            #     'PW': 'Peak amplitude, calculate from the raw signal', 
-                            #     'BW': 'Bandwidth of the peak, 2-sided (ie, both halves from the peak center), calculated from the raw signal',
-                            #     'SK': 'Skewness of the peak'},
 
             return ERPparamResults(**{key.strip('_') : getattr(self, key) \
                 for key in OBJ_DESC['results']}), params_dict

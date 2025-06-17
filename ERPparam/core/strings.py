@@ -168,7 +168,8 @@ def gen_model_exists_str(ERPparam_obj, concise=False):
         '',
 
         # Frequency range information information
-        'The model was fit from {} to {}, using a baseline period of {} to {}. Time and signal inputs given here will be ignored. Re-fit the model or reset the data if neccessary.'.format(time_range[0], time_range[1], baseline_[0], baseline_[1]),
+        'The model was fit from {:6.3f} to {:6.3f}, using a baseline period of {:6.2f} to {:6.2f}. \
+        \nTime and signal inputs given here will be ignored. Re-fit the model or reset the data if neccessary.'.format(time_range[0], time_range[1], baseline_[0], baseline_[1]),
 
         # Footer
         '',
