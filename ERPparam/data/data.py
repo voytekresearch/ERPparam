@@ -18,7 +18,9 @@ class ERPparamSettings(namedtuple('ERPparamSettings', ['peak_width_limits',
                                                        'min_peak_height', 
                                                        'peak_threshold',
                                                        'peak_mode',
-                                                       'fit_offset'])):
+                                                       'fit_offset', 
+                                                       'gauss_overlap_thresh', 
+                                                       'maxfev'])):
     """User defined settings for the fitting algorithm.
 
     Parameters

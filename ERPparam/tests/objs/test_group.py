@@ -147,7 +147,7 @@ def test_fg_fail():
 
     # Use a fg with the max iterations set so low that it will fail to converge
     ntfg = ERPparamGroup(max_n_peaks=3, peak_threshold=1.5)
-    ntfg._maxfev = 5
+    ntfg.maxfev = 5
 
     # Fit models, where some will fail, to see if it completes cleanly
     ntfg.fit(xs, ys)

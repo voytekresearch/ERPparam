@@ -282,7 +282,8 @@ def test_add_settings():
     tfm = get_tfm()
 
     # Test adding settings
-    ERPparam_settings = ERPparamSettings([1, 4], 6, 0, 2, "gaussian", False)
+    ERPparam_settings = ERPparamSettings([1, 4], 6, 0, 2, "gaussian", False, 
+                                         0.75, 500)
     tfm.add_settings(ERPparam_settings)
     for setting in OBJ_DESC['settings']:
         assert getattr(tfm, setting) == getattr(ERPparam_settings, setting)
@@ -410,7 +411,7 @@ def test_ERPparam_fit_failure():
 
     ## Induce a runtime error, and check it runs through
     tfm = ERPparam(verbose=False, max_n_peaks=4)
-    tfm._maxfev = 5
+    tfm.maxfev = 5
     tfm.fit(*simulate_erp(*default_params()))
 
     # Check after failing out of fit, all results are reset
@@ -435,7 +436,7 @@ def test_ERPparam_debug():
     """Test ERPparam in debug mode, including with fit failures."""
 
     tfm = ERPparam(verbose=False, max_n_peaks=4)
-    tfm._maxfev = 5
+    tfm.maxfev = 5
 
     tfm.set_debug_mode(True)
     assert tfm._debug is True
