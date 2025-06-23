@@ -824,7 +824,7 @@ class ERPparam():
 
         guess, bounds = self._generate_guess_sigmoid(time, signal)
         params, _ = curve_fit(sigmoid_function, time, signal, p0=guess,
-                              maxfev=self._maxfev, bounds=bounds)
+                              maxfev=self.maxfev, bounds=bounds)
 
         return params
     
@@ -832,12 +832,12 @@ class ERPparam():
         if self.peak_mode == 'gaussian':
             params = np.hstack([self.offset_params_, np.ndarray.flatten(self.gaussian_params_[:, :3])])
             params_multigauss, _ = curve_fit(sigmoid_multigauss, self.time, 
-                                             self.signal, maxfev=self._maxfev, 
+                                             self.signal, maxfev=self.maxfev, 
                                              p0=params)
         elif self.peak_mode == 'skewed_gaussian':
             params = np.hstack([self.offset_params_, np.ndarray.flatten(self.gaussian_params_)])
             params_multigauss, _ = curve_fit(sigmoid_multigauss_skew, self.time,
-                                             self.signal, maxfev=self._maxfev, 
+                                             self.signal, maxfev=self.maxfev, 
                                              p0=params)
 
         return params_multigauss
