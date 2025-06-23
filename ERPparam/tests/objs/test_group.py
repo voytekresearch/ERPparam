@@ -214,7 +214,7 @@ def test_fg_fit_skew():
         xs, ys = simulate_erps(n_signals, time_range, erp_params, nlvs, 
                             peak_mode='skewed_gaussian')
 
-        tfg = ERPparamGroup(verbose=False)
+        tfg = ERPparamGroup(verbose=False, max_n_peaks=4)
         tfg.fit(xs, ys, n_jobs=2)
         out = tfg.get_results()
 
