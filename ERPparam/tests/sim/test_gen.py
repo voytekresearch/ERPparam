@@ -153,10 +153,17 @@ def test_gen_signal_values():
     pe_params = [10, 2, 0.01]
     nlv = 0.1
     fs = 1000
-    ys, time = gen_signal(xs, [0, 50], pe_params, fs, nlv)
+    ys, _ = gen_signal(xs, [0, 50], pe_params, fs, nlv)
+    assert np.all(ys)
+
+    # test with skewed Gaussian peaks
+    pe_params_skew = [10, 2, 0.01, 4]
+    ys, _ = gen_signal(xs, [0, 50], pe_params_skew, fs, nlv, 
+                       peak_mode='skewed_gaussian')
     assert np.all(ys)
 
     # test with offset
     offset_params = [1, 0.5, 0.1]
-    ys, time = gen_signal(xs, [0, 50], pe_params, fs, nlv, offset_params)
+    ys, _ = gen_signal(xs, [0, 50], pe_params, fs, nlv, 
+                          offset_params=offset_params)
     assert np.all(ys)
