@@ -394,9 +394,13 @@ def test_ERPparam_resets():
         assert np.all(np.isnan(getattr(tfm, field)))
     assert tfm.time is None and tfm._peak_fit is None
 
-def test_ERPparam_report(skip_if_no_mpl):
+def test_ERPparam_report(tfm, skip_if_no_mpl):
     """Check that running the top level model method runs."""
 
+    # test with testing object
+    tfm.report()
+
+    # test with simulated data
     tfm = ERPparam(verbose=False)
     tfm.report(*simulate_erp(*default_params()))
 
