@@ -178,7 +178,7 @@ def test_fg_drop():
     n_signals = 3
     xs, ys = simulate_erps(n_signals, *default_group_params())
 
-    tfg = ERPparamGroup(verbose=False, peak_threshold=1.5, max_n_peaks=3)
+    tfg = ERPparamGroup(verbose=False, peak_threshold=1.5, max_n_peaks=4)
 
     # Test dropping one ind
     tfg.fit(xs, ys)
@@ -230,9 +230,9 @@ def test_fg_fit_skew():
         chunks = [erp_params_i[i:i+3] for i in range(0, len(erp_params_i), 3)]
         erp_params = np.concatenate([np.append(chunk, skew) for chunk in chunks])
         xs, ys = simulate_erps(n_signals, time_range, erp_params, nlvs, 
-                            peak_mode='skewed_gaussian')
+                               peak_mode='skewed_gaussian')
 
-        tfg = ERPparamGroup(verbose=False)
+        tfg = ERPparamGroup(verbose=False, max_n_peaks=4)
         tfg.fit(xs, ys, n_jobs=2)
         out = tfg.get_results()
 

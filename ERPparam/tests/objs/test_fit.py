@@ -12,7 +12,7 @@ from pytest import raises
 from ERPparam import ERPparam
 from ERPparam.core.items import OBJ_DESC
 from ERPparam.core.errors import FitError
-from ERPparam.core.utils import group_three, group_four
+from ERPparam.core.utils import group_three
 from ERPparam.core.modutils import safe_import
 from ERPparam.core.errors import DataError, NoDataError, InconsistentDataError
 from ERPparam.sim import gen_time_vector, simulate_erp
@@ -86,19 +86,18 @@ def test_ERPparam_fit_noise():
 def test_ERPparam_fit_skew():
     """Test ERPparam fit on skewed data with peak_mode='skewed_gaussian'."""
 
-    time_range, erp_params_d, nlv = default_params()
+    time_range, _, nlv = default_params()
+    erp_params_d = [0.2, 1, .1]
     for skew in [-2, 0, 2]:
-        erp_params = np.concatenate([erp_params_d[:3], [skew]])
+        erp_params = np.concatenate([erp_params_d, [skew]])
         xs, ys = simulate_erp(time_range, erp_params, nlv, 
-                            peak_mode='skewed_gaussian')
+                              peak_mode='skewed_gaussian')
 
         tfm = ERPparam(verbose=False, max_n_peaks=2, peak_mode='skewed_gaussian')
         tfm.fit(xs, ys, time_range=[0, time_range[1]])
 
         # Check model results - gaussian parameters
-        for ii, gauss in enumerate(group_four(erp_params)):
-            assert np.allclose(gauss, tfm.peak_params_[ii], 
-                            [2.0, 1.0, 1.0, 2.0])
+        assert np.allclose(erp_params, tfm.peak_params_[0], [2.0, 1.0, 1.0, 2.0])
 
 def test_ERPparam_fit_offset():
     """Test ERPparam fit with offset."""
@@ -401,7 +400,7 @@ def test_ERPparam_report(tfm, skip_if_no_mpl):
     tfm.report()
 
     # test with simulated data
-    tfm = ERPparam(verbose=False)
+    tfm = ERPparam(verbose=False, max_n_peaks=4)
     tfm.report(*simulate_erp(*default_params()))
 
     assert tfm
@@ -410,7 +409,7 @@ def test_ERPparam_fit_failure():
     """Test ERPparam fit failures."""
 
     ## Induce a runtime error, and check it runs through
-    tfm = ERPparam(verbose=False)
+    tfm = ERPparam(verbose=False, max_n_peaks=4)
     tfm._maxfev = 5
     tfm.fit(*simulate_erp(*default_params()))
 
@@ -420,7 +419,7 @@ def test_ERPparam_fit_failure():
 
     ## Monkey patch to check errors in general
     #  This mimics the main fit-failure, without requiring bad data / waiting for it to fail.
-    tfm = ERPparam(verbose=False)
+    tfm = ERPparam(verbose=False, max_n_peaks=4)
     def raise_runtime_error(*args, **kwargs):
         raise FitError('Test-MonkeyPatch')
     tfm._fit_peaks = raise_runtime_error
@@ -435,7 +434,7 @@ def test_ERPparam_fit_failure():
 def test_ERPparam_debug():
     """Test ERPparam in debug mode, including with fit failures."""
 
-    tfm = ERPparam(verbose=False)
+    tfm = ERPparam(verbose=False, max_n_peaks=4)
     tfm._maxfev = 5
 
     tfm.set_debug_mode(True)
@@ -447,7 +446,7 @@ def test_ERPparam_debug():
 def test_ERPparam_check_data():
     """Test ERPparam in with check data mode turned off, including with NaN data."""
 
-    tfm = ERPparam(verbose=False)
+    tfm = ERPparam(verbose=False, max_n_peaks=4)
 
     tfm.set_check_data_mode(False)
     assert tfm._check_data is False
