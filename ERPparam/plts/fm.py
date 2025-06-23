@@ -130,8 +130,10 @@ def _add_peaks_shade(fm, ax, **plot_kwargs):
     plot_kwargs = check_plot_kwargs(plot_kwargs, defaults)
 
     for peak in fm.gaussian_params_:
-
-        peak_line = sim_erp(fm.time, peak)
+        if fm.peak_mode== 'gaussian':
+            peak_line = sim_erp(fm.time, peak[:3], peak_mode=fm.peak_mode)
+        elif fm.peak_mode == 'skewed_gaussian':
+            peak_line = sim_erp(fm.time, peak, peak_mode=fm.peak_mode)
 
         ax.fill_between(fm.time, peak_line, fm.signal, **plot_kwargs)
 
@@ -186,7 +188,10 @@ def _add_peaks_outline(fm, ax, **plot_kwargs):
         peak_range = [peak[0] - peak[2]*3, peak[0] + peak[2]*3]
 
         # Generate a peak reconstruction for each peak, and trim to desired range
-        peak_line = sim_erp(fm.time, peak)
+        if fm.peak_mode== 'gaussian':
+            peak_line = sim_erp(fm.time, peak[:3], peak_mode=fm.peak_mode)
+        elif fm.peak_mode == 'skewed_gaussian':
+            peak_line = sim_erp(fm.time, peak, peak_mode=fm.peak_mode)
         peak_time, peak_line = trim_signal(fm.time, peak_line, peak_range)
 
         # Plot the peak outline
