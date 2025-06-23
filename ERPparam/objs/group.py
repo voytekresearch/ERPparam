@@ -356,15 +356,14 @@ class ERPparamGroup(ERPparam):
 
         Parameters
         ----------
-        name : { 'peak_params', 'gaussian_params','shape_params', 'error', 'r_squared'}
+        name : { 'gaussian_params','shape_params', 'error', 'r_squared'}
             Name of the data field to extract across the group.
-        col :   {'CT', 'PW', 'BW' 'SK'}, 
-                {'MN','HT','SD', 'SK'}, 
-                {fwhm, rise_time, decay_time, symmetry, sharpness, sharpness_rise, 
-                    sharpness_decay}, or
+        col :   {'MN','HT','SD', 'SK'}, 
+                {FWHM, rise_time, decay_time, symmetry, sharpness, sharpness_rise, 
+                    sharpness_decay, 'CT', 'PW', 'BW' 'SK'}, or
                 int, optional
                 Column name / index to extract from selected data, if requested.
-                Only used for name of {'peak_params', 'gaussian_params', 'shape_params}, 
+                Only used for name of {'gaussian_params', 'shape_params}, 
                 respectively.
 
         Returns
@@ -381,7 +380,7 @@ class ERPparamGroup(ERPparam):
 
         Notes
         -----
-        When extracting peak information ('peak_params', 'shape_params', or 'gaussian_params'), an additional column
+        When extracting peak information ('shape_params', or 'gaussian_params'), an additional column
         is appended to the returned array, indicating the index of the model that the peak came from.
         """
 
@@ -389,7 +388,7 @@ class ERPparamGroup(ERPparam):
             raise NoModelError("No model fit results are available, can not proceed.")
 
         # Allow for shortcut alias, without adding `_params`
-        if name in ['peak', 'gaussian', 'shape']:
+        if name in ['gaussian', 'shape']:
             name = name + '_params'
             
         # If col specified as string, get mapping back to integer
@@ -402,7 +401,7 @@ class ERPparamGroup(ERPparam):
         # Pull out the requested data field from the group data
         # As a special case, peak_params are pulled out in a way that appends
         #  an extra column, indicating which ERPparam run each peak comes from
-        if name in ('peak_params', 'gaussian_params'):
+        if name in ('gaussian_params'):
 
             # Collect peak data, appending the index of the model it comes from
             gather_params = [getattr(data, name) for data in (self.group_results)]
@@ -419,7 +418,7 @@ class ERPparamGroup(ERPparam):
         elif name in ('shape_params'):
 
             # Collect peak data, appending the index of the model it comes from
-            out = np.vstack([np.insert(getattr(data, name), 7, index, axis=1)
+            out = np.vstack([np.insert(getattr(data, name), 11, index, axis=1)
                              for index, data in enumerate(self.group_results)])
 
             # This updates index to grab selected column, and the last column

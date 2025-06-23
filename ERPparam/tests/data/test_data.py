@@ -29,11 +29,10 @@ def test_ERPparam_meta_data():
 
 def test_ERPparam_results():
     # ['peak_params', 'r_squared', 'error', 'gaussian_params','shape_params', 'peak_indices']
-    results = ERPparamResults([10, 0.5, 1], 
-                              0.95, 
+    results = ERPparamResults(0.95, 
                               0.05,
                               [10, 0.5, 1], 
-                              [0.05, 0.05, 0.025, 0.5, 0.97,  0.97, 0.98], 
+                              [0.05, 0.05, 0.025, 0.5, 0.97,  0.97, 0.98, 10, 0.5, 1], 
                               [0]) 
     assert results
 
