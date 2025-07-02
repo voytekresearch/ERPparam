@@ -97,7 +97,7 @@ def test_fg_fit_nk():
     assert out
     assert len(out) == n_signals
     assert isinstance(out[0], ERPparamResults)
-    assert np.all(out[1].peak_params[:, :3])
+    assert np.all(out[1].gaussian_params[:, :3])
 
 def test_fg_fit_nk_noise():
     """Test ERPparamGroup fit, on noisy data, to make sure nothing breaks."""
@@ -139,15 +139,15 @@ def test_fg_fail():
         assert res
 
     # Test that get_params works with failed model fits
-    outs1 = ntfg.get_params('peak_params')
+    outs1 = ntfg.get_params('gaussian_params')
     outs2 = ntfg.get_params('shape_params', 'sharpness')
-    outs3 = ntfg.get_params('gaussian_params')
-    outs4 = ntfg.get_params('peak_params', 0)
+    outs3 = ntfg.get_params('shape_params', 'CT')
+    outs4 = ntfg.get_params('shape_params', 0)
     outs5 = ntfg.get_params('gaussian_params', 2)
 
     # Test shortcut labels
     outs6 = ntfg.get_params('gaussian')
-    outs6 = ntfg.get_params('peak', 'CT')
+    outs6 = ntfg.get_params('shape', 'CT')
 
     # Test the property attributes related to null model fits
     #   This checks that they do the right thing when there are null fits (failed fits)
@@ -181,7 +181,7 @@ def test_fg_drop():
             assert np.all(np.isnan(getattr(dropped_fres, field)))
 
     # Test that a ERPparamGroup that has had inds dropped still works with `get_params`
-    cfs = tfg.get_params('peak_params', 1)
+    cfs = tfg.get_params('shape_params', 1)
     exps = tfg.get_params('gaussian_params', 'MN')
     assert np.all(np.isnan([exps[i,0] for i in range(exps.shape[0]) if exps[i,1] in drop_inds ]))
     #assert np.all(np.invert(np.isnan(np.delete(exps, drop_inds))))
@@ -243,35 +243,18 @@ def test_get_results(tfg):
     assert tfg.get_results()
 
 def test_get_params(tfg):
-    # """Check get_params method."""
-
-    # for dname in ['aperiodic_params', 'peak_params', 'error', 'r_squared', 'gaussian_params']:
-    #     assert np.any(tfg.get_params(dname))
-
-    #     if dname == 'aperiodic_params':
-    #         for dtype in ['offset', 'exponent']:
-    #             assert np.any(tfg.get_params(dname, dtype))
-
-    #     if dname == 'peak_params':
-    #         for dtype in ['CF', 'PW', 'BW']:
-    #             assert np.any(tfg.get_params(dname, dtype))
-
     """Test the get_params method."""
 
-    for dname in ['peak_params', 'peak','shape','shape_params',
+    for dname in ['shape','shape_params',
                   'error', 'r_squared', 'gaussian_params', 'gaussian']:
         assert np.any(tfg.get_params(dname))
-
-        if dname == 'peak_params' or dname == 'peak':
-            for dtype in ['CT', 'PW', 'BW']:
-                assert np.any(tfg.get_params(dname, dtype))
 
         if dname == 'gaussian_params' or dname == 'gaussian':
             for dtype in ['MN','HT','SD']:
                 assert np.any(tfg.get_params(dname, dtype))
 
         if dname == 'shape_params' or dname == 'shape':
-            for dtype in ['FWHM', 'rise_time', 'decay_time', 'symmetry',
+            for dtype in ['CT', 'PW', 'BW','FWHM', 'rise_time', 'decay_time', 'symmetry',
             'sharpness', 'sharpness_rise', 'sharpness_decay']:
                 assert np.any(tfg.get_params(dname, dtype))
 

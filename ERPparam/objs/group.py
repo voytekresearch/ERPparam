@@ -85,7 +85,7 @@ class ERPparamGroup(ERPparam):
       and the BW of the peak, is 2*std of the gaussian (as 'two sided' bandwidth).
     - The ERPparamGroup object inherits from the ERPparam object. As such it also has data
       attributes (`signal`), and parameter attributes
-      ( `peak_params_`, `gaussian_params_`, `r_squared_`, `error_`)
+      ( `shape_params_`, `gaussian_params_`, `r_squared_`, `error_`)
       which are defined in the context of individual model fits. These attributes are
       used during the fitting process, but in the group context do not store results
       post-fitting. Rather, all model fit results are collected and stored into the
@@ -140,14 +140,14 @@ class ERPparamGroup(ERPparam):
     def n_peaks_(self):
         """How many peaks were fit for each model."""
 
-        return [single_tr_erp.peak_params.shape[0] for single_tr_erp in self] if self.has_model else None
+        return [single_tr_erp.shape_params.shape[0] for single_tr_erp in self] if self.has_model else None
 
 
     @property
     def n_null_(self):
         """How many model fits are null."""
 
-        return sum([1 for single_tr_erp in self.group_results if (len(single_tr_erp.peak_params)==0)]) \
+        return sum([1 for single_tr_erp in self.group_results if (len(single_tr_erp.shape_params)==0)]) \
             if self.has_model else None
 
 
@@ -156,7 +156,7 @@ class ERPparamGroup(ERPparam):
         """The indices for model fits that are null."""
 
         return [ind for ind, single_tr_erp in enumerate(self.group_results) \
-            if (len(single_tr_erp.peak_params)==0)] \
+            if (len(single_tr_erp.shape_params)==0)] \
             if self.has_model else None
 
 
@@ -196,7 +196,7 @@ class ERPparamGroup(ERPparam):
         """
         format_dict = { 'gaussian_params_' : np.ones([0,4])*np.nan,
                         'peak_params_' : np.ones([0,4])*np.nan,
-                        'shape_params_' : np.ones([0,7])*np.nan,
+                        'shape_params_' : np.ones([0,11])*np.nan,
                         'r_squared_': np.nan,
                         'error_' : np.nan,
                         'peak_indices_' : np.full(3, np.nan)
@@ -210,16 +210,16 @@ class ERPparamGroup(ERPparam):
 
 
     def _add_data(self, time, signals, time_range, baseline):
-        """Add data (frequencies and power spectrum values) to the current object.
+        """Add data (time and signal values) to the current object.
 
         Parameters
         ----------
         times : 1d array
-            Frequency values for the power spectra, in linear space.
+            Time values for the power spectra, in linear space.
         signals : 2d array, shape=[n_signals, n_times]
-            Matrix of power values, in linear space.
+            Matrix of voltage values
         time_range : list of [float, float], optional
-            Frequency range to restrict power spectra to. If not provided, keeps the entire range.
+            Time range to restrict fitting to. If not provided, keeps the entire range.
 
         Notes
         -----

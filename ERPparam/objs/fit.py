@@ -256,7 +256,7 @@ class ERPparam():
         if clear_results:
 
             self.peak_params_ = np.ones([0,4])*np.nan
-            self.shape_params_ = np.ones([0,7])*np.nan
+            self.shape_params_ = np.ones([0,11])*np.nan
             self.r_squared_ = np.nan
             self.error_ = np.nan
             self.peak_indices_ = np.full(3, np.nan)
