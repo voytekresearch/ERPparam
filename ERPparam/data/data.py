@@ -55,7 +55,7 @@ class ERPparamMetaData(namedtuple('ERPparamMetaData', ['time_range', 'fs'])):
     __slots__ = ()
 
 
-class ERPparamResults(namedtuple('ERPparamResults', ['peak_params', 'r_squared', 'error', 
+class ERPparamResults(namedtuple('ERPparamResults', ['r_squared', 'error', 
                                                      'gaussian_params','shape_params',
                                                      'peak_indices'])):
     """Model results from parameterizing a power spectrum.

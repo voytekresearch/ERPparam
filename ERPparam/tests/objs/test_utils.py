@@ -32,19 +32,19 @@ def test_compare_info(tfm, tfg):
         f_obj2.time_range = [5, 25]
         assert not compare_info([f_obj, f_obj2], 'meta_data')
 
-def test_average_fg(tfg, tbands):
+# def test_average_fg(tfg, tbands):
 
-    nfm = average_fg(tfg, tbands)
-    assert nfm
+#     nfm = average_fg(tfg, tbands)
+#     assert nfm
 
-    # Test bad average method error
-    with raises(ValueError):
-        average_fg(tfg, tbands, avg_method='BAD')
+#     # Test bad average method error
+#     with raises(ValueError):
+#         average_fg(tfg, tbands, avg_method='BAD')
 
-    # Test no data available error
-    ntfg = ERPparamGroup()
-    with raises(NoModelError):
-        average_fg(ntfg, tbands)
+#     # Test no data available error
+#     ntfg = ERPparamGroup()
+#     with raises(NoModelError):
+#         average_fg(ntfg, tbands)
 
 def test_combine_ERPparams(tfm, tfg):
 

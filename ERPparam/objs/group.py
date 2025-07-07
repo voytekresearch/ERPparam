@@ -85,7 +85,7 @@ class ERPparamGroup(ERPparam):
       and the BW of the peak, is 2*std of the gaussian (as 'two sided' bandwidth).
     - The ERPparamGroup object inherits from the ERPparam object. As such it also has data
       attributes (`signal`), and parameter attributes
-      ( `peak_params_`, `gaussian_params_`, `r_squared_`, `error_`)
+      ( `shape_params_`, `gaussian_params_`, `r_squared_`, `error_`)
       which are defined in the context of individual model fits. These attributes are
       used during the fitting process, but in the group context do not store results
       post-fitting. Rather, all model fit results are collected and stored into the
@@ -140,14 +140,14 @@ class ERPparamGroup(ERPparam):
     def n_peaks_(self):
         """How many peaks were fit for each model."""
 
-        return [single_tr_erp.peak_params.shape[0] for single_tr_erp in self] if self.has_model else None
+        return [single_tr_erp.shape_params.shape[0] for single_tr_erp in self] if self.has_model else None
 
 
     @property
     def n_null_(self):
         """How many model fits are null."""
 
-        return sum([1 for single_tr_erp in self.group_results if (len(single_tr_erp.peak_params)==0)]) \
+        return sum([1 for single_tr_erp in self.group_results if (len(single_tr_erp.shape_params)==0)]) \
             if self.has_model else None
 
 
@@ -156,7 +156,7 @@ class ERPparamGroup(ERPparam):
         """The indices for model fits that are null."""
 
         return [ind for ind, single_tr_erp in enumerate(self.group_results) \
-            if (len(single_tr_erp.peak_params)==0)] \
+            if (len(single_tr_erp.shape_params)==0)] \
             if self.has_model else None
 
 
@@ -196,7 +196,7 @@ class ERPparamGroup(ERPparam):
         """
         format_dict = { 'gaussian_params_' : np.ones([0,4])*np.nan,
                         'peak_params_' : np.ones([0,4])*np.nan,
-                        'shape_params_' : np.ones([0,7])*np.nan,
+                        'shape_params_' : np.ones([0,11])*np.nan,
                         'r_squared_': np.nan,
                         'error_' : np.nan,
                         'peak_indices_' : np.full(3, np.nan)
@@ -210,16 +210,16 @@ class ERPparamGroup(ERPparam):
 
 
     def _add_data(self, time, signals, time_range, baseline):
-        """Add data (frequencies and power spectrum values) to the current object.
+        """Add data (time and signal values) to the current object.
 
         Parameters
         ----------
         times : 1d array
-            Frequency values for the power spectra, in linear space.
+            Time values for the power spectra, in linear space.
         signals : 2d array, shape=[n_signals, n_times]
-            Matrix of power values, in linear space.
+            Matrix of voltage values
         time_range : list of [float, float], optional
-            Frequency range to restrict power spectra to. If not provided, keeps the entire range.
+            Time range to restrict fitting to. If not provided, keeps the entire range.
 
         Notes
         -----
@@ -356,15 +356,14 @@ class ERPparamGroup(ERPparam):
 
         Parameters
         ----------
-        name : { 'peak_params', 'gaussian_params','shape_params', 'error', 'r_squared'}
+        name : { 'gaussian_params','shape_params', 'error', 'r_squared'}
             Name of the data field to extract across the group.
-        col :   {'CT', 'PW', 'BW' 'SK'}, 
-                {'MN','HT','SD', 'SK'}, 
-                {fwhm, rise_time, decay_time, symmetry, sharpness, sharpness_rise, 
-                    sharpness_decay}, or
+        col :   {'MN','HT','SD', 'SK'}, 
+                {FWHM, rise_time, decay_time, symmetry, sharpness, sharpness_rise, 
+                    sharpness_decay, 'CT', 'PW', 'BW' 'SK'}, or
                 int, optional
                 Column name / index to extract from selected data, if requested.
-                Only used for name of {'peak_params', 'gaussian_params', 'shape_params}, 
+                Only used for name of {'gaussian_params', 'shape_params}, 
                 respectively.
 
         Returns
@@ -381,7 +380,7 @@ class ERPparamGroup(ERPparam):
 
         Notes
         -----
-        When extracting peak information ('peak_params', 'shape_params', or 'gaussian_params'), an additional column
+        When extracting peak information ('shape_params', or 'gaussian_params'), an additional column
         is appended to the returned array, indicating the index of the model that the peak came from.
         """
 
@@ -389,7 +388,7 @@ class ERPparamGroup(ERPparam):
             raise NoModelError("No model fit results are available, can not proceed.")
 
         # Allow for shortcut alias, without adding `_params`
-        if name in ['peak', 'gaussian', 'shape']:
+        if name in ['gaussian', 'shape']:
             name = name + '_params'
             
         # If col specified as string, get mapping back to integer
@@ -402,7 +401,7 @@ class ERPparamGroup(ERPparam):
         # Pull out the requested data field from the group data
         # As a special case, peak_params are pulled out in a way that appends
         #  an extra column, indicating which ERPparam run each peak comes from
-        if name in ('peak_params', 'gaussian_params'):
+        if name in ('gaussian_params'):
 
             # Collect peak data, appending the index of the model it comes from
             gather_params = [getattr(data, name) for data in (self.group_results)]
@@ -419,7 +418,7 @@ class ERPparamGroup(ERPparam):
         elif name in ('shape_params'):
 
             # Collect peak data, appending the index of the model it comes from
-            out = np.vstack([np.insert(getattr(data, name), 7, index, axis=1)
+            out = np.vstack([np.insert(getattr(data, name), 11, index, axis=1)
                              for index, data in enumerate(self.group_results)])
 
             # This updates index to grab selected column, and the last column

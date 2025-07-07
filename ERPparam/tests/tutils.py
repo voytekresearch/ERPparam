@@ -55,8 +55,9 @@ def get_twindow():
 def get_tresults():
     """Get a ERPparamResults objet, for testing."""
 
-    return ERPparamResults(shape_params=np.array([[0.08, 0.05, 0.02, 0.6, 0.97, 0.97, 0.98], [0.08, 0.05, 0.02, 0.6, 0.97, 0.97, 0.98]]), # [duration, rise-time, decay-time, rise-decay symmetry, FWHM, rising sharpness, decaying sharpness]
-                           peak_params=np.array([[0.1, 2, 0.06], [0.2, -1.5, 0.1]]), # [CT, PW, BW]
+    return ERPparamResults(shape_params=np.array([[0.08, 0.05, 0.02, 0.6, 0.97, 0.97, 0.98, 0.1, 2, 0.06], 
+                                                  [0.08, 0.05, 0.02, 0.6, 0.97, 0.97, 0.98, 0.2, -1.5, 0.1]]), 
+                           # [duration, rise-time, decay-time, rise-decay symmetry, FWHM, rising sharpness, decaying sharpness, CT, PW, BW]
                            r_squared=0.97, error=0.01,
                            gaussian_params=np.array([[0.1, 2, 0.03], [0.2, -1.5, 0.05]]), # [mean, height, standard deviation]
                            peak_indices=np.array([[1,2,3],[4,5,6]])

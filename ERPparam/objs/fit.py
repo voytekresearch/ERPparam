@@ -252,7 +252,7 @@ class ERPparam():
         if clear_results:
 
             self.peak_params_ = np.ones([0,4])*np.nan
-            self.shape_params_ = np.ones([0,7])*np.nan
+            self.shape_params_ = np.ones([0,11])*np.nan
             self.r_squared_ = np.nan
             self.error_ = np.nan
             self.peak_indices_ = np.full(3, np.nan)
@@ -333,7 +333,7 @@ class ERPparam():
         """
 
         self.gaussian_params_ = ERPparam_result.gaussian_params
-        self.peak_params_ = ERPparam_result.peak_params
+        self.peak_params_ = ERPparam_result.shape_params[:,7:]
         self.shape_params_ = ERPparam_result.shape_params
         self.peak_indices_ = ERPparam_result.peak_indices
         self.r_squared_ = ERPparam_result.r_squared
@@ -449,6 +449,9 @@ class ERPparam():
             self._drop_peaks_near_edge()
             self.peak_indices_ = self.peak_indices_.astype(int)
 
+            # Merge peak_params with shape params
+            self.shape_params_ = np.hstack([self.shape_params_, self.peak_params_])
+
             # Calculate the peak fit
             #   Note: if no peaks are found, this creates a flat (all zero) peak fit
             if self.peak_mode == 'skewed_gaussian':
@@ -550,12 +553,12 @@ class ERPparam():
 
         Parameters
         ----------
-        name : {'peak_params', 'gaussian_params', 'shape_params', 'error', 'r_squared'}
+        name : {'gaussian_params', 'shape_params', 'error', 'r_squared'}
             Name of the data field to extract.
-        col : {'CT', 'PW', 'BW', 'SK'}, {'MN','HT','SD', 'SK'}, {FWHM, rise_time, decay_time, symmetry,
+        col : {'MN','HT','SD', 'SK'}, {CT, PW, BW, SK, FWHM, rise_time, decay_time, symmetry,
             sharpness, sharpness_rise, sharpness_decay} or int, optional
             Column name / index to extract from selected data, if requested.
-            Only used for name of {'peak_params', 'gaussian_params', 'shape_params}, 
+            Only used for name of { 'gaussian_params', 'shape_params}, 
             respectively.
 
         Returns
@@ -577,7 +580,7 @@ class ERPparam():
             raise NoModelError("No model fit results are available to extract, can not proceed.")
 
         # Allow for shortcut alias, without adding `_params`
-        if name in ['peak', 'gaussian', 'shape']:
+        if name in [ 'gaussian', 'shape']: #'peak',
             name = name + '_params'
 
         # If col specified as string, get mapping back to integer
@@ -622,11 +625,12 @@ class ERPparam():
                                            'symmetry': 'rise time / FWHM', 
                                            'sharpness': 'peak sharpness (normalized to be dimensionless 0-1)', 
                                            'sharpness_rise': 'sharpness of the rise (normalized to be dimensionless 0-1)', 
-                                           'sharpness_decay': 'sharpness of the decay (normalized to be dimensionless 0-1)'},
-                            'peak_params': {'CT': "Center time of the peak, calculated from the raw signal", 
+                                           'sharpness_decay': 'sharpness of the decay (normalized to be dimensionless 0-1)',
+                                           'CT': "Center time of the peak, calculated from the raw signal", 
                                             'PW': 'Peak amplitude, calculate from the raw signal', 
                                             'BW': 'Bandwidth of the peak, 2-sided (ie, both halves from the peak center), calculated from the raw signal',
                                             'SK': 'Skewness of the peak'},
+
                             'gaussian_params':{'MN':'mean of the gaussian',
                                                'HT':'height of the gaussian',
                                                'SD':'gaussian width',
@@ -1396,7 +1400,7 @@ class ERPparam():
         # If results loaded, check dimensions of peak parameters
         #   This fixes an issue where they end up the wrong shape if they are empty (no peaks)
         if set(OBJ_DESC['results']).issubset(set(data.keys())):
-            self.peak_params_ = check_array_dim(self.peak_params_)
+            # self.peak_params_ = check_array_dim(self.peak_params_)
             self.gaussian_params_ = check_array_dim(self.gaussian_params_)
 
 

@@ -168,7 +168,8 @@ def gen_model_exists_str(ERPparam_obj, concise=False):
         '',
 
         # Frequency range information information
-        'The model was fit from {} to {}, using a baseline period of {} to {}. Time and signal inputs given here will be ignored. Re-fit the model or reset the data if neccessary.'.format(time_range[0], time_range[1], baseline_[0], baseline_[1]),
+        'The model was fit from {:6.3f} to {:6.3f}, using a baseline period of {:6.2f} to {:6.2f}. \
+        \nTime and signal inputs given here will be ignored. Re-fit the model or reset the data if neccessary.'.format(time_range[0], time_range[1], baseline_[0], baseline_[1]),
 
         # Footer
         '',
@@ -375,11 +376,11 @@ def gen_results_fg_str(fg, concise=False):
         raise NoModelError("No model fit results are available, can not proceed.")
 
     # Extract all the relevant data for printing
-    n_peaks = len(fg.get_params('peak_params'))
+    n_peaks = len(fg.get_params('shape_params'))
     r2s = fg.get_params('r_squared')
     errors = fg.get_params('error')
-    bws = fg.get_params('peak_params', 'BW')
-    pws = fg.get_params('peak_params', 'PW')
+    bws = fg.get_params('shape_params', 'BW')
+    pws = fg.get_params('shape_params', 'PW')
     symmetry = fg.get_params('shape_params', 'symmetry')
     sharpness = fg.get_params('shape_params', 'sharpness')
 
