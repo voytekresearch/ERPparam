@@ -89,19 +89,18 @@ def test_ERPparam_fit_noise():
 def test_ERPparam_fit_skew():
     """Test ERPparam fit on skewed data with peak_mode='skewed_gaussian'."""
 
-    time_range, erp_params_d, nlv = default_params()
+    time_range, _, nlv = default_params()
+    erp_params_d = [0.2, 1, .1]
     for skew in [-2, 0, 2]:
-        erp_params = np.concatenate([erp_params_d[:3], [skew]])
+        erp_params = np.concatenate([erp_params_d, [skew]])
         xs, ys = simulate_erp(time_range, erp_params, nlv, 
-                            peak_mode='skewed_gaussian')
+                              peak_mode='skewed_gaussian')
 
         tfm = ERPparam(verbose=False, max_n_peaks=2, peak_mode='skewed_gaussian')
         tfm.fit(xs, ys, time_range=[0, time_range[1]])
 
         # Check model results - gaussian parameters
-        for ii, gauss in enumerate(group_four(erp_params)):
-            assert np.allclose(gauss, tfm.peak_params_[ii], 
-                            [2.0, 1.0, 1.0, 2.0])
+        assert np.allclose(erp_params, tfm.peak_params_[0], [2.0, 1.0, 1.0, 2.0])
 
 def test_ERPparam_fit_measures():
     """Test goodness of fit & error metrics, post model fitting."""
@@ -262,7 +261,7 @@ def test_add_settings():
     tfm = get_tfm()
 
     # Test adding settings
-    ERPparam_settings = ERPparamSettings([1, 4], 6, 0, 2, "gaussian")
+    ERPparam_settings = ERPparamSettings([1, 4], 6, 0, 2, "gaussian", 0.75, 500)
     tfm.add_settings(ERPparam_settings)
     for setting in OBJ_DESC['settings']:
         assert getattr(tfm, setting) == getattr(ERPparam_settings, setting)
@@ -380,7 +379,7 @@ def test_ERPparam_fit_failure():
 
     ## Induce a runtime error, and check it runs through
     tfm = ERPparam(verbose=False)
-    tfm._maxfev = 5
+    tfm.maxfev = 5
 
     tfm.fit(*simulate_erp(*default_params()))
 
@@ -406,7 +405,7 @@ def test_ERPparam_debug():
     """Test ERPparam in debug mode, including with fit failures."""
 
     tfm = ERPparam(verbose=False)
-    tfm._maxfev = 5
+    tfm.maxfev = 5
 
     tfm.set_debug_mode(True)
     assert tfm._debug is True

@@ -129,7 +129,7 @@ def test_fg_fail():
 
     # Use a fg with the max iterations set so low that it will fail to converge
     ntfg = ERPparamGroup(max_n_peaks=3, peak_threshold=1.5)
-    ntfg._maxfev = 5
+    ntfg.maxfev = 5
 
     # Fit models, where some will fail, to see if it completes cleanly
     ntfg.fit(xs, ys)
@@ -214,7 +214,7 @@ def test_fg_fit_skew():
         xs, ys = simulate_erps(n_signals, time_range, erp_params, nlvs, 
                             peak_mode='skewed_gaussian')
 
-        tfg = ERPparamGroup(verbose=False)
+        tfg = ERPparamGroup(verbose=False, max_n_peaks=4)
         tfg.fit(xs, ys, n_jobs=2)
         out = tfg.get_results()
 

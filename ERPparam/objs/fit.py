@@ -18,13 +18,9 @@ _cf_bound : float
     Parameter bounds for peak time when fitting gaussians.
 _bw_std_edge : float
     Bandwidth threshold for edge rejection of peaks, in units of gaussian standard deviation.
-_gauss_overlap_thresh : float
-    Degree of overlap (in units of standard deviation) between gaussian guesses to drop one.
 _gauss_std_limits : list of [float, float]
     Peak width limits, converted to use for gaussian standard deviation parameter.
     This attribute is computed based on `peak_width_limits` and should not be updated directly.
-_maxfev : int
-    The maximum number of calls to the curve fitting function.
 _error_metric : str
     The error metric to use for post-hoc measures of model fit error.
 
@@ -143,7 +139,7 @@ class ERPparam():
 
     def __init__(self, peak_width_limits=(0.01, 10), max_n_peaks=20, 
                  min_peak_height=0.0, peak_threshold=2.0, peak_mode='gaussian',
-                 gauss_overlap = 0.75, maxfev = 500,
+                 gauss_overlap_thresh = 0.75, maxfev = 500,
                  verbose=True):
         
         self.peak_width_limits = peak_width_limits
@@ -152,8 +148,8 @@ class ERPparam():
         self.peak_threshold = peak_threshold
         self.peak_mode = peak_mode
         self.verbose = verbose
-        self._gauss_overlap_thresh = gauss_overlap
-        self._maxfev = maxfev
+        self.gauss_overlap_thresh = gauss_overlap_thresh
+        self.maxfev = maxfev
 
         # Threshold for how far a peak has to be from edge to keep.
         #   This is defined in units of gaussian standard deviation
@@ -953,10 +949,10 @@ class ERPparam():
         try:
             if self.peak_mode == "skewed_gaussian":
                 gaussian_params, _ = curve_fit(skewed_gaussian_function, self.time, self.signal,
-                                               p0=guess, maxfev=self._maxfev, bounds=gaus_param_bounds)
+                                               p0=guess, maxfev=self.maxfev, bounds=gaus_param_bounds)
             elif self.peak_mode == "gaussian":
                 gaussian_params, _ = curve_fit(gaussian_function, self.time, self.signal,
-                                            p0=guess, maxfev=self._maxfev, bounds=gaus_param_bounds)
+                                            p0=guess, maxfev=self.maxfev, bounds=gaus_param_bounds)
         except RuntimeError as excp:
             error_msg = ("Model fitting failed due to not finding "
                          "parameters in the peak component fit.")
@@ -1185,8 +1181,8 @@ class ERPparam():
         for ii in range(len(guess)):
             # get bounds for gaussian overlap
             guess_i = guess[ii]
-            bounds = [guess_i[0] - guess_i[2] * self._gauss_overlap_thresh,
-                        guess_i[0] + guess_i[2] * self._gauss_overlap_thresh]
+            bounds = [guess_i[0] - guess_i[2] * self.gauss_overlap_thresh,
+                        guess_i[0] + guess_i[2] * self.gauss_overlap_thresh]
 
             # find overlapping peaks
             in_range = (guess[:,0] > bounds[0]) & (guess[:,0] < bounds[1])
