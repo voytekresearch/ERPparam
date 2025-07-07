@@ -25,7 +25,7 @@ def get_description():
     """
 
     attributes = {'results' : ['gaussian_params_', 'shape_params_', 'peak_indices_', 'r_squared_', 'error_'],
-                  'settings' : ['peak_width_limits', 'max_n_peaks', 'min_peak_height', 'peak_threshold', 'peak_mode'],
+                  'settings' : ['peak_width_limits', 'max_n_peaks', 'min_peak_height', 'peak_threshold', 'peak_mode', 'gauss_overlap_thresh', 'maxfev'],
                   'data' : ['signal', 'time'],
                   'meta_data' : ['time_range', 'fs'],
                   'arrays' : ['time', 'signal', 'gaussian_params_', 'shape_params_', 'peak_params_'],

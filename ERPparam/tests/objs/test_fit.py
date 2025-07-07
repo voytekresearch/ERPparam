@@ -63,7 +63,7 @@ def test_ERPparam_fit():
     np.random.seed(4)
     xs, ys = simulate_erp(time_range, erp_params, nlv)
 
-    tfm = ERPparam(verbose=False, max_n_peaks=3, gauss_overlap= 3.0)
+    tfm = ERPparam(verbose=False, max_n_peaks=3, gauss_overlap_thresh= 3.0)
     tfm.fit(xs, ys, time_range=[0, time_range[1]])
 
     # Check model results - gaussian parameters
