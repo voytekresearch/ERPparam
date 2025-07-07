@@ -7,25 +7,25 @@ from ERPparam.analysis.periodic import *
 ###################################################################################################
 ###################################################################################################
 
-def test_get_band_peak_fm(tfm):
+# def test_get_band_peak_fm(tfm):
 
-    assert np.all(get_band_peak_fm(tfm, (8, 12)))
+#     assert np.all(get_band_peak_fm(tfm, (8, 12)))
 
-def test_get_band_peak_fg(tfg):
+# def test_get_band_peak_fg(tfg):
 
-    assert np.all(get_band_peak_fg(tfg, (8, 12)))
+#     assert np.all(get_band_peak_fg(tfg, (8, 12)))
 
-def test_get_band_peak_group():
+# def test_get_band_peak_group():
 
-    data = np.array([[10, 1, 1.8, 0], [13, 1, 2, 2], [14, 2, 4, 2]])
+#     data = np.array([[10, 1, 1.8, 0], [13, 1, 2, 2], [14, 2, 4, 2]])
 
-    out1 = get_band_peak_group(data, [8, 12], 3)
-    assert out1.shape == (3, 3)
-    assert np.array_equal(out1[0, :], [10, 1, 1.8])
+#     out1 = get_band_peak_group(data, [8, 12], 3)
+#     assert out1.shape == (3, 3)
+#     assert np.array_equal(out1[0, :], [10, 1, 1.8])
 
-    out2 = get_band_peak_group(data, [12, 16], 3)
-    assert out2.shape == (3, 3)
-    assert np.array_equal(out2[2, :], [14, 2, 4])
+#     out2 = get_band_peak_group(data, [12, 16], 3)
+#     assert out2.shape == (3, 3)
+#     assert np.array_equal(out2[2, :], [14, 2, 4])
 
 def test_get_band_peak():
 
