@@ -137,7 +137,7 @@ class ERPparam():
     """
     # pylint: disable=attribute-defined-outside-init
 
-    def __init__(self, peak_width_limits=(0.01, 10), max_n_peaks=20, 
+    def __init__(self, peak_width_limits=(0.01, 10), max_n_peaks=10, 
                  min_peak_height=0.0, peak_threshold=2.0, peak_mode='gaussian',
                  gauss_overlap_thresh = 0.75, maxfev = 500,
                  verbose=True):
@@ -159,7 +159,7 @@ class ERPparam():
         # The error metric to calculate, post model fitting. See `_calc_error` for options
         #   Note: this is for checking error post fitting, not an objective function for fitting
         self._error_metric = 'MAE'
-
+        # The maximum number of times that the iterative Gaussian fitting process will run (for each positive and negative peaks)
         self._max_n_iters = 20
 
         ## RUN MODES
@@ -834,7 +834,7 @@ class ERPparam():
 
         # Find peak: Loop through, finding a candidate peak, and fitting with a guess gaussian
         #   Stopping procedures: limit on # of peaks, or relative or absolute height thresholds
-        while len(guess) < self.max_n_peaks:
+        while len(guess) < self._max_n_iters:
 
             # Find candidate peak - the maximum point of the signal
             max_ind = np.argmax(iter_signal)
@@ -1122,6 +1122,19 @@ class ERPparam():
 
         return shape_params, peak_indices
 
+    def _drop_extra_peaks(self):
+        """Check whether to drop peaks, if the number of peaks fit is greater than the user specified max_n_peaks.
+        """
+        if self.n_peaks_ > self.max_n_peaks:
+
+            # get the top n tallest peaks, determined by the peak amplitude
+            # get the absolute values of the peak amps, sort by smallest to largest, and extract the inds of the top N tallest
+            tallest_amps_idx = np.abs(self.shape_params_[:,-3]).argsort()[-(self.max_n_peaks):]
+            # extract and sort shape params by the tallest, which will reorder them by smallest to tallest
+            # extract the peak times so that we can reorder by that instead
+            keepers_time_idx = self.shape_params_[tallest_amps_idx,:][:,-4].argsort()
+            # extract the tallest peaks but sorted by peak time
+            self.shape_params_ = self.shape_params_[keepers_time_idx,:]
 
     def _drop_peak_cf(self, guess):
         """Check whether to drop peaks based on center's proximity to the edge of the signal.
