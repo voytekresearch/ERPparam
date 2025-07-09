@@ -160,6 +160,8 @@ class ERPparam():
         #   Note: this is for checking error post fitting, not an objective function for fitting
         self._error_metric = 'MAE'
 
+        self._max_n_iters = 20
+
         ## RUN MODES
         # Set default debug mode - controls if an error is raised if model fitting is unsuccessful
         self._debug = False
