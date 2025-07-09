@@ -1123,7 +1123,9 @@ class ERPparam():
         return shape_params, peak_indices
 
     def _drop_extra_peaks(self):
-        """Check whether to drop peaks, if the number of peaks fit is greater than the user specified max_n_peaks.
+        """
+            Check whether to drop peaks, if the number of peaks fit is greater than the user specified max_n_peaks.
+            
         """
         if self.n_peaks_ > self.max_n_peaks:
 
@@ -1134,7 +1136,7 @@ class ERPparam():
             # extract the peak times so that we can reorder by that instead
             keepers_time_idx = self.shape_params_[tallest_amps_idx,:][:,-4].argsort()
             # extract the tallest peaks but sorted by peak time
-            self.shape_params_ = self.shape_params_[keepers_time_idx,:]
+            self.shape_params_ = self.shape_params_[tallest_amps_idx,:][keepers_time_idx,:]
 
     def _drop_peak_cf(self, guess):
         """Check whether to drop peaks based on center's proximity to the edge of the signal.
