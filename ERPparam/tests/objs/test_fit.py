@@ -93,6 +93,7 @@ def test_ERPparam_fit_skew():
     erp_params_d = [0.2, 1, .1]
     for skew in [-2, 0, 2]:
         erp_params = np.concatenate([erp_params_d, [skew]])
+        np.random.seed(24)
         xs, ys = simulate_erp(time_range, erp_params, nlv, 
                               peak_mode='skewed_gaussian')
 
