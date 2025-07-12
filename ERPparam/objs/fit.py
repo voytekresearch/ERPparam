@@ -160,7 +160,7 @@ class ERPparam():
         #   Note: this is for checking error post fitting, not an objective function for fitting
         self._error_metric = 'MAE'
         # The maximum number of times that the iterative Gaussian fitting process will run (for each positive and negative peaks)
-        self._max_n_iters = 20
+        self._max_n_iters = 10
 
         ## RUN MODES
         # Set default debug mode - controls if an error is raised if model fitting is unsuccessful

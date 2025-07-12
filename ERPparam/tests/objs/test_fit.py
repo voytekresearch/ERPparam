@@ -98,7 +98,8 @@ def test_ERPparam_fit_skew():
                               peak_mode='skewed_gaussian')
 
         tfm = ERPparam(verbose=False, max_n_peaks=1, peak_mode='skewed_gaussian')
-        tfm.fit(xs, ys, time_range=[0, 0.75])
+        tfm._max_n_iters = 2
+        tfm.fit(xs, ys, time_range=[0, time_range[1]])
 
         # Check model results - gaussian parameters
         assert tfm.has_model
