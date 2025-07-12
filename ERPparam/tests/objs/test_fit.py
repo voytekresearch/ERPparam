@@ -97,10 +97,12 @@ def test_ERPparam_fit_skew():
         xs, ys = simulate_erp(time_range, erp_params, nlv, 
                               peak_mode='skewed_gaussian')
 
-        tfm = ERPparam(verbose=False, max_n_peaks=2, peak_mode='skewed_gaussian')
+        tfm = ERPparam(verbose=False, max_n_peaks=1, peak_mode='skewed_gaussian')
+        tfm._max_n_iters = 2
         tfm.fit(xs, ys, time_range=[0, time_range[1]])
 
         # Check model results - gaussian parameters
+        assert tfm.has_model
         assert np.allclose(erp_params, tfm.peak_params_[0], [2.0, 1.0, 1.0, 2.0])
 
 def test_ERPparam_fit_measures():
