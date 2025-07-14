@@ -466,7 +466,10 @@ class ERPparam():
                 # get the sigmoid + peaks signal, and apply curve_fit again
                 final_sigmultigauss_params = self._fit_sigmultigauss()
                 self.offset_params_ = final_sigmultigauss_params[:3] # get sigmoid params alone
-                self.gaussian_params_ = final_sigmultigauss_params[3:].reshape(-1,(self.gaussian_params_.shape[1])) # get gauss params alone, and reshape to (n peaks,3)
+                if self.peak_mode == 'skewed_gaussian':
+                    self.gaussian_params_ = final_sigmultigauss_params[3:].reshape(-1, 4) # get gauss params alone, and reshape to (n peaks,4)
+                else:
+                    self.gaussian_params_ = final_sigmultigauss_params[3:].reshape(-1, 3) # get gauss params alone, and reshape to (n peaks,3)
 
             # Convert gaussian definitions to peak parameters
             self.peak_params_  = self._create_peak_params(self.gaussian_params_)
