@@ -441,15 +441,12 @@ class ERPparam():
             # Find peaks, and fit them with gaussians
             self.gaussian_params_ = self._fit_peaks(np.copy(self.signal))
 
-            # Convert gaussian definitions to peak parameters
-            self.peak_params_  = self._create_peak_params(self.gaussian_params_)
-
             # compute rise-decay symmetry
-            self.shape_params_, self.peak_indices_ = self._compute_shape_params()
+            self.shape_params_, self.peak_params_, self.peak_indices_ = \
+                self._compute_shape_params()
 
             # drop peaks based on edge proximity (if shape could not be fit)
             self._drop_peaks_near_edge()
-            self.peak_indices_ = self.peak_indices_.astype(int)
 
             # Merge peak_params with shape params
             self.shape_params_ = np.hstack([self.shape_params_, self.peak_params_])
@@ -978,54 +975,7 @@ class ERPparam():
         return gaussian_params
 
 
-    def _create_peak_params(self, gaus_params):
-        """Copies over the gaussian params to peak outputs, updating as appropriate.
-
-        Parameters
-        ----------
-        gaus_params : 2d array
-            Parameters that define the gaussian fit(s), as gaussian parameters.
-
-        Returns
-        -------
-        peak_params : 2d array
-            Fitted parameter values for the peaks, with each row as [CT, PW, BW, SK].
-
-        Notes
-        -----
-        The gaussian center is unchanged as the peak center.
-
-        The gaussian height is updated to reflect the height of the signal. This is 
-        returned instead of the gaussian height, as the gaussian height is harder to interpret, 
-        due to peak overlaps.
-
-        The gaussian standard deviation is updated to be 'both-sided', to reflect the
-        'bandwidth' of the peak, as opposed to the gaussian parameter, which is 1-sided.
-
-        Performing this conversion requires that the model has been run.
-        """
-
-        peak_params = np.empty((len(gaus_params), 4))
-
-        for ii, peak in enumerate(gaus_params):
-
-            # find the index of the signal at the time closest to the Gaussian center
-            peak_index = np.argmin(np.abs(self.time - peak[0]))
-
-            # compute skewness
-            if self.peak_mode == "skewed_gaussian":
-                skew = peak[3]
-            else:
-                skew = np.nan
-
-            # Collect peak parameter data
-            peak_params[ii] = [self.time[peak_index], self.signal[peak_index], 
-                               peak[2] * 2, skew]
-
-        return peak_params
-
-
-    def _get_peak_indices(self, peak_params, gaussian_params):
+    def _get_peak_indices(self, gaussian_params):
         """
         Find the indices of the peak and the half magnitude points.
         """
@@ -1037,14 +987,14 @@ class ERPparam():
             params = gaussian_params[:3]
         model_compoment = sim_erp(self.time, params, peak_mode=self.peak_mode)
         model_peak_index = np.argmax(np.abs(model_compoment))
-        peak_range_indices = int(np.floor(peak_params[2] * self.fs))
+        peak_range_indices = int(np.floor(gaussian_params[2] * 2 * self.fs))
         index_low = model_peak_index - peak_range_indices
         if index_low < 0:
             index_low = 0
         index_high = model_peak_index + peak_range_indices
         if index_high > len(self.signal):
             index_high = len(self.signal)
-        if peak_params[1]>0:
+        if gaussian_params[1]>0:
             peak_index = np.argmax(self.signal[index_low:index_high]) + index_low
         else:
             peak_index = np.argmin(self.signal[index_low:index_high]) + index_low
@@ -1055,11 +1005,11 @@ class ERPparam():
         # find the index closest to the peak that crosses the half magnitude
         try:
             if self.signal[peak_index]>0:
-                start_index = np.argwhere((self.signal[:peak_index] - half_mag)<0)[-1][0]
-                end_index = peak_index + np.argwhere(-(self.signal[peak_index:] - half_mag)>0)[0][0]
+                start_index = int(np.argwhere((self.signal[:peak_index] - half_mag)<0)[-1][0])
+                end_index = int(peak_index + np.argwhere(-(self.signal[peak_index:] - half_mag)>0)[0][0])
             else: # flip the logic if the peak is negative
-                start_index = np.argwhere((self.signal[:peak_index] - half_mag)>0)[-1][0]
-                end_index = peak_index + np.argwhere(-(self.signal[peak_index:] - half_mag)<0)[0][0]
+                start_index = int(np.argwhere((self.signal[:peak_index] - half_mag)>0)[-1][0])
+                end_index = int(peak_index + np.argwhere(-(self.signal[peak_index:] - half_mag)<0)[0][0])
         except IndexError:
             # if the half magnitude is not crossed, set the start and end indices to NaN
             start_index = np.nan
@@ -1085,18 +1035,26 @@ class ERPparam():
             * sharpness_decay: sharpness of the decay (normalized to be dimensionless 0-1)
         """
 
-        # get peak and gaussian parameters
-        peak_params = self.peak_params_
+        # get gaussian parameters
         gaussian_params = self.gaussian_params_
 
         # initialize list of shape parameters
-        shape_params = np.empty((len(peak_params), 7))
-        peak_indices = np.empty((len(peak_params), 3))
+        shape_params = np.empty((len(gaussian_params), 7))
+        peak_params = np.empty((len(gaussian_params), 4))
+        peak_indices = np.empty((len(gaussian_params), 3))
 
-        for ii, (peak, gaus) in enumerate(zip(peak_params, gaussian_params)):
+        for ii, gaus in enumerate(gaussian_params):
 
             # get peak indices
-            start_index, peak_index, end_index = self._get_peak_indices(peak, gaus)
+            start_index, peak_index, end_index = self._get_peak_indices(gaus)
+
+            # compute peak params
+            if self.peak_mode == "skewed_gaussian":
+                peak_params[ii] = [self.time[peak_index], self.signal[peak_index],
+                                   gaus[2] * 2, gaus[3]]
+            elif self.peak_mode == "gaussian":
+                peak_params[ii] = [self.time[peak_index], self.signal[peak_index],
+                                   gaus[2] * 2, np.nan]
 
             # if the peak indices could not be determined, set all shape params to NaN
             if np.isnan(start_index) or np.isnan(end_index):
@@ -1113,7 +1071,7 @@ class ERPparam():
             rise_decay_symmetry = rise_time / fwhm
 
             # compute sharpness
-            half_mag = np.abs(peak[1] / 2)
+            half_mag = np.abs(self.signal[peak_index] / 2)
             sharpness_rise = np.arctan(half_mag / rise_time) * (180 / np.pi) / 90
             sharpness_decay = np.arctan(half_mag / decay_time) * (180 / np.pi) / 90
             sharpness = 1 - ((180 - ((np.arctan(half_mag / rise_time) * (180 / np.pi)) + (np.arctan(half_mag / decay_time)) * (180 / np.pi))) / 180)
@@ -1123,7 +1081,7 @@ class ERPparam():
                              sharpness, sharpness_rise, sharpness_decay]
             peak_indices[ii] = [start_index, peak_index, end_index]
 
-        return shape_params, peak_indices
+        return shape_params, peak_params, peak_indices
 
     def _drop_extra_peaks(self):
         """Check whether to drop peaks, if the number of peaks fit is greater than the user specified max_n_peaks.
@@ -1235,7 +1193,7 @@ class ERPparam():
         self.gaussian_params_ = self.gaussian_params_[~to_drop]
         self.peak_params_ = self.peak_params_[~to_drop]
         self.shape_params_ = self.shape_params_[~to_drop]
-        self.peak_indices_ = self.peak_indices_[~to_drop]
+        self.peak_indices_ = self.peak_indices_[~to_drop].astype(int)
 
 
     def _calc_r_squared(self):
