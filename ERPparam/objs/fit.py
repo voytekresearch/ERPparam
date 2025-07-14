@@ -443,7 +443,7 @@ class ERPparam():
 
             # If we're fitting a sigmoid to the data, fit this first 
             if self.fit_offset: # if true, fit the sigmoid
-                self.offset_params_ = self._fit_offset(self.time,self.signal)
+                self.offset_params_, self._sig_param_bounds = self._fit_offset(self.time,self.signal)
                 self._sigmoid_fit = sigmoid_function(self.time, *self.offset_params_)
                 ## subtract sigmoid from signal before peak fitting
                 self._signal_minus_offset = self.signal - self._sigmoid_fit
@@ -455,7 +455,7 @@ class ERPparam():
             # Find peaks, and fit them with gaussians
             #   Note: if the offset was fit with a sigmoid function, 
             #         then the fit signal will be the sigmoid-removed signal
-            self.gaussian_params_ = self._fit_peaks(np.copy(self._signal_minus_offset))
+            self.gaussian_params_, self._gaus_param_bounds = self._fit_peaks(np.copy(self._signal_minus_offset))
 
             
             # Now that we have the sigmoid and the peak fits, we want to
@@ -832,18 +832,22 @@ class ERPparam():
         params, _ = curve_fit(sigmoid_function, time, signal, p0=guess,
                               maxfev=self.maxfev, bounds=bounds)
 
-        return params
+        return params, bounds
     
     def _fit_sigmultigauss(self):
+        bounds = ( tuple(np.hstack([[b for b in self._sig_param_bounds[0]], [b for b in self._gaus_param_bounds[0] ]])),
+                    tuple(np.hstack([[b for b in self._sig_param_bounds[1]], [b for b in self._gaus_param_bounds[1] ]])) )
         if self.peak_mode == 'gaussian':
             params = np.hstack([self.offset_params_, np.ndarray.flatten(self.gaussian_params_[:, :3])])
             params_multigauss, _ = curve_fit(sigmoid_multigauss, self.time, 
                                              self.signal, maxfev=self.maxfev, 
+                                             bounds=bounds,
                                              p0=params)
         elif self.peak_mode == 'skewed_gaussian':
             params = np.hstack([self.offset_params_, np.ndarray.flatten(self.gaussian_params_)])
             params_multigauss, _ = curve_fit(sigmoid_multigauss_skew, self.time,
                                              self.signal, maxfev=self.maxfev, 
+                                             bounds = bounds,
                                              p0=params)
 
         return params_multigauss
@@ -874,7 +878,7 @@ class ERPparam():
         if len(guess) > 0:
 
             # Fit the peaks, and sort results
-            gaussian_params = self._fit_peak_guess(guess, iter_signal)
+            gaussian_params, gaus_param_bounds = self._fit_peak_guess(guess, iter_signal)
             gaussian_params = gaussian_params[gaussian_params[:, 0].argsort()]
 
             # drop overlapping peaks, again after fitting, and sort again
@@ -891,10 +895,12 @@ class ERPparam():
         else:
             if self.peak_mode == 'skewed_gaussian':
                 gaussian_params = np.empty([0, 4])
+                gaus_param_bounds = np.empty([0, 4])
             else:
                 gaussian_params = np.empty([0, 3])
+                gaus_param_bounds = np.empty([0, 3])
 
-        return gaussian_params
+        return gaussian_params, gaus_param_bounds
     
     def _generate_guess(self, iter_signal):
         """Iteratively fit peaks to the signal.
@@ -1065,7 +1071,7 @@ class ERPparam():
             gaussian_params = np.array(group_three(gaussian_params))
             gaussian_params = np.hstack((gaussian_params, np.ones((gaussian_params.shape[0], 1))*np.nan)) # add NaNs for skewness
             
-        return gaussian_params
+        return gaussian_params, gaus_param_bounds
 
 
     def _create_peak_params(self, gaus_params):
