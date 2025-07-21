@@ -1070,11 +1070,11 @@ class ERPparam():
             # compute rise-decay symmetry
             rise_decay_symmetry = rise_time / fwhm
 
-            # compute sharpness
+            # compute sharpness (voltage per second)
             half_mag = np.abs(self.signal[peak_index] / 2)
-            sharpness_rise = np.arctan(half_mag / rise_time) * (180 / np.pi) / 90
-            sharpness_decay = np.arctan(half_mag / decay_time) * (180 / np.pi) / 90
-            sharpness = 1 - ((180 - ((np.arctan(half_mag / rise_time) * (180 / np.pi)) + (np.arctan(half_mag / decay_time)) * (180 / np.pi))) / 180)
+            sharpness_rise = half_mag / rise_time
+            sharpness_decay = half_mag / decay_time
+            sharpness = np.mean([sharpness_rise, sharpness_decay])
 
             # collect results
             shape_params[ii] = [fwhm, rise_time, decay_time, rise_decay_symmetry,
