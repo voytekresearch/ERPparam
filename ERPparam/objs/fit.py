@@ -980,24 +980,13 @@ class ERPparam():
         Find the indices of the peak and the half magnitude points.
         """
 
-        # get index of peak (find extreme value within a range around the model peak)
+        # get index of peak - find the raw signal voltage at the index closest to the extrema of the modelled Gaussian peak
         if self.peak_mode == "skewed_gaussian":
             params = gaussian_params
         else:
             params = gaussian_params[:3]
         model_compoment = sim_erp(self.time, params, peak_mode=self.peak_mode)
-        model_peak_index = np.argmax(np.abs(model_compoment))
-        peak_range_indices = int(np.floor(gaussian_params[2] * 2 * self.fs))
-        index_low = model_peak_index - peak_range_indices
-        if index_low < 0:
-            index_low = 0
-        index_high = model_peak_index + peak_range_indices
-        if index_high > len(self.signal):
-            index_high = len(self.signal)
-        if gaussian_params[1]>0:
-            peak_index = np.argmax(self.signal[index_low:index_high]) + index_low
-        else:
-            peak_index = np.argmin(self.signal[index_low:index_high]) + index_low
+        peak_index = np.argmax(np.abs(model_compoment))
 
         # compute half magnitude
         half_mag = self.signal[peak_index] / 2
