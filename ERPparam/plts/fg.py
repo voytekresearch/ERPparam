@@ -20,19 +20,13 @@ gridspec = safe_import('.gridspec', 'matplotlib')
 
 @savefig
 @check_dependency(plt, 'matplotlib')
-def plot_fg(fg, save_fig=False, file_name=None, file_path=None, **plot_kwargs):
+def plot_fg(fg, **plot_kwargs):
     """Plot a figure with subplots visualizing the parameters from a ERPparamGroup object.
 
     Parameters
     ----------
     fg : ERPparamGroup
-        Object containing results from fitting a group of power spectra.
-    save_fig : bool, optional, default: False
-        Whether to save out a copy of the plot.
-    file_name : str, optional
-        Name to give the saved out file.
-    file_path : str, optional
-        Path to directory to save to. If None, saves to current directory.
+        Object containing results from fitting a group of ERPs.
 
     Raises
     ------
@@ -50,24 +44,26 @@ def plot_fg(fg, save_fig=False, file_name=None, file_path=None, **plot_kwargs):
     scatter_kwargs = plot_kwargs
     scatter_kwargs['all_axes'] = True
 
-    # Aperiodic parameters plot
+    # Peak parameters plot
     ax0 = plt.subplot(gs[0, 0])
-    plot_fg_ap(fg, ax0, **scatter_kwargs)
+    plot_fg_pks(fg, ax0, **scatter_kwargs)
 
     # Goodness of fit plot
     ax1 = plt.subplot(gs[0, 1])
     plot_fg_gf(fg, ax1, **scatter_kwargs)
 
-    # Center frequencies plot
+    # Center time plot
     ax2 = plt.subplot(gs[1, :])
     plot_fg_peak_cens(fg, ax2, **plot_kwargs)
+
+    return fig
 
 
 @savefig
 @style_plot
 @check_dependency(plt, 'matplotlib')
-def plot_fg_ap(fg, ax=None, **plot_kwargs):
-    """Plot aperiodic fit parameters, in a scatter plot.
+def plot_fg_pks(fg, ax=None, **plot_kwargs):
+    """Plot Peak fit parameters, in a scatter plot.
 
     Parameters
     ----------
@@ -80,8 +76,8 @@ def plot_fg_ap(fg, ax=None, **plot_kwargs):
     """
 
     
-    plot_scatter_2(fg.get_params('peak_params', 'BW'), 'Bandwidth',
-                   fg.get_params('peak_params', "PW"), 'Amplitude',
+    plot_scatter_2(fg.get_params('shape_params', 'BW'), 'Bandwidth',
+                   fg.get_params('shape_params', "PW"), 'Amplitude',
                     'Peak Fits', ax=ax)
 
 
@@ -109,7 +105,7 @@ def plot_fg_gf(fg, ax=None, **plot_kwargs):
 @style_plot
 @check_dependency(plt, 'matplotlib')
 def plot_fg_peak_cens(fg, ax=None, **plot_kwargs):
-    """Plot peak center frequencies, in a histogram.
+    """Plot peak center times, in a histogram.
 
     Parameters
     ----------
@@ -121,5 +117,5 @@ def plot_fg_peak_cens(fg, ax=None, **plot_kwargs):
         Keyword arguments to pass into the ``style_plot``.
     """
 
-    plot_hist(fg.get_params('peak_params', 0)[:, 0], 'Center Peak Times',
+    plot_hist(fg.get_params('shape_params', 'CT')[:, 0], 'Center Peak Times',
               'Peaks - Center Times', x_lims=fg.time_range, ax=ax)

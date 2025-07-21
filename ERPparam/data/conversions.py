@@ -6,24 +6,24 @@ from ERPparam import Bands
 from ERPparam.core.info import (get_peak_indices, get_shape_indices, 
                                 get_gauss_indices)
 from ERPparam.core.modutils import safe_import, check_dependency
-from ERPparam.analysis.periodic import get_band_peak
+from ERPparam.analysis.periodic import get_band_peak_arr
 
 pd = safe_import('pandas')
 
 ###################################################################################################
 ###################################################################################################
 
-def model_to_dict(fit_results, peak_org):
+def model_to_dict(fit_results, peak_org=None):
     """Convert model fit results to a dictionary.
 
     Parameters
     ----------
     fit_results : ERPparamResults
         Results of a model fit.
-    peak_org : int or Bands
+    peak_org : int or list or None
         How to organize peaks.
         If int, extracts the first n peaks.
-        If Bands, extracts peaks based on band definitions.
+        If list, extracts peaks based on time window.
 
     Returns
     -------
@@ -34,24 +34,20 @@ def model_to_dict(fit_results, peak_org):
     fr_dict = {}
 
     # concatenate peak and shape parameters
-    peak_params = fit_results.peak_params
     shape_params = fit_results.shape_params
     gaussian_params = fit_results.gaussian_params
-    peaks = np.hstack((peak_params, shape_params, gaussian_params))
+    peaks = np.hstack((shape_params, gaussian_params))
 
     # get indices for peak and shape parameters
-    peak_indices = get_peak_indices()
     shape_indices = get_shape_indices()
     gauss_indices = get_gauss_indices()
-    for key in shape_indices.keys():
-        shape_indices[key] += len(peak_indices)
     for key in gauss_indices.keys():
-        gauss_indices[key] += (len(peak_indices) + len(shape_indices))
-    indices = {**peak_indices, **shape_indices, **gauss_indices}
+        gauss_indices[key] += ( len(shape_indices))
+    indices = {**shape_indices, **gauss_indices}
 
     if isinstance(peak_org, int):
         if len(peaks) < peak_org:
-            nans = [np.array([np.nan] * 10) for _ in range(peak_org-len(peaks))]
+            nans = [np.array([np.nan] * peaks.shape[1]) for _ in range(peak_org-len(peaks))]
             peaks = np.vstack((peaks, nans))
 
         for ind, peak in enumerate(peaks[:peak_org, :]):
@@ -60,27 +56,30 @@ def model_to_dict(fit_results, peak_org):
 
     elif isinstance(peak_org, Bands):
         for band, f_range in peak_org:
-            for label, param in zip(indices, get_band_peak(peaks, f_range)):
+            band_peak = get_band_peak_arr(peaks, f_range)
+            if band_peak[0] == np.nan:
+                band_peak = [np.nan] * peaks.shape[1]
+            for label, param in zip(indices, band_peak):
                 fr_dict[band + '_' + label.lower()] = param
 
-        # goodness-of-fit metrics
-        fr_dict['error'] = fit_results.error
-        fr_dict['r_squared'] = fit_results.r_squared
+    # goodness-of-fit metrics
+    fr_dict['error'] = fit_results.error
+    fr_dict['r_squared'] = fit_results.r_squared
 
     return fr_dict
 
+
 @check_dependency(pd, 'pandas')
-def model_to_dataframe(fit_results, peak_org):
-    """Convert model fit results to a dataframe.
+def model_to_dataframe(fit_results, peak_org=None):
+    """Convert model fit results to a dictionary.
 
     Parameters
     ----------
     fit_results : ERPparamResults
         Results of a model fit.
-    peak_org : int or Bands
-        How to organize peaks.
-        If int, extracts the first n peaks.
-        If Bands, extracts peaks based on band definitions.
+    peak_org : int or None
+        Extracts the first n peaks.
+        If None, extracts all peaks
 
     Returns
     -------
@@ -92,17 +91,16 @@ def model_to_dataframe(fit_results, peak_org):
 
 
 @check_dependency(pd, 'pandas')
-def group_to_dataframe(fit_results, peak_org):
-    """Convert a group of model fit results into a dataframe.
+def group_to_dataframe(fit_results, peak_org=None):
+    """Convert model fit results to a dictionary.
 
     Parameters
     ----------
-    fit_results : list of ERPparamResults
-        List of ERPparamResults objects.
-    peak_org : int or Bands
-        How to organize peaks.
-        If int, extracts the first n peaks.
-        If Bands, extracts peaks based on band definitions.
+    fit_results : ERPparamResults
+        Results of a model fit.
+    peak_org : int or None
+        Extracts the first n peaks.
+        If None, extracts all peaks
 
     Returns
     -------

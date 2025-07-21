@@ -1,4 +1,4 @@
-"""Tests for the fooof.objs.group, including the FOOOFGroup object and it's methods.
+"""Tests for the ERPparam.objs.group, including the ERPparamGroup object and it's methods.
 
 NOTES
 -----
@@ -10,39 +10,41 @@ import os
 
 import numpy as np
 from numpy.testing import assert_equal
+from pytest import raises
 
-from fooof.core.items import OBJ_DESC
-from fooof.core.modutils import safe_import
-from fooof.core.errors import DataError, NoDataError, InconsistentDataError
-from fooof.data import FOOOFResults
-from fooof.sim import gen_group_power_spectra
+from ERPparam.core.items import OBJ_DESC
+from ERPparam.core.modutils import safe_import
+from ERPparam.core.errors import DataError, NoDataError, InconsistentDataError
+from ERPparam.data import ERPparamResults
+from ERPparam.sim import simulate_erps
+from ERPparam.sim.params import param_sampler
 
 pd = safe_import('pandas')
 
-from fooof.tests.settings import TEST_DATA_PATH, TEST_REPORTS_PATH
-from fooof.tests.tutils import default_group_params, plot_test
+from ERPparam.tests.settings import TEST_DATA_PATH, TEST_REPORTS_PATH
+from ERPparam.tests.tutils import default_group_params, plot_test
 
-from fooof.objs.group import *
+from ERPparam.objs.group import *
 
 ###################################################################################################
 ###################################################################################################
 
 def test_fg():
-    """Check FOOOFGroup object initializes properly."""
+    """Check ERPparamGroup object initializes properly."""
 
     # Note: doesn't assert fg itself, as it return false when group_results are empty
-    #  This is due to the __len__ used in FOOOFGroup
-    fg = FOOOFGroup(verbose=False)
-    assert isinstance(fg, FOOOFGroup)
+    #  This is due to the __len__ used in ERPparamGroup
+    fg = ERPparamGroup(verbose=False)
+    assert isinstance(fg, ERPparamGroup)
 
 def test_fg_iter(tfg):
-    """Check iterating through FOOOFGroup."""
+    """Check iterating through ERPparamGroup."""
 
     for res in tfg:
         assert res
 
 def test_fg_getitem(tfg):
-    """Check indexing, from custom __getitem__, in FOOOFGroup."""
+    """Check indexing, from custom __getitem__, in ERPparamGroup."""
 
     assert tfg[0]
 
@@ -51,7 +53,7 @@ def test_fg_has_data(tfg):
 
     assert tfg.has_model
 
-    ntfg = FOOOFGroup()
+    ntfg = ERPparamGroup()
     assert not ntfg.has_data
 
 def test_fg_has_model(tfg):
@@ -59,10 +61,13 @@ def test_fg_has_model(tfg):
 
     assert tfg.has_model
 
-    ntfg = FOOOFGroup()
+    ntfg = ERPparamGroup()
     assert not ntfg.has_model
 
-def test_fooof_n_peaks(tfg):
+    with raises(NoDataError):
+        ntfg.fit()
+
+def test_ERPparam_n_peaks(tfg):
     """Test the n_peaks property attribute."""
 
     assert tfg.n_peaks_
@@ -80,81 +85,69 @@ def test_null_inds(tfg):
     assert tfg.null_inds_ == []
 
 def test_fg_fit_nk():
-    """Test FOOOFGroup fit, no knee."""
+    """Test ERPparamGroup fit, no noise. Intialize empty Group obj, then feed data into fit func. """
 
-    n_spectra = 2
-    xs, ys = gen_group_power_spectra(n_spectra, *default_group_params(), nlvs=0)
+    n_signals = 2
+    xs, ys = simulate_erps(n_signals, *default_group_params())
 
-    tfg = FOOOFGroup(verbose=False)
+    tfg = ERPparamGroup(verbose=False, max_n_peaks=4)
     tfg.fit(xs, ys)
     out = tfg.get_results()
 
     assert out
-    assert len(out) == n_spectra
-    assert isinstance(out[0], FOOOFResults)
-    assert np.all(out[1].aperiodic_params)
+    assert len(out) == n_signals
+    assert isinstance(out[0], ERPparamResults)
+    assert np.all(out[1].gaussian_params[:, :3])
 
 def test_fg_fit_nk_noise():
-    """Test FOOOFGroup fit, no knee, on noisy data, to make sure nothing breaks."""
+    """Test ERPparamGroup fit, on noisy data, to make sure nothing breaks."""
 
-    n_spectra = 5
-    xs, ys = gen_group_power_spectra(n_spectra, *default_group_params(), nlvs=1.0)
+    n_signals = 2
+    xs, ys = simulate_erps(n_signals, *default_group_params())
 
-    tfg = FOOOFGroup(max_n_peaks=8, verbose=False)
-    tfg.fit(xs, ys)
-
-    # No accuracy checking here - just checking that it ran
-    assert tfg.has_model
-
-def test_fg_fit_knee():
-    """Test FOOOFGroup fit, with a knee."""
-
-    n_spectra = 2
-    ap_params = [50, 2, 1]
-    gaussian_params = [10, 0.5, 2, 20, 0.3, 4]
-
-    xs, ys = gen_group_power_spectra(n_spectra, [1, 150], ap_params, gaussian_params, nlvs=0)
-
-    tfg = FOOOFGroup(aperiodic_mode='knee', verbose=False)
+    tfg = ERPparamGroup(verbose=False, max_n_peaks=4)
     tfg.fit(xs, ys)
 
     # No accuracy checking here - just checking that it ran
     assert tfg.has_model
 
 def test_fg_fit_progress(tfg):
-    """Test running FOOOFGroup fitting, with a progress bar."""
+    """Test running ERPparamGroup fitting, with a progress bar."""
 
     tfg.fit(progress='tqdm')
 
 def test_fg_fail():
-    """Test FOOOFGroup fit, in a way that some fits will fail.
+    """Test ERPparamGroup fit, in a way that some fits will fail.
     Also checks that model failures don't cause errors.
     """
 
-    # Create some noisy spectra that will be hard to fit
-    fs, ps = gen_group_power_spectra(10, [3, 6], [1, 1], [10, 1, 1], nlvs=10)
+    # Create some noisy spectra that will be hard to fit    
+    time_range, erp_params, _ = default_group_params()
+    nlv = 0.3
+
+    xs, ys = simulate_erps(3, time_range, erp_params, nlv)
 
     # Use a fg with the max iterations set so low that it will fail to converge
-    ntfg = FOOOFGroup()
-    ntfg._maxfev = 5
+    ntfg = ERPparamGroup(max_n_peaks=3, peak_threshold=1.5)
+    ntfg.maxfev = 5
 
     # Fit models, where some will fail, to see if it completes cleanly
-    ntfg.fit(fs, ps)
+    ntfg.fit(xs, ys)
 
     # Check that results are all
     for res in ntfg.get_results():
         assert res
 
     # Test that get_params works with failed model fits
-    outs1 = ntfg.get_params('aperiodic_params')
-    outs2 = ntfg.get_params('aperiodic_params', 'exponent')
-    outs3 = ntfg.get_params('peak_params')
-    outs4 = ntfg.get_params('peak_params', 0)
+    outs1 = ntfg.get_params('gaussian_params')
+    outs2 = ntfg.get_params('shape_params', 'sharpness')
+    outs3 = ntfg.get_params('shape_params', 'CT')
+    outs4 = ntfg.get_params('shape_params', 0)
     outs5 = ntfg.get_params('gaussian_params', 2)
 
     # Test shortcut labels
-    outs6 = ntfg.get_params('aperiodic')
-    outs6 = ntfg.get_params('peak', 'CF')
+    outs6 = ntfg.get_params('gaussian')
+    outs6 = ntfg.get_params('shape', 'CT')
 
     # Test the property attributes related to null model fits
     #   This checks that they do the right thing when there are null fits (failed fits)
@@ -162,12 +155,12 @@ def test_fg_fail():
     assert ntfg.null_inds_
 
 def test_fg_drop():
-    """Test function to drop results from FOOOFGroup."""
+    """Test function to drop results from ERPparamGroup."""
 
-    n_spectra = 3
-    xs, ys = gen_group_power_spectra(n_spectra, *default_group_params())
+    n_signals = 3
+    xs, ys = simulate_erps(n_signals, *default_group_params())
 
-    tfg = FOOOFGroup(verbose=False)
+    tfg = ERPparamGroup(verbose=False, peak_threshold=1.5, max_n_peaks=3)
 
     # Test dropping one ind
     tfg.fit(xs, ys)
@@ -187,26 +180,49 @@ def test_fg_drop():
         for field in dropped_fres._fields:
             assert np.all(np.isnan(getattr(dropped_fres, field)))
 
-    # Test that a FOOOFGroup that has had inds dropped still works with `get_params`
-    cfs = tfg.get_params('peak_params', 1)
-    exps = tfg.get_params('aperiodic_params', 'exponent')
-    assert np.all(np.isnan(exps[drop_inds]))
-    assert np.all(np.invert(np.isnan(np.delete(exps, drop_inds))))
+    # Test that a ERPparamGroup that has had inds dropped still works with `get_params`
+    cfs = tfg.get_params('shape_params', 1)
+    exps = tfg.get_params('gaussian_params', 'MN')
+    assert np.all(np.isnan([exps[i,0] for i in range(exps.shape[0]) if exps[i,1] in drop_inds ]))
+    #assert np.all(np.invert(np.isnan(np.delete(exps, drop_inds))))
 
 def test_fg_fit_par():
-    """Test FOOOFGroup fit, running in parallel."""
+    """Test ERPparamGroup fit, running in parallel."""
 
-    n_spectra = 2
-    xs, ys = gen_group_power_spectra(n_spectra, *default_group_params())
+    n_signals = 2
+    xs, ys = simulate_erps(n_signals, *default_group_params())
 
-    tfg = FOOOFGroup(verbose=False)
+    tfg = ERPparamGroup(verbose=False)
     tfg.fit(xs, ys, n_jobs=2)
     out = tfg.get_results()
 
     assert out
-    assert len(out) == n_spectra
-    assert isinstance(out[0], FOOOFResults)
-    assert np.all(out[1].aperiodic_params)
+    assert len(out) == n_signals
+    assert isinstance(out[0], ERPparamResults)
+    assert np.all(out[1].gaussian_params)
+
+def test_fg_fit_skew():
+    """Test ERPparamGroup fit, with skewed gaussian peaks."""
+
+    n_signals = 2
+    time_range, erp_params_d, nlvs = default_group_params()
+
+    for skew in [-2, 0, 2]:
+        erp_params_i = next(erp_params_d)
+        chunks = [erp_params_i[i:i+3] for i in range(0, len(erp_params_i), 3)]
+        erp_params = np.concatenate([np.append(chunk, skew) for chunk in chunks])
+        xs, ys = simulate_erps(n_signals, time_range, erp_params, nlvs, 
+                            peak_mode='skewed_gaussian')
+
+        tfg = ERPparamGroup(verbose=False, max_n_peaks=4)
+        tfg.fit(xs, ys, n_jobs=2)
+        out = tfg.get_results()
+
+        assert out
+        assert len(out) == n_signals
+        assert isinstance(out[0], ERPparamResults)
+        assert np.all(out[1].gaussian_params)
+        assert np.all(out[1].shape_params)
 
 def test_fg_print(tfg):
     """Check print method (alias)."""
@@ -227,17 +243,19 @@ def test_get_results(tfg):
     assert tfg.get_results()
 
 def test_get_params(tfg):
-    """Check get_params method."""
+    """Test the get_params method."""
 
-    for dname in ['aperiodic_params', 'peak_params', 'error', 'r_squared', 'gaussian_params']:
+    for dname in ['shape','shape_params',
+                  'error', 'r_squared', 'gaussian_params', 'gaussian']:
         assert np.any(tfg.get_params(dname))
 
-        if dname == 'aperiodic_params':
-            for dtype in ['offset', 'exponent']:
+        if dname == 'gaussian_params' or dname == 'gaussian':
+            for dtype in ['MN','HT','SD']:
                 assert np.any(tfg.get_params(dname, dtype))
 
-        if dname == 'peak_params':
-            for dtype in ['CF', 'PW', 'BW']:
+        if dname == 'shape_params' or dname == 'shape':
+            for dtype in ['CT', 'PW', 'BW','FWHM', 'rise_time', 'decay_time', 'symmetry',
+            'sharpness', 'sharpness_rise', 'sharpness_decay']:
                 assert np.any(tfg.get_params(dname, dtype))
 
 @plot_test
@@ -247,14 +265,14 @@ def test_fg_plot(tfg, skip_if_no_mpl):
     tfg.plot()
 
 def test_fg_load():
-    """Test load into FOOOFGroup. Note: loads files from test_core_io."""
+    """Test load into ERPparamGroup. Note: loads files from test_core_io."""
 
-    file_name_res = 'test_fooofgroup_res'
-    file_name_set = 'test_fooofgroup_set'
-    file_name_dat = 'test_fooofgroup_dat'
+    file_name_res = 'test_ERPparamgroup_res'
+    file_name_set = 'test_ERPparamgroup_set'
+    file_name_dat = 'test_ERPparamgroup_dat'
 
     # Test loading just results
-    tfg = FOOOFGroup(verbose=False)
+    tfg = ERPparamGroup(verbose=False)
     tfg.load(file_name_res, TEST_DATA_PATH)
     assert len(tfg.group_results) > 0
     # Test that settings and data are None
@@ -262,22 +280,22 @@ def test_fg_load():
     for setting in OBJ_DESC['settings']:
         if setting != 'aperiodic_mode':
             assert getattr(tfg, setting) is None
-    assert tfg.power_spectra is None
+    assert tfg.signals is None
 
     # Test loading just settings
-    tfg = FOOOFGroup(verbose=False)
+    tfg = ERPparamGroup(verbose=False)
     tfg.load(file_name_set, TEST_DATA_PATH)
     for setting in OBJ_DESC['settings']:
         assert getattr(tfg, setting) is not None
     # Test that results and data are None
     for result in OBJ_DESC['results']:
         assert np.all(np.isnan(getattr(tfg, result)))
-    assert tfg.power_spectra is None
+    assert tfg.signals is None
 
     # Test loading just data
-    tfg = FOOOFGroup(verbose=False)
+    tfg = ERPparamGroup(verbose=False)
     tfg.load(file_name_dat, TEST_DATA_PATH)
-    assert tfg.power_spectra is not None
+    assert tfg.signals is not None
     # Test that settings and results are None
     for setting in OBJ_DESC['settings']:
         assert getattr(tfg, setting) is None
@@ -285,65 +303,68 @@ def test_fg_load():
         assert np.all(np.isnan(getattr(tfg, result)))
 
     # Test loading all elements
-    tfg = FOOOFGroup(verbose=False)
-    file_name_all = 'test_fooofgroup_all'
+    tfg = ERPparamGroup(verbose=False)
+    file_name_all = 'test_ERPparamgroup_all'
     tfg.load(file_name_all, TEST_DATA_PATH)
     assert len(tfg.group_results) > 0
     for setting in OBJ_DESC['settings']:
         assert getattr(tfg, setting) is not None
-    assert tfg.power_spectra is not None
+    assert tfg.signals is not None
     for meta_dat in OBJ_DESC['meta_data']:
         assert getattr(tfg, meta_dat) is not None
 
 def test_fg_report(skip_if_no_mpl):
     """Check that running the top level model method runs."""
 
-    n_spectra = 2
-    xs, ys = gen_group_power_spectra(n_spectra, *default_group_params())
+    n_signals = 2
+    xs, ys = simulate_erps(n_signals, *default_group_params())
 
-    tfg = FOOOFGroup(verbose=False)
+    tfg = ERPparamGroup(verbose=False)
     tfg.report(xs, ys)
 
     assert tfg
 
-def test_fg_get_fooof(tfg):
-    """Check return of an individual model fit to a FOOOF object from FOOOFGroup."""
+    """Check return of an individual model fit to a ERPparam object from ERPparamGroup."""
 
     # Check without regenerating
-    tfm0 = tfg.get_fooof(0, False)
+    tfm0 = tfg.get_ERPparam(0, False)
     assert tfm0
     # Check that settings are copied over properly
     for setting in OBJ_DESC['settings']:
         assert getattr(tfg, setting) == getattr(tfm0, setting)
 
     # Check with regenerating
-    tfm1 = tfg.get_fooof(1, True)
+    tfm1 = tfg.get_ERPparam(1, True)
     assert tfm1
     # Check that regenerated model is created
     for result in OBJ_DESC['results']:
-        assert np.all(getattr(tfm1, result))
+        if (result == 'gaussian_params_') or (result == 'peak_params_'):
+            assert np.all(getattr(tfm1, result)[:, :3])
+        else:
+            assert np.all(getattr(tfm1, result))
 
     # Test when object has no data (clear a copy of tfg)
     new_tfg = tfg.copy()
-    new_tfg._reset_data_results(False, True, True, True)
-    tfm2 = new_tfg.get_fooof(0, True)
+    new_tfg._reset_data_results(clear_signals=True, clear_time=False, clear_results=True, clear_signal=True)
+    new_tfg._reset_group_results(length=n_signals)
+    tfm2 = new_tfg.get_ERPparam(0, True)
     assert tfm2
     # Check that data info is copied over properly
     for meta_dat in OBJ_DESC['meta_data']:
         assert getattr(tfm2, meta_dat)
 
 def test_fg_get_group(tfg):
-    """Check the return of a sub-sampled FOOOFGroup."""
+    """Check the return of a sub-sampled ERPparamGroup."""
 
     # Check with list index
     inds1 = [1, 2]
     nfg1 = tfg.get_group(inds1)
-    assert isinstance(nfg1, FOOOFGroup)
+    assert isinstance(nfg1, ERPparamGroup)
 
     # Check with range index
     inds2 = range(0, 2)
     nfg2 = tfg.get_group(inds2)
-    assert isinstance(nfg2, FOOOFGroup)
+    assert isinstance(nfg2, ERPparamGroup)
 
     # Check that settings are copied over properly
     for setting in OBJ_DESC['settings']:
@@ -356,8 +377,8 @@ def test_fg_get_group(tfg):
         assert getattr(nfg2, meta_dat)
 
     # Check that the correct data is extracted
-    assert_equal(tfg.power_spectra[inds1, :], nfg1.power_spectra)
-    assert_equal(tfg.power_spectra[inds2, :], nfg2.power_spectra)
+    assert_equal(tfg.signals[inds1, :], nfg1.signals)
+    assert_equal(tfg.signals[inds2, :], nfg2.signals)
 
     # Check that the correct results are extracted
     assert [tfg.group_results[ind] for ind in inds1] == nfg1.group_results

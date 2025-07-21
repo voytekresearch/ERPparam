@@ -1,4 +1,4 @@
-"""Tests for fooof.core.utils."""
+"""Tests for ERPparam.core.utils."""
 
 from collections.abc import Iterable
 from itertools import repeat
@@ -7,7 +7,7 @@ from numpy import array_equal
 
 from pytest import raises
 
-from fooof.core.utils import *
+from ERPparam.core.utils import *
 
 ###################################################################################################
 ###################################################################################################

@@ -6,10 +6,10 @@ import pytest
 
 import numpy as np
 
-from fooof.core.modutils import safe_import
+from ERPparam.core.modutils import safe_import
 
-from fooof.tests.tutils import get_tfm, get_tfg, get_tbands, get_tresults
-from fooof.tests.settings import (BASE_TEST_FILE_PATH, TEST_DATA_PATH,
+from ERPparam.tests.tutils import get_tfm, get_tfg, get_tbands, get_twindow, get_tresults
+from ERPparam.tests.settings import (BASE_TEST_FILE_PATH, TEST_DATA_PATH,
                                   TEST_REPORTS_PATH, TEST_PLOTS_PATH)
 
 plt = safe_import('.pyplot', 'matplotlib')
@@ -47,6 +47,10 @@ def tfg():
 @pytest.fixture(scope='session')
 def tbands():
     yield get_tbands()
+    
+@pytest.fixture(scope='session')
+def twindow():
+    yield get_twindow()
 
 @pytest.fixture(scope='session')
 def tresults():

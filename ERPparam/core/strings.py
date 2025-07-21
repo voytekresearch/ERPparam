@@ -17,13 +17,13 @@ SCV = 70
 ###################################################################################################
 ###################################################################################################
 
-def gen_width_warning_str(freq_res, bwl):
+def gen_width_warning_str(time_res, bwl):
     """Generate a string representation of the warning about peak width limits.
 
     Parameters
     ----------
-    freq_res : float
-        Frequency resolution.
+    time_res : float
+        Time resolution.
     bwl : float
         Lower bound peak width limit.
 
@@ -35,12 +35,12 @@ def gen_width_warning_str(freq_res, bwl):
 
     output = '\n'.join([
         '',
-        'ERPparam WARNING: Lower-bound peak width limit is < or ~= the frequency resolution: ' + \
-            '{:1.2f} <= {:1.2f}'.format(bwl, freq_res),
-        '\tLower bounds below frequency-resolution have no effect ' + \
-        '(effective lower bound is the frequency resolution).',
+        'ERPparam WARNING: Lower-bound peak width limit is < or ~= the time resolution: ' + \
+            '{:1.2f} <= {:1.2f}'.format(bwl, time_res),
+        '\tLower bounds below time-resolution have no effect ' + \
+        '(effective lower bound is the time resolution).',
         '\tToo low a limit may lead to overfitting noise as small bandwidth peaks.',
-        '\tWe recommend a lower bound of approximately 2x the frequency resolution.',
+        '\tWe recommend a lower bound of approximately 2x the time resolution.',
         ''
     ])
 
@@ -171,8 +171,47 @@ def gen_settings_str(ERPparam_obj, description=False, concise=False):
 
     return output
 
+def gen_model_exists_str(ERPparam_obj, concise=False):
+    """Generate a string warning that a model already exists in the object, and the settings used.
 
-def gen_freq_range_str(ERPparam_obj, concise=False):
+    Parameters
+    ----------
+    ERPparam_obj : ERPparam or ERPparamGroup
+        Object to access settings from.
+    concise : bool, optional, default: False
+        Whether to print the report in concise mode.
+
+    Notes
+    -----
+    If fit range is not available, will print out 'XX' for missing values.
+    """
+    assert ERPparam_obj.has_data
+    time_range = ERPparam_obj.time_range
+    baseline_ = ERPparam_obj.baseline 
+
+    str_lst = [
+
+        # Header
+        '=',
+        '',
+        'ERPparam Model already exists',
+        '',
+
+        # Frequency range information information
+        'The model was fit from {:6.3f} to {:6.3f}, using a baseline period of {:6.2f} to {:6.2f}. \
+        \nTime and signal inputs given here will be ignored. Re-fit the model or reset the data if neccessary.'.format(time_range[0], time_range[1], baseline_[0], baseline_[1]),
+
+        # Footer
+        '',
+        '='
+
+    ]
+
+    output = _format(str_lst, concise)
+
+    return output
+
+def gen_time_range_str(ERPparam_obj, concise=False):
     """Generate a string representation of the fit range that was used for the model.
 
     Parameters
@@ -187,7 +226,7 @@ def gen_freq_range_str(ERPparam_obj, concise=False):
     If fit range is not available, will print out 'XX' for missing values.
     """
 
-    freq_range = ERPparam_obj.freq_range if ERPparam_obj.has_data else ('XX', 'XX')
+    time_range = ERPparam_obj.time_range if ERPparam_obj.has_data else ('XX', 'XX')
 
     str_lst = [
 
@@ -198,7 +237,7 @@ def gen_freq_range_str(ERPparam_obj, concise=False):
         '',
 
         # Frequency range information information
-        'The model was fit from {} to {} Hz.'.format(*freq_range),
+        'The model was fit from {} to {}.'.format(*time_range),
 
         # Footer
         '',
@@ -238,7 +277,7 @@ def gen_methods_report_str(concise=False):
         '',
         '- the code version that was used used',
         '- the algorithm settings that were used',
-        '- the frequency range that was fit',
+        '- the time range that was fit',
 
         # Footer
         '',
@@ -262,28 +301,31 @@ def gen_methods_text_str(ERPparam_obj=None):
 
     template = (
         "The ERPparam algorithm (version {}) was used to parameterize "
-        "neural power spectra. Settings for the algorithm were set as: "
+        "neural timeseries. Settings for the algorithm were set as: "
         "peak width limits : {}; "
         "max number of peaks : {}; "
         "minimum peak height : {}; "
         "peak threshold : {}; "
-        "and aperiodic mode : '{}'. "
-        "Power spectra were parameterized across the frequency range "
-        "{} to {} Hz."
+        "ERPs were parameterized across the time range "
+        "{} to {}."
+        "The time range (baseline period) used for "
+        "calculating the noise threshold was {} to {}."
     )
 
     if ERPparam_obj:
-        freq_range = ERPparam_obj.freq_range if ERPparam_obj.has_data else ('XX', 'XX')
+        time_range = ERPparam_obj.time_range if ERPparam_obj.has_data else ('XX', 'XX')
+        time_baseline = ERPparam_obj.baseline if ERPparam_obj.has_data else ('XX', 'XX')
     else:
-        freq_range = ('XX', 'XX')
+        time_range = ('XX', 'XX')
+        time_baseline = ('XX','XX')
 
     methods_str = template.format(ERPPARAM_VERSION,
                                   ERPparam_obj.peak_width_limits if ERPparam_obj else 'XX',
                                   ERPparam_obj.max_n_peaks if ERPparam_obj else 'XX',
                                   ERPparam_obj.min_peak_height if ERPparam_obj else 'XX',
                                   ERPparam_obj.peak_threshold if ERPparam_obj else 'XX',
-                                  ERPparam_obj.aperiodic_mode if ERPparam_obj else 'XX',
-                                  *freq_range)
+                                  *time_range,
+                                  *time_baseline)
 
     return methods_str
 
@@ -364,11 +406,11 @@ def gen_results_fg_str(fg, concise=False):
         raise NoModelError("No model fit results are available, can not proceed.")
 
     # Extract all the relevant data for printing
-    n_peaks = len(fg.get_params('peak_params'))
+    n_peaks = len(fg.get_params('shape_params'))
     r2s = fg.get_params('r_squared')
     errors = fg.get_params('error')
-    bws = fg.get_params('peak_params', 'BW')
-    pws = fg.get_params('peak_params', 'PW')
+    bws = fg.get_params('shape_params', 'BW')
+    pws = fg.get_params('shape_params', 'PW')
     symmetry = fg.get_params('shape_params', 'symmetry')
     sharpness = fg.get_params('shape_params', 'sharpness')
 
@@ -389,8 +431,8 @@ def gen_results_fg_str(fg, concise=False):
         '',
 
         # Frequency range and resolution
-        'The model was run on the time range {} - {} '.format(
-            int(np.floor(fg.time_range[0])), int(np.ceil(fg.time_range[1]))),
+        'The model was run on the time range {} - {} '.format( fg.time_range[0], fg.time_range[1]),
+        'The baseline variance was calculated on {} - {} '.format( fg.baseline[0], fg.baseline[1]),
         'Time Resolution is {:1.2f}'.format(fg.time_res),
         '',
 

@@ -1,15 +1,15 @@
-"""Utilities for testing fooof."""
+"""Utilities for testing ERPparam."""
 
 from functools import wraps
 
 import numpy as np
 
-from fooof.bands import Bands
-from fooof.data import FOOOFResults
-from fooof.objs import FOOOF, FOOOFGroup
-from fooof.core.modutils import safe_import
-from fooof.sim.params import param_sampler
-from fooof.sim.gen import gen_power_spectrum, gen_group_power_spectra
+from ERPparam.bands import Bands
+from ERPparam.data import ERPparamResults
+from ERPparam.objs import ERPparam, ERPparamGroup
+from ERPparam.core.modutils import safe_import
+from ERPparam.sim.params import param_sampler
+from ERPparam.sim.gen import simulate_erp, simulate_erps
 
 plt = safe_import('.pyplot', 'matplotlib')
 
@@ -17,51 +17,78 @@ plt = safe_import('.pyplot', 'matplotlib')
 ###################################################################################################
 
 def get_tfm():
-    """Get a FOOOF object, with a fit power spectrum, for testing."""
+    """Get a ERPparam object, with a fit power spectrum, for testing."""
 
-    freq_range = [3, 50]
-    ap_params = [50, 2]
-    gaussian_params = [10, 0.5, 2, 20, 0.3, 4]
+    fs = 1000
+    xs, ys = simulate_erp(*default_params(), fs=fs)
 
-    xs, ys = gen_power_spectrum(freq_range, ap_params, gaussian_params)
-
-    tfm = FOOOF(verbose=False)
+    tfm = ERPparam(verbose=False, max_n_peaks=4)
     tfm.fit(xs, ys)
 
     return tfm
 
+
 def get_tfg():
-    """Get a FOOOFGroup object, with some fit power spectra, for testing."""
+    """Get a ERPparamGroup object, with some fit power spectra, for testing."""
 
-    n_spectra = 3
-    xs, ys = gen_group_power_spectra(n_spectra, *default_group_params())
+    n_signals = 3
+    xs, ys = simulate_erps(n_signals, *default_group_params())
 
-    tfg = FOOOFGroup(verbose=False)
+    tfg = ERPparamGroup(verbose=False, max_n_peaks=4)
     tfg.fit(xs, ys)
 
     return tfg
 
+
 def get_tbands():
     """Get a bands object, for testing."""
 
-    return Bands({'theta' : (4, 8), 'alpha' : (8, 12), 'beta' : (13, 30)})
+    return Bands({'p1' : (0, 0.2), 'p3' : (0.2, 0.4)})
+
+
+def get_twindow():
+    """Get a time window list, for testing."""
+
+    return [0, 10]
+
 
 def get_tresults():
-    """Get a FOOOFResults objet, for testing."""
+    """Get a ERPparamResults objet, for testing."""
 
-    return FOOOFResults(aperiodic_params=np.array([1.0, 1.00]),
-                        peak_params=np.array([[10.0, 1.25, 2.0], [20.0, 1.0, 3.0]]),
-                        r_squared=0.97, error=0.01,
-                        gaussian_params=np.array([[10.0, 1.25, 1.0], [20.0, 1.0, 1.5]]))
+    return ERPparamResults(shape_params=np.array([[0.08, 0.05, 0.02, 0.6, 0.97, 0.97, 0.98, 0.1, 2, 0.06], 
+                                                  [0.08, 0.05, 0.02, 0.6, 0.97, 0.97, 0.98, 0.2, -1.5, 0.1]]), 
+                           # [duration, rise-time, decay-time, rise-decay symmetry, FWHM, rising sharpness, decaying sharpness, CT, PW, BW]
+                           r_squared=0.97, error=0.01,
+                           gaussian_params=np.array([[0.1, 2, 0.03], [0.2, -1.5, 0.05]]), # [mean, height, standard deviation]
+                           peak_indices=np.array([[1,2,3],[4,5,6]])
+                           )
+
+def default_params():
+    time_range = (-0.5, 2)
+    erp_latency = [0.1, 0.2]
+    erp_amplitude = [2, -1.5]
+    erp_width = [0.03, 0.05]
+    erp_params = np.ravel(np.column_stack([erp_latency, erp_amplitude, erp_width]))
+    nlv = 0.1
+
+    return time_range, erp_params, nlv
+
 
 def default_group_params():
     """Create default parameters for generating a test group of power spectra."""
 
-    freq_range = [3, 50]
-    ap_opts = param_sampler([[20, 2], [50, 2.5], [35, 1.5]])
-    gauss_opts = param_sampler([[10, 0.5, 2], [10, 0.5, 2, 20, 0.3, 4]])
+    time_range = [-0.5, 2]
+    erp_latency = [0.1, 0.2]
+    erp_amplitude = [2, -1.5]
+    erp_width = [0.03, 0.05]
+    erp_params = param_sampler( [np.ravel(np.column_stack([erp_latency, erp_amplitude, erp_width])),
+                                np.ravel(np.column_stack([erp_latency[:2], erp_amplitude[:2], erp_width[:2]])),
+                                np.ravel(np.column_stack([erp_latency[0], erp_amplitude[0], erp_width[0]]))
+                                ] )
+    nlvs = 0.1
 
-    return freq_range, ap_opts, gauss_opts
+    return time_range, erp_params, nlvs
+
 
 def plot_test(func):
     """Decorator for simple testing of plotting functions.

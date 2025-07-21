@@ -16,12 +16,13 @@ from ERPparam.plts.fg import plot_fg
 from ERPparam.core.items import OBJ_DESC
 from ERPparam.core.info import get_indices
 from ERPparam.core.utils import check_inds
-from ERPparam.core.errors import NoModelError
+from ERPparam.core.errors import NoModelError, NoDataError
 from ERPparam.core.reports import save_report_fg
 from ERPparam.core.strings import gen_results_fg_str
 from ERPparam.core.io import save_fg, load_jsonlines
 from ERPparam.core.modutils import copy_doc_func_to_method, safe_import
 from ERPparam.data.conversions import group_to_dataframe
+from ERPparam.data import ERPparamResults
 
 ###################################################################################################
 ###################################################################################################
@@ -39,8 +40,8 @@ class ERPparamGroup(ERPparam):
         Absolute threshold for detecting peaks, in units of the input data.
     peak_threshold : float, optional, default: 2.0
         Relative threshold for detecting peaks, in units of standard deviation of the input data.
-    skewed_gaussian : bool, optional, default: True
-        Whether to use a skewed gaussian model for the ERP components.
+    peak_mode : str, optional, default: 'gaussian'
+        Whether to use a skewed gaussian model for the ERP components. "gaussian" is for the base gaussian function, "skewed_gaussian" for skewed gaussians
     verbose : bool, optional, default: True
         Verbosity mode. If True, prints out warnings and general status updates.
 
@@ -84,7 +85,7 @@ class ERPparamGroup(ERPparam):
       and the BW of the peak, is 2*std of the gaussian (as 'two sided' bandwidth).
     - The ERPparamGroup object inherits from the ERPparam object. As such it also has data
       attributes (`signal`), and parameter attributes
-      ( `peak_params_`, `gaussian_params_`, `r_squared_`, `error_`)
+      ( `shape_params_`, `gaussian_params_`, `r_squared_`, `error_`)
       which are defined in the context of individual model fits. These attributes are
       used during the fitting process, but in the group context do not store results
       post-fitting. Rather, all model fit results are collected and stored into the
@@ -96,12 +97,11 @@ class ERPparamGroup(ERPparam):
     def __init__(self, *args, **kwargs):
         """Initialize object with desired settings."""
 
-        ERPparam.__init__(self, *args, **kwargs)
-
         self.signals = None
 
         self._reset_group_results()
 
+        ERPparam.__init__(self, *args, **kwargs)
 
     def __len__(self):
         """Define the length of the object as the number of model fit results available."""
@@ -140,14 +140,14 @@ class ERPparamGroup(ERPparam):
     def n_peaks_(self):
         """How many peaks were fit for each model."""
 
-        return [single_tr_erp.peak_params.shape[0] for single_tr_erp in self] if self.has_model else None
+        return [single_tr_erp.shape_params.shape[0] for single_tr_erp in self] if self.has_model else None
 
 
     @property
     def n_null_(self):
         """How many model fits are null."""
 
-        return sum([1 for single_tr_erp in self.group_results if (len(single_tr_erp.peak_params)==0)]) \
+        return sum([1 for single_tr_erp in self.group_results if (len(single_tr_erp.shape_params)==0)]) \
             if self.has_model else None
 
 
@@ -156,29 +156,34 @@ class ERPparamGroup(ERPparam):
         """The indices for model fits that are null."""
 
         return [ind for ind, single_tr_erp in enumerate(self.group_results) \
-            if (len(single_tr_erp.peak_params)==0)] \
+            if (len(single_tr_erp.shape_params)==0)] \
             if self.has_model else None
 
 
-    def _reset_data_results(self, clear_signal=False, clear_signals=False, clear_time=False,
-                            clear_results=False):
-        """Set, or reset, data & results attributes to empty.
+    def _reset_data_results(self, clear_signals=False, clear_time=False,
+                            clear_results=False, clear_signal=False):
+        """Set, or reset, data & results attributes to empty. 
+        Automatically sets self.signal attribute to None if clear_signals=True.
 
         Parameters
         ----------
-        clear_times : bool, optional, default: False
+        clear_signals : bool, optional, default: False
+            Whether to clear  group signals attribute.
+        clear_time : bool, optional, default: False
             Whether to clear time attributes.
-        clear_spectrum : bool, optional, default: False
-            Whether to clear power spectrum attribute.
         clear_results : bool, optional, default: False
             Whether to clear model results attributes.
-        clear_spectra : bool, optional, default: False
-            Whether to clear power spectra attribute.
+        clear_signal : bool, optional, default: False
+            Sets self.signal to None if True, or if clear_signals is True
         """
 
-        super()._reset_data_results(clear_time, clear_signal, clear_results)
+        super()._reset_data_results(clear_time=clear_time, 
+                                    clear_signal=clear_signal, 
+                                    clear_results=clear_results)
         if clear_signals:
             self.signals= None
+
+
 
 
     def _reset_group_results(self, length=0):
@@ -189,21 +194,32 @@ class ERPparamGroup(ERPparam):
         length : int, optional, default: 0
             Length of list of empty lists to initialize. If 0, creates a single empty list.
         """
+        format_dict = { 'gaussian_params_' : np.ones([0,4])*np.nan,
+                        'peak_params_' : np.ones([0,4])*np.nan,
+                        'shape_params_' : np.ones([0,11])*np.nan,
+                        'r_squared_': np.nan,
+                        'error_' : np.nan,
+                        'peak_indices_' : np.full(3, np.nan)
+                    }
+        empty_res = ERPparamResults(**{key.strip('_') : format_dict[key] \
+            for key in OBJ_DESC['results']})
 
-        self.group_results = [[]] * length
+        self.group_results = [empty_res] * length
+
+        #self.group_results = [[]] * length
 
 
     def _add_data(self, time, signals, time_range, baseline):
-        """Add data (frequencies and power spectrum values) to the current object.
+        """Add data (time and signal values) to the current object.
 
         Parameters
         ----------
         times : 1d array
-            Frequency values for the power spectra, in linear space.
+            Time values for the power spectra, in linear space.
         signals : 2d array, shape=[n_signals, n_times]
-            Matrix of power values, in linear space.
+            Matrix of voltage values
         time_range : list of [float, float], optional
-            Frequency range to restrict power spectra to. If not provided, keeps the entire range.
+            Time range to restrict fitting to. If not provided, keeps the entire range.
 
         Notes
         -----
@@ -214,9 +230,9 @@ class ERPparamGroup(ERPparam):
         # If any data is already present, then clear data & results
         #   This is to ensure object consistency of all data & results
         if np.any(self.time):
-            self._reset_data_results(True, True, True, True)
+            self._reset_data_results(True, True, True)
             self._reset_group_results()
-
+            
         #output of prepare data: time, signal, time_range, baseline_signal, baseline, uncropped signal, uncropped time, fs, time-res
         self.time, self.signals, self.time_range, self.baseline_signal, self.baseline, self.uncropped_signals, self.uncropped_time, self.fs, self.time_res \
             = self._prepare_data(time=time, signal=signals, time_range=time_range, baseline=baseline, signal_dim=2)
@@ -273,8 +289,13 @@ class ERPparamGroup(ERPparam):
         """
 
         # If times & power spectra provided together, add data to object
-        if time is not None and signals is not None:
+        if signals is not None:
             self._add_data(time, signals, time_range, baseline)
+
+
+        # Check that data is available
+        if not self.has_data:
+            raise NoDataError("No data available to fit, can not proceed.")
 
         # If 'verbose', print out a marker of what is being run
         if self.verbose and not progress:
@@ -287,8 +308,8 @@ class ERPparamGroup(ERPparam):
         if n_jobs == 1:
             self._reset_group_results(len(self.signals))
             for ind, signal in \
-                _progress(enumerate(signals), progress, len(self)):
-                self._fit(time=time, signal=signal, time_range=time_range)
+                _progress(enumerate(self.signals), progress, len(self)):
+                self._fit(time=None, signal=signal, time_range=self.time_range, baseline=self.baseline)
                 self.group_results[ind] = self._get_results()
 
         # Run in parallel
@@ -335,13 +356,16 @@ class ERPparamGroup(ERPparam):
 
         Parameters
         ----------
-        name : { 'peak_params', 'gaussian_params','shape_params', 'error', 'r_squared'}
+        name : { 'gaussian_params','shape_params', 'error', 'r_squared'}
             Name of the data field to extract across the group.
-        col : {'CT', 'PW', 'BW'}, {'MN','HT','SD'}, {fwhm, rise_time, decay_time, symmetry,
-            sharpness, sharpness_rise, sharpness_decay} or int, optional
-            Column name / index to extract from selected data, if requested.
-            Only used for name of {'peak_params', 'gaussian_params', 'shape_params}, 
-            respectively.
+        col :   {'MN','HT','SD', 'SK'}, 
+                {FWHM, rise_time, decay_time, symmetry, sharpness, sharpness_rise, 
+                    sharpness_decay, 'CT', 'PW', 'BW' 'SK'}, or
+                int, optional
+                Column name / index to extract from selected data, if requested.
+                Only used for name of {'gaussian_params', 'shape_params}, 
+                respectively.
+
         Returns
         -------
         out : ndarray
@@ -356,7 +380,7 @@ class ERPparamGroup(ERPparam):
 
         Notes
         -----
-        When extracting peak information ('peak_params', 'shape_params', or 'gaussian_params'), an additional column
+        When extracting peak information ('shape_params', or 'gaussian_params'), an additional column
         is appended to the returned array, indicating the index of the model that the peak came from.
         """
 
@@ -364,7 +388,7 @@ class ERPparamGroup(ERPparam):
             raise NoModelError("No model fit results are available, can not proceed.")
 
         # Allow for shortcut alias, without adding `_params`
-        if name in ['peak', 'gaussian', 'shape']:
+        if name in ['gaussian', 'shape']:
             name = name + '_params'
             
         # If col specified as string, get mapping back to integer
@@ -377,11 +401,15 @@ class ERPparamGroup(ERPparam):
         # Pull out the requested data field from the group data
         # As a special case, peak_params are pulled out in a way that appends
         #  an extra column, indicating which ERPparam run each peak comes from
-        if name in ('peak_params', 'gaussian_params'):
+        if name in ('gaussian_params'):
 
             # Collect peak data, appending the index of the model it comes from
-            out = np.vstack([np.insert(getattr(data, name), 3, index, axis=1)
-                             for index, data in enumerate(self.group_results)])
+            gather_params = [getattr(data, name) for data in (self.group_results)]
+            out = np.vstack([np.insert(p, 4, index, axis=1) if p.size != 0
+                             else  np.insert([np.nan]*4, 4, index, axis=0) 
+                             for index, p in enumerate(gather_params)])
+            # out = np.vstack([np.insert(getattr(data, name), 3, index, axis=1)
+            #                  for index, data in enumerate(self.group_results)])
 
             # This updates index to grab selected column, and the last column
             #  This last column is the 'index' column (ERPparam object source)
@@ -390,7 +418,7 @@ class ERPparamGroup(ERPparam):
         elif name in ('shape_params'):
 
             # Collect peak data, appending the index of the model it comes from
-            out = np.vstack([np.insert(getattr(data, name), 7, index, axis=1)
+            out = np.vstack([np.insert(getattr(data, name), 11, index, axis=1)
                              for index, data in enumerate(self.group_results)])
 
             # This updates index to grab selected column, and the last column
@@ -450,8 +478,8 @@ class ERPparamGroup(ERPparam):
                 self._check_loaded_settings(data)
 
             # If power spectra data is part of loaded data, collect to add to object
-            if 'signals' in data.keys():
-                signals.append(data['signals'])
+            if 'signal' in data.keys():
+                signals.append(data['signal'])
 
             # If results part of current data added, check and update object results
             if set(OBJ_DESC['results']).issubset(set(data.keys())):
@@ -459,7 +487,7 @@ class ERPparamGroup(ERPparam):
                 self.group_results.append(self._get_results())
 
         # Reconstruct time vector, if information is available to do so
-        if self.time_range:
+        if self.fs:
             self._regenerate_time_vector()
 
         # Add power spectra data, if they were loaded
@@ -467,7 +495,7 @@ class ERPparamGroup(ERPparam):
             self.signals = np.array(signals)
 
         # Reset peripheral data from last loaded result, keeping times info
-        self._reset_data_results(clear_spectrum=True, clear_results=True)
+        self._reset_data_results(clear_signal=True, clear_results=True)
 
 
     def get_ERPparam(self, ind, regenerate=True):
@@ -487,7 +515,7 @@ class ERPparamGroup(ERPparam):
         """
 
         # Initialize a ERPparam object, with same settings & check data mode as current ERPparamGroup
-        fm = ERPparam(**self.get_settings(), verbose=self.verbose)
+        fm = ERPparam(**self.get_settings(return_dict=True), verbose=self.verbose)
         fm.set_check_data_mode(self._check_data)
 
         # Add data for specified single power spectrum, if available
@@ -500,7 +528,7 @@ class ERPparamGroup(ERPparam):
 
         # Add results for specified power spectrum, regenerating full fit if requested
         fm.add_results(self.group_results[ind])
-        if regenerate:
+        if (regenerate and ((fm.gaussian_params_.size) > 0)):
             fm._regenerate_model()
 
         return fm
@@ -525,7 +553,7 @@ class ERPparamGroup(ERPparam):
         inds = check_inds(inds)
 
         # Initialize a new ERPparamGroup object, with same settings as current ERPparamGroup
-        fg = ERPparamGroup(**self.get_settings(), verbose=self.verbose)
+        fg = ERPparamGroup(**self.get_settings(return_dict=True), verbose=self.verbose)
 
         # Add data for specified ERPs, if available
         if self.has_data:
@@ -663,7 +691,7 @@ class ERPparamGroup(ERPparam):
 def _par_fit(signal, fg):
     """Helper function for running in parallel."""
 
-    fg._fit(signal=signal)
+    fg._fit(time=fg.time, signal=signal, time_range=fg.time_range, baseline=fg.baseline)
 
     return fg._get_results()
 

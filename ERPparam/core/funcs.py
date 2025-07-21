@@ -8,11 +8,38 @@ NOTES
 """
 
 import numpy as np
+from scipy.stats import norm
 
 from ERPparam.core.errors import InconsistentDataError
 
 ###################################################################################################
 ###################################################################################################
+
+
+def skewed_gaussian_function(xs, *params):
+    """Skewed Gaussian fitting function.
+
+    Parameters
+    ----------
+    xs : 1d array
+        Input x-axis values.
+    *params : float
+        Parameters that define skewed gaussian function:
+        * ctr: center of gaussian
+        * hgt: height of gaussian
+        * wid: width of gaussian
+        * skew: skewness of gaussian
+    """
+
+    ys = np.zeros_like(xs)
+
+    for ii in range(0, len(params), 4):
+
+        ctr, hgt, wid, skew = params[ii:ii+4]
+
+        ys = ys + skewed_gaussian(xs, ctr, hgt, wid, skew)
+
+    return ys
 
 def skewed_gaussian(xs, *params):
     """Skewed Gaussian PDF function.
@@ -34,70 +61,19 @@ def skewed_gaussian(xs, *params):
         Output values for skewed gaussian function.
     """
 
-    # check if empty
-    if len(params) == 0:
-        return np.zeros_like(xs)
-    
-    # compute Gaussian PDF
-    if params[3] == 0:
-        pdf = gaussian_pdf(xs, *params[:3]) # no skew
-    elif params[3] > 0:
-        pdf = 2 * gaussian_pdf(xs, *params[:3]) * gaussian_cdf(params[3] * xs, *params[:3])
-    elif params[3] < 0:
-        pdf = 2 * gaussian_pdf(xs, *params[:3]) * (1 - gaussian_cdf(params[3] * xs, *params[:3]))
-    
-    # scale to height parameter
-    ys = pdf * (params[1] / np.max(pdf))
+    ctr, hgt, wid, skew = params
 
-    return ys
+    # Gaussian distribution
+    pdf = gaussian_function(xs, ctr, hgt, wid)
 
+    # Skewed cumulative distribution function
+    cdf = norm.cdf(skew * ((xs - ctr) / wid))
 
-def gaussian_pdf(xs, *params):
-    """Probability density function (PDF) of a Gaussian.
+    # Skew the gaussian
+    ys = pdf * cdf
 
-    Parameters
-    ----------
-    xs : 1d array
-        Input x-axis values.
-    *params : float
-        Parameters that define skewed gaussian function:
-        * ctr: center of gaussian
-        * hgt: height of gaussian
-        * wid: width of gaussian
-
-    Returns
-    -------
-    ys : 1d array
-        Output values for skewed gaussian function.
-    """
-
-    gf = gaussian_function(xs, *params) # compute gaussian function
-    ys = gf / (np.sqrt(2*np.pi) * params[2]) # normalize to unit area
-
-    return ys
-
-
-def gaussian_cdf(xs, *params):
-    """Cumulative distribution function (CDF) of a Gaussian PDF.
-
-    Parameters
-    ----------
-    xs : 1d array
-        Input x-axis values.
-    *params : float
-        Parameters that define skewed gaussian function:
-        * ctr: center of gaussian
-        * hgt: height of gaussian
-        * wid: width of gaussian
-
-    Returns
-    -------
-    ys : 1d array
-        Output values for skewed gaussian function.
-    """
-
-    gf = gaussian_pdf(xs, *params)
-    ys = np.cumsum(gf) / np.sum(gf) 
+    # Rescale height
+    ys = (ys / np.max(np.abs(ys))) * np.abs(hgt)
 
     return ys
 
@@ -258,7 +234,7 @@ def get_pe_func(periodic_mode):
     if periodic_mode == 'gaussian':
         pe_func = gaussian_function
     elif periodic_mode == 'skewed_gaussian':
-        pe_func = skewed_gaussian
+        pe_func = skewed_gaussian_function
     else:
         raise ValueError("Requested periodic mode not understood.")
 

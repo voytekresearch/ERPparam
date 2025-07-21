@@ -1,3 +1,3 @@
 """Utilities sub-module for ERPparam."""
 
-from .data import trim_spectrum, interpolate_spectrum, subsample_spectra
+from .data import trim_signal, interpolate_signal, subsample_signal

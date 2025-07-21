@@ -1,9 +1,9 @@
-"""Tests for fooof.plts.fm."""
+"""Tests for ERPparam.plts.fm."""
 
-from fooof.tests.tutils import plot_test
-from fooof.tests.settings import TEST_PLOTS_PATH
+from ERPparam.tests.tutils import plot_test
+from ERPparam.tests.settings import TEST_PLOTS_PATH
 
-from fooof.plts.fm import *
+from ERPparam.plts.fm import *
 
 ###################################################################################################
 ###################################################################################################

@@ -1,11 +1,11 @@
-"""Tests for fooof.plts.aperiodic."""
+"""Tests for ERPparam.plts.aperiodic."""
 
 import numpy as np
 
-from fooof.tests.tutils import plot_test
-from fooof.tests.settings import TEST_PLOTS_PATH
+from ERPparam.tests.tutils import plot_test
+from ERPparam.tests.settings import TEST_PLOTS_PATH
 
-from fooof.plts.aperiodic import *
+from ERPparam.plts.aperiodic import *
 
 ###################################################################################################
 ###################################################################################################
