@@ -56,6 +56,7 @@ from ERPparam.core.errors import (FitError, NoModelError, DataError,
                                NoDataError, InconsistentDataError)
 from ERPparam.core.strings import (gen_settings_str, gen_results_fm_str,
                                 gen_issue_str, gen_width_warning_str, gen_model_exists_str)
+from ERPparam.core.corrections import correct_overlapping_peaks
 
 from ERPparam.plts.model import plot_ERPparam
 from ERPparam.utils.data import trim_signal
@@ -1027,15 +1028,28 @@ class ERPparam():
         # get gaussian parameters
         gaussian_params = self.gaussian_params_
 
-        # initialize list of shape parameters
+        # get peak indices and correct overlapping peaks
+        peak_indices = np.empty((len(gaussian_params), 3))
+        for ii, gaus in enumerate(gaussian_params):
+            peak_indices[ii] = self._get_peak_indices(gaus)
+        peak_indices = correct_overlapping_peaks(self.signal, peak_indices)
+
+        # initialize lists
         shape_params = np.empty((len(gaussian_params), 7))
         peak_params = np.empty((len(gaussian_params), 4))
-        peak_indices = np.empty((len(gaussian_params), 3))
 
+        # loop through each gaussian and compute the shape parameters
         for ii, gaus in enumerate(gaussian_params):
-
-            # get peak indices
-            start_index, peak_index, end_index = self._get_peak_indices(gaus)
+            # if the peak indices could not be determined, set all shape params to NaN
+            if np.isnan(peak_indices[ii]).any():
+                shape_params[ii] = [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
+                peak_indices[ii] = [np.nan, np.nan, np.nan]
+                continue
+            else:
+                # convert indices to integers
+                start_index = int(peak_indices[ii][0])
+                peak_index = int(peak_indices[ii][1])
+                end_index = int(peak_indices[ii][2])
 
             # compute peak params
             if self.peak_mode == "skewed_gaussian":
@@ -1045,32 +1059,32 @@ class ERPparam():
                 peak_params[ii] = [self.time[peak_index], self.signal[peak_index],
                                    gaus[2] * 2, np.nan]
 
-            # if the peak indices could not be determined, set all shape params to NaN
-            if np.isnan(start_index) or np.isnan(end_index):
-                shape_params[ii] = [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
-                peak_indices[ii] = [np.nan, np.nan, np.nan]
-                continue
-
             # compute fwhm, rise-, and decay-time
             fwhm = self.time[end_index] - self.time[start_index]
             rise_time = self.time[peak_index] - self.time[start_index]
             decay_time = self.time[end_index] - self.time[peak_index]
 
-            # compute rise-decay symmetry
-            rise_decay_symmetry = rise_time / fwhm
+            try:
+                # compute rise-decay symmetry
+                rise_decay_symmetry = rise_time / fwhm
 
-            # compute sharpness
-            half_mag = np.abs(self.signal[peak_index] / 2)
-            sharpness_rise = np.arctan(half_mag / rise_time) * (180 / np.pi) / 90
-            sharpness_decay = np.arctan(half_mag / decay_time) * (180 / np.pi) / 90
-            sharpness = 1 - ((180 - ((np.arctan(half_mag / rise_time) * (180 / np.pi)) + (np.arctan(half_mag / decay_time)) * (180 / np.pi))) / 180)
+                # compute sharpness
+                half_mag = np.abs(self.signal[peak_index] / 2)
+                sharpness_rise = np.arctan(half_mag / rise_time) * (180 / np.pi) / 90
+                sharpness_decay = np.arctan(half_mag / decay_time) * (180 / np.pi) / 90
+                sharpness = 1 - ((180 - ((np.arctan(half_mag / rise_time) * (180 / np.pi)) + (np.arctan(half_mag / decay_time)) * (180 / np.pi))) / 180)
+            
+            except ZeroDivisionError:
+                # if the rise or decay time is zero, set all shape params to NaN
+                shape_params[ii] = [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
+                continue
 
             # collect results
             shape_params[ii] = [fwhm, rise_time, decay_time, rise_decay_symmetry,
                              sharpness, sharpness_rise, sharpness_decay]
-            peak_indices[ii] = [start_index, peak_index, end_index]
 
         return shape_params, peak_params, peak_indices
+
 
     def _drop_extra_peaks(self):
         """Check whether to drop peaks, if the number of peaks fit is greater than the user specified max_n_peaks.
@@ -1089,6 +1103,7 @@ class ERPparam():
             self.peak_params_ = self.peak_params_[tallest_amps_idx,:][keepers_time_idx,:]
             self.gaussian_params_ = self.gaussian_params_[tallest_amps_idx,:][keepers_time_idx,:]
             self.peak_indices_ = self.peak_indices_[tallest_amps_idx,:][keepers_time_idx,:]
+
 
     def _drop_peak_cf(self, guess):
         """Check whether to drop peaks based on center's proximity to the edge of the signal.
