@@ -5,6 +5,7 @@
 
 # Ignore VS Code settings
 ERPparam/.vscode/settings.json
+.vscode/
 
 # Ignore notebook checkpoints
 *.ipynb_checkpoints*
