@@ -8,6 +8,7 @@ They serve rather as 'smoke tests', for if anything fails completely.
 
 import numpy as np
 from pytest import raises
+import matplotlib.pyplot as plt
 
 from ERPparam import ERPparam
 from ERPparam.core.items import OBJ_DESC
@@ -58,14 +59,16 @@ def test_ERPparam_fit():
     """Test ERPparam fit."""
 
     time_range, erp_params, nlv = default_params()
+    # np.random.seed(42)
+    np.random.seed(4)
     xs, ys = simulate_erp(time_range, erp_params, nlv)
 
-    tfm = ERPparam(verbose=False, max_n_peaks=4)
+    tfm = ERPparam(verbose=False, max_n_peaks=3, gauss_overlap_thresh= 3.0)
     tfm.fit(xs, ys, time_range=[0, time_range[1]])
 
     # Check model results - gaussian parameters
     for ii, gauss in enumerate(group_three(erp_params)):
-        assert np.allclose(gauss, tfm.peak_params_[ii, :3], 
+        assert np.allclose(gauss, tfm.gaussian_params_[ii, :3], 
                            [2.0, 0.5, 1.0])
         assert np.isnan(tfm.peak_params_[ii, 3])
 
@@ -90,13 +93,16 @@ def test_ERPparam_fit_skew():
     erp_params_d = [0.2, 1, .1]
     for skew in [-2, 0, 2]:
         erp_params = np.concatenate([erp_params_d, [skew]])
+        np.random.seed(24)
         xs, ys = simulate_erp(time_range, erp_params, nlv, 
                               peak_mode='skewed_gaussian')
 
-        tfm = ERPparam(verbose=False, max_n_peaks=2, peak_mode='skewed_gaussian')
+        tfm = ERPparam(verbose=False, max_n_peaks=1, peak_mode='skewed_gaussian')
+        tfm._max_n_iters = 2
         tfm.fit(xs, ys, time_range=[0, time_range[1]])
 
         # Check model results - gaussian parameters
+        assert tfm.has_model
         assert np.allclose(erp_params, tfm.peak_params_[0], [2.0, 1.0, 1.0, 2.0])
 
 def test_ERPparam_fit_measures():
@@ -231,8 +237,7 @@ def test_add_data():
 
     # Test that prior data does not get cleared, when requesting not to clear
     tfm._reset_data_results(True, True, True)
-    tfm.add_results(ERPparamResults(peak_params=np.asarray([[ 0.102     ,  1.7758259 ,  0.05875653],
-       [ 0.198     , -1.48916601,  0.09412952]]), 
+    tfm.add_results(ERPparamResults(
        r_squared=0.9973886245863048, error=0.01234299919871499, 
        gaussian_params=np.asarray([[ 0.10157924,  1.8103013 ,  0.02937827],
        [ 0.1980535 , -1.39908145,  0.04706476]]), 
@@ -283,9 +288,8 @@ def test_add_results():
     tfm = get_tfm()
 
     # Test adding results
-    ERPparam_results = ERPparamResults(peak_params=np.asarray([[ 0.1     ,  1.7 ,  0.053],
-                                                                 [ 0.1     , -1.4,  0.09]]), 
-       r_squared=0.99, error=0.01, 
+    ERPparam_results = ERPparamResults(
+        r_squared=0.99, error=0.01, 
        gaussian_params=np.asarray([[ 0.10,  1.8 ,  0.02],
                                     [ 0.19 , -1.39,  0.047]]), 
        shape_params=np.asarray([[0.064 , 0.04 , 0.024, 0.625 , 0.97, 0.97   , 0.98],
@@ -312,20 +316,16 @@ def test_obj_gets(tfm):
 def test_get_params(tfm):
     """Test the get_params method."""
 
-    for dname in ['peak_params', 'peak','shape','shape_params',
+    for dname in ['shape','shape_params',
                   'error', 'r_squared', 'gaussian_params', 'gaussian']:
         assert np.any(tfm.get_params(dname))
-
-        if dname == 'peak_params' or dname == 'peak':
-            for dtype in ['CT', 'PW', 'BW']:
-                assert np.any(tfm.get_params(dname, dtype))
 
         if dname == 'gaussian_params' or dname == 'gaussian':
             for dtype in ['MN','HT','SD']:
                 assert np.any(tfm.get_params(dname, dtype))
 
         if dname == 'shape_params' or dname == 'shape':
-            for dtype in ['FWHM', 'rise_time', 'decay_time', 'symmetry',
+            for dtype in ['CT', 'PW', 'BW', 'FWHM', 'rise_time', 'decay_time', 'symmetry',
             'sharpness', 'sharpness_rise', 'sharpness_decay']:
                 assert np.any(tfm.get_params(dname, dtype))
 

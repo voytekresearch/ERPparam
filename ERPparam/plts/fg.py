@@ -76,8 +76,8 @@ def plot_fg_pks(fg, ax=None, **plot_kwargs):
     """
 
     
-    plot_scatter_2(fg.get_params('peak_params', 'BW'), 'Bandwidth',
-                   fg.get_params('peak_params', "PW"), 'Amplitude',
+    plot_scatter_2(fg.get_params('shape_params', 'BW'), 'Bandwidth',
+                   fg.get_params('shape_params', "PW"), 'Amplitude',
                     'Peak Fits', ax=ax)
 
 
@@ -117,5 +117,5 @@ def plot_fg_peak_cens(fg, ax=None, **plot_kwargs):
         Keyword arguments to pass into the ``style_plot``.
     """
 
-    plot_hist(fg.get_params('peak_params', 0)[:, 0], 'Center Peak Times',
+    plot_hist(fg.get_params('shape_params', 'CT')[:, 0], 'Center Peak Times',
               'Peaks - Center Times', x_lims=fg.time_range, ax=ax)

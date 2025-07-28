@@ -140,7 +140,7 @@ class ERPparam():
     """
     # pylint: disable=attribute-defined-outside-init
 
-    def __init__(self, peak_width_limits=(0.01, 10), max_n_peaks=20, 
+    def __init__(self, peak_width_limits=(0.01, 10), max_n_peaks=10, 
                  min_peak_height=0.0, peak_threshold=2.0, peak_mode='gaussian',
                  gauss_overlap_thresh = 0.75, maxfev = 500,
                  amplitude_fraction=0.5, verbose=True):
@@ -163,6 +163,8 @@ class ERPparam():
         # The error metric to calculate, post model fitting. See `_calc_error` for options
         #   Note: this is for checking error post fitting, not an objective function for fitting
         self._error_metric = 'MAE'
+        # The maximum number of times that the iterative Gaussian fitting process will run (for each positive and negative peaks)
+        self._max_n_iters = 10
 
         ## RUN MODES
         # Set default debug mode - controls if an error is raised if model fitting is unsuccessful
@@ -256,7 +258,7 @@ class ERPparam():
         if clear_results:
 
             self.peak_params_ = np.ones([0,4])*np.nan
-            self.shape_params_ = np.ones([0,7])*np.nan
+            self.shape_params_ = np.ones([0,11])*np.nan
             self.r_squared_ = np.nan
             self.error_ = np.nan
             self.peak_indices_ = np.full(3, np.nan)
@@ -337,7 +339,7 @@ class ERPparam():
         """
 
         self.gaussian_params_ = ERPparam_result.gaussian_params
-        self.peak_params_ = ERPparam_result.peak_params
+        self.peak_params_ = ERPparam_result.shape_params[:,7:]
         self.shape_params_ = ERPparam_result.shape_params
         self.peak_indices_ = ERPparam_result.peak_indices
         self.r_squared_ = ERPparam_result.r_squared
@@ -443,15 +445,18 @@ class ERPparam():
             # Find peaks, and fit them with gaussians
             self.gaussian_params_ = self._fit_peaks(np.copy(self.signal))
 
-            # Convert gaussian definitions to peak parameters
-            self.peak_params_  = self._create_peak_params(self.gaussian_params_)
-
             # compute rise-decay symmetry
-            self.shape_params_, self.peak_indices_ = self._compute_shape_params()
+            self.shape_params_, self.peak_params_, self.peak_indices_ = \
+                self._compute_shape_params()
 
             # drop peaks based on edge proximity (if shape could not be fit)
             self._drop_peaks_near_edge()
-            self.peak_indices_ = self.peak_indices_.astype(int)
+
+            # Merge peak_params with shape params
+            self.shape_params_ = np.hstack([self.shape_params_, self.peak_params_])
+
+            # Drop the smallest peaks, keep only the max_n_peaks largest peaks
+            self._drop_extra_peaks()
 
             # Calculate the peak fit
             #   Note: if no peaks are found, this creates a flat (all zero) peak fit
@@ -554,12 +559,12 @@ class ERPparam():
 
         Parameters
         ----------
-        name : {'peak_params', 'gaussian_params', 'shape_params', 'error', 'r_squared'}
+        name : {'gaussian_params', 'shape_params', 'error', 'r_squared'}
             Name of the data field to extract.
-        col : {'CT', 'PW', 'BW', 'SK'}, {'MN','HT','SD', 'SK'}, {FWHM, rise_time, decay_time, symmetry,
+        col : {'MN','HT','SD', 'SK'}, {CT, PW, BW, SK, FWHM, rise_time, decay_time, symmetry,
             sharpness, sharpness_rise, sharpness_decay} or int, optional
             Column name / index to extract from selected data, if requested.
-            Only used for name of {'peak_params', 'gaussian_params', 'shape_params}, 
+            Only used for name of { 'gaussian_params', 'shape_params}, 
             respectively.
 
         Returns
@@ -581,7 +586,7 @@ class ERPparam():
             raise NoModelError("No model fit results are available to extract, can not proceed.")
 
         # Allow for shortcut alias, without adding `_params`
-        if name in ['peak', 'gaussian', 'shape']:
+        if name in [ 'gaussian', 'shape']: #'peak',
             name = name + '_params'
 
         # If col specified as string, get mapping back to integer
@@ -626,11 +631,12 @@ class ERPparam():
                                            'symmetry': 'rise time / FWHM', 
                                            'sharpness': 'peak sharpness (normalized to be dimensionless 0-1)', 
                                            'sharpness_rise': 'sharpness of the rise (normalized to be dimensionless 0-1)', 
-                                           'sharpness_decay': 'sharpness of the decay (normalized to be dimensionless 0-1)'},
-                            'peak_params': {'CT': "Center time of the peak, calculated from the raw signal", 
+                                           'sharpness_decay': 'sharpness of the decay (normalized to be dimensionless 0-1)',
+                                           'CT': "Center time of the peak, calculated from the raw signal", 
                                             'PW': 'Peak amplitude, calculate from the raw signal', 
                                             'BW': 'Bandwidth of the peak, 2-sided (ie, both halves from the peak center), calculated from the raw signal',
                                             'SK': 'Skewness of the peak'},
+
                             'gaussian_params':{'MN':'mean of the gaussian',
                                                'HT':'height of the gaussian',
                                                'SD':'gaussian width',
@@ -832,7 +838,7 @@ class ERPparam():
 
         # Find peak: Loop through, finding a candidate peak, and fitting with a guess gaussian
         #   Stopping procedures: limit on # of peaks, or relative or absolute height thresholds
-        while len(guess) < self.max_n_peaks:
+        while len(guess) < self._max_n_iters:
 
             # Find candidate peak - the maximum point of the signal
             max_ind = np.argmax(iter_signal)
@@ -973,54 +979,7 @@ class ERPparam():
         return gaussian_params
 
 
-    def _create_peak_params(self, gaus_params):
-        """Copies over the gaussian params to peak outputs, updating as appropriate.
-
-        Parameters
-        ----------
-        gaus_params : 2d array
-            Parameters that define the gaussian fit(s), as gaussian parameters.
-
-        Returns
-        -------
-        peak_params : 2d array
-            Fitted parameter values for the peaks, with each row as [CT, PW, BW, SK].
-
-        Notes
-        -----
-        The gaussian center is unchanged as the peak center.
-
-        The gaussian height is updated to reflect the height of the signal. This is 
-        returned instead of the gaussian height, as the gaussian height is harder to interpret, 
-        due to peak overlaps.
-
-        The gaussian standard deviation is updated to be 'both-sided', to reflect the
-        'bandwidth' of the peak, as opposed to the gaussian parameter, which is 1-sided.
-
-        Performing this conversion requires that the model has been run.
-        """
-
-        peak_params = np.empty((len(gaus_params), 4))
-
-        for ii, peak in enumerate(gaus_params):
-
-            # find the index of the signal at the time closest to the Gaussian center
-            peak_index = np.argmin(np.abs(self.time - peak[0]))
-
-            # compute skewness
-            if self.peak_mode == "skewed_gaussian":
-                skew = peak[3]
-            else:
-                skew = np.nan
-
-            # Collect peak parameter data
-            peak_params[ii] = [self.time[peak_index], self.signal[peak_index], 
-                               peak[2] * 2, skew]
-
-        return peak_params
-
-
-    def _get_peak_indices(self, peak_params, gaussian_params):
+    def _get_peak_indices(self, gaussian_params):
         """
         Find the indices of the peak and the half magnitude points.
         """
@@ -1032,14 +991,14 @@ class ERPparam():
             params = gaussian_params[:3]
         model_compoment = sim_erp(self.time, params, peak_mode=self.peak_mode)
         model_peak_index = np.argmax(np.abs(model_compoment))
-        peak_range_indices = int(np.floor(peak_params[2] * self.fs))
+        peak_range_indices = int(np.floor(gaussian_params[2] * 2 * self.fs))
         index_low = model_peak_index - peak_range_indices
         if index_low < 0:
             index_low = 0
         index_high = model_peak_index + peak_range_indices
         if index_high > len(self.signal):
             index_high = len(self.signal)
-        if peak_params[1]>0:
+        if gaussian_params[1]>0:
             peak_index = np.argmax(self.signal[index_low:index_high]) + index_low
         else:
             peak_index = np.argmin(self.signal[index_low:index_high]) + index_low
@@ -1050,11 +1009,11 @@ class ERPparam():
         # find the index closest to the peak that crosses the half magnitude
         try:
             if self.signal[peak_index]>0:
-                start_index = np.argwhere((self.signal[:peak_index] - half_mag)<0)[-1][0]
-                end_index = peak_index + np.argwhere(-(self.signal[peak_index:] - half_mag)>0)[0][0]
+                start_index = int(np.argwhere((self.signal[:peak_index] - half_mag)<0)[-1][0])
+                end_index = int(peak_index + np.argwhere(-(self.signal[peak_index:] - half_mag)>0)[0][0])
             else: # flip the logic if the peak is negative
-                start_index = np.argwhere((self.signal[:peak_index] - half_mag)>0)[-1][0]
-                end_index = peak_index + np.argwhere(-(self.signal[peak_index:] - half_mag)<0)[0][0]
+                start_index = int(np.argwhere((self.signal[:peak_index] - half_mag)>0)[-1][0])
+                end_index = int(peak_index + np.argwhere(-(self.signal[peak_index:] - half_mag)<0)[0][0])
         except IndexError:
             # if the half magnitude is not crossed, set the start and end indices to NaN
             start_index = np.nan
@@ -1080,18 +1039,26 @@ class ERPparam():
             * sharpness_decay: sharpness of the decay (normalized to be dimensionless 0-1)
         """
 
-        # get peak and gaussian parameters
-        peak_params = self.peak_params_
+        # get gaussian parameters
         gaussian_params = self.gaussian_params_
 
         # initialize list of shape parameters
-        shape_params = np.empty((len(peak_params), 7))
-        peak_indices = np.empty((len(peak_params), 3))
+        shape_params = np.empty((len(gaussian_params), 7))
+        peak_params = np.empty((len(gaussian_params), 4))
+        peak_indices = np.empty((len(gaussian_params), 3))
 
-        for ii, (peak, gaus) in enumerate(zip(peak_params, gaussian_params)):
+        for ii, gaus in enumerate(gaussian_params):
 
             # get peak indices
-            start_index, peak_index, end_index = self._get_peak_indices(peak, gaus)
+            start_index, peak_index, end_index = self._get_peak_indices(gaus)
+
+            # compute peak params
+            if self.peak_mode == "skewed_gaussian":
+                peak_params[ii] = [self.time[peak_index], self.signal[peak_index],
+                                   gaus[2] * 2, gaus[3]]
+            elif self.peak_mode == "gaussian":
+                peak_params[ii] = [self.time[peak_index], self.signal[peak_index],
+                                   gaus[2] * 2, np.nan]
 
             # if the peak indices could not be determined, set all shape params to NaN
             if np.isnan(start_index) or np.isnan(end_index):
@@ -1108,7 +1075,7 @@ class ERPparam():
             rise_decay_symmetry = rise_time / fwhm
 
             # compute sharpness
-            half_mag = np.abs(peak[1] / 2)
+            half_mag = np.abs(self.signal[peak_index] / 2)
             sharpness_rise = np.arctan(half_mag / rise_time) * (180 / np.pi) / 90
             sharpness_decay = np.arctan(half_mag / decay_time) * (180 / np.pi) / 90
             sharpness = 1 - ((180 - ((np.arctan(half_mag / rise_time) * (180 / np.pi)) + (np.arctan(half_mag / decay_time)) * (180 / np.pi))) / 180)
@@ -1118,8 +1085,25 @@ class ERPparam():
                              sharpness, sharpness_rise, sharpness_decay]
             peak_indices[ii] = [start_index, peak_index, end_index]
 
-        return shape_params, peak_indices
+        return shape_params, peak_params, peak_indices
 
+    def _drop_extra_peaks(self):
+        """Check whether to drop peaks, if the number of peaks fit is greater than the user specified max_n_peaks.
+            
+        """
+        if self.shape_params_.shape[0] > self.max_n_peaks:
+
+            # get the top n tallest peaks, determined by the peak amplitude
+            # get the absolute values of the peak amps, sort by smallest to largest, and extract the inds of the top N tallest
+            tallest_amps_idx = np.abs(self.shape_params_[:,-3]).argsort()[-(self.max_n_peaks):]
+            # extract and sort shape params by the tallest, which will reorder them by smallest to tallest
+            # extract the peak times so that we can reorder by that instead
+            keepers_time_idx = self.shape_params_[tallest_amps_idx,:][:,-4].argsort()
+            # extract the tallest peaks but sorted by peak time
+            self.shape_params_ = self.shape_params_[tallest_amps_idx,:][keepers_time_idx,:]
+            self.peak_params_ = self.peak_params_[tallest_amps_idx,:][keepers_time_idx,:]
+            self.gaussian_params_ = self.gaussian_params_[tallest_amps_idx,:][keepers_time_idx,:]
+            self.peak_indices_ = self.peak_indices_[tallest_amps_idx,:][keepers_time_idx,:]
 
     def _drop_peak_cf(self, guess):
         """Check whether to drop peaks based on center's proximity to the edge of the signal.
@@ -1213,7 +1197,7 @@ class ERPparam():
         self.gaussian_params_ = self.gaussian_params_[~to_drop]
         self.peak_params_ = self.peak_params_[~to_drop]
         self.shape_params_ = self.shape_params_[~to_drop]
-        self.peak_indices_ = self.peak_indices_[~to_drop]
+        self.peak_indices_ = self.peak_indices_[~to_drop].astype(int)
 
 
     def _calc_r_squared(self):
@@ -1400,7 +1384,7 @@ class ERPparam():
         # If results loaded, check dimensions of peak parameters
         #   This fixes an issue where they end up the wrong shape if they are empty (no peaks)
         if set(OBJ_DESC['results']).issubset(set(data.keys())):
-            self.peak_params_ = check_array_dim(self.peak_params_)
+            # self.peak_params_ = check_array_dim(self.peak_params_)
             self.gaussian_params_ = check_array_dim(self.gaussian_params_)
 
 

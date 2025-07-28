@@ -56,7 +56,7 @@ def get_band_peak_fg(fg, band, threshold=None, thresh_param='PW', attribute='pea
     fg : ERPparamGroup
         Object to extract peak data from.
     band : tuple of (float, float)
-        Frequency range for the band of interest.
+        Time range for the band of interest.
         Defined as: (lower_frequency_bound, upper_frequency_bound).
     threshold : float, optional
         A minimum threshold value to apply.

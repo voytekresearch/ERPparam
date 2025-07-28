@@ -17,13 +17,13 @@ def test_model_to_dict(tresults, tbands):
     out = model_to_dict(tresults, peak_org=1)
     assert isinstance(out, dict)
     assert 'ct_0' in out
-    assert out['ct_0'] == tresults.peak_params[0, 0]
+    assert out['ct_0'] == tresults.shape_params[0, 7]
     assert not 'ct_1' in out
 
     out = model_to_dict(tresults, peak_org=2)
     assert 'ct_0' in out
     assert 'ct_1' in out
-    assert out['ct_1'] == tresults.peak_params[1, 0]
+    assert out['ct_1'] == tresults.shape_params[1, 7]
 
     out = model_to_dict(tresults, peak_org=3)
     assert 'ct_2' in out
@@ -31,7 +31,7 @@ def test_model_to_dict(tresults, tbands):
 
     out = model_to_dict(tresults, peak_org=tbands)
     assert 'p1_ct' in out
-    assert out['p1_ct'] == tresults.peak_params[0, 0]
+    assert out['p1_ct'] == tresults.shape_params[0, 7]
 
 
 def test_model_to_dataframe(tresults, skip_if_no_pandas):

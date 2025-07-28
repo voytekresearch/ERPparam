@@ -30,7 +30,7 @@ def get_description():
                                 'gauss_overlap_thresh', 'maxfev', 'amplitude_fraction'],
                   'data' : ['signal', 'time'],
                   'meta_data' : ['time_range', 'fs'],
-                  'arrays' : ['time', 'signal', 'peak_params_', 'gaussian_params_', 'shape_params_'],
+                  'arrays' : ['time', 'signal', 'gaussian_params_', 'shape_params_', 'peak_params_'],
                   'model_components' : ['_peak_fit'],
                   'descriptors' : ['has_data', 'has_model', 'n_peaks_']
                   }
@@ -51,6 +51,7 @@ def get_peak_indices():
         'CT' : 0,
         'PW' : 1,
         'BW' : 2,
+        'SK' : 3
     }
 
     return indices
@@ -75,7 +76,7 @@ def get_gauss_indices():
     return indices
 
 
-def get_shape_indices():
+def get_shape_indices(include_peak_params=True):
     """Get a mapping from column labels to indices for rise-decay
      symmetry parameters.
 
@@ -94,6 +95,11 @@ def get_shape_indices():
         'sharpness_rise' : 5,
         'sharpness_decay' : 6
     }
+
+    if include_peak_params:
+        # get the peak_params to add onto our indices
+        peak_params = get_peak_indices()
+        indices.update({ k:(int(peak_params[k]+7)) for k in peak_params.keys() })
 
     return indices
 
