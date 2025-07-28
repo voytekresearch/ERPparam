@@ -87,6 +87,9 @@ class ERPparam():
         This is defined in units of gaussian standard deviation
     maxfev : int, optional, default: 500
         The maximum number of calls to the curve fitting function
+    amplitude_fraction : float, optional, default: 0.5
+        Fraction of the peak amplitude to use as a threshold for computing
+        the shape parameters of the ERP peak.
     verbose : bool, optional, default: True
         Verbosity mode. If True, prints out warnings and general status updates.
 
@@ -140,16 +143,17 @@ class ERPparam():
     def __init__(self, peak_width_limits=(0.01, 10), max_n_peaks=10, 
                  min_peak_height=0.0, peak_threshold=2.0, peak_mode='gaussian',
                  gauss_overlap_thresh = 0.75, maxfev = 500,
-                 verbose=True):
+                 amplitude_fraction=0.5, verbose=True):
         
         self.peak_width_limits = peak_width_limits
         self.max_n_peaks = max_n_peaks
         self.min_peak_height = min_peak_height
         self.peak_threshold = peak_threshold
         self.peak_mode = peak_mode
-        self.verbose = verbose
         self.gauss_overlap_thresh = gauss_overlap_thresh
         self.maxfev = maxfev
+        self.amplitude_fraction = amplitude_fraction
+        self.verbose = verbose
 
         # Threshold for how far a peak has to be from edge to keep.
         #   This is defined in units of gaussian standard deviation
@@ -1000,7 +1004,7 @@ class ERPparam():
             peak_index = np.argmin(self.signal[index_low:index_high]) + index_low
 
         # compute half magnitude
-        half_mag = self.signal[peak_index] / 2
+        half_mag = self.signal[peak_index] * self.amplitude_fraction
 
         # find the index closest to the peak that crosses the half magnitude
         try:

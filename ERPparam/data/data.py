@@ -15,9 +15,9 @@ from collections import namedtuple
 
 class ERPparamSettings(namedtuple('ERPparamSettings', ['peak_width_limits', 'max_n_peaks',
                                                  'min_peak_height', 'peak_threshold',
-                                                 'peak_mode', 'gauss_overlap_thresh', 'maxfev'])):
+                                                 'peak_mode', 'gauss_overlap_thresh', 'maxfev', 
+                                                 'amplitude_fraction'])):
     """User defined settings for the fitting algorithm.
-
     Parameters
     ----------
     peak_width_limits : tuple of (float, float)
@@ -30,6 +30,9 @@ class ERPparamSettings(namedtuple('ERPparamSettings', ['peak_width_limits', 'max
         Relative threshold for detecting peaks, in units of standard deviation of the input data.
     peak_mode : {'gaussian', 'skewed_gaussian'}
         Mode for fitting the peaks.
+    amplitude_fraction : float, optional, default: 0.5
+        Fraction of the peak amplitude to use as a threshold for computing
+        the shape parameters of the ERP peak.
 
     Notes
     -----
