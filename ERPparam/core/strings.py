@@ -331,9 +331,9 @@ def gen_results_fm_str(fm, concise=False):
 
         # Peak parameters
         '{} peaks were found:'.format(
-            len(fm.peak_params_)),
-        *['Time: {:6.2f}, Amp: {:6.2f}, Dur: {:5.2f}, Sym: {:4.2f}, Sharp: {:1.4f}'.format(op[0], op[1], op[2], sp[3], sp[4]) \
-          for op, sp in zip(fm.peak_params_, fm.shape_params_)],
+            len(fm.shape_params_)),
+        *['Time: {:6.2f}, Amp: {:6.2f}, Dur: {:5.2f}, Sym: {:4.2f}, Sharp: {:1.4f}'.format(sp[7], sp[8], sp[9], sp[3], sp[4]) \
+          for sp in fm.shape_params_],
         '',
 
         # Goodness if fit

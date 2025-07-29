@@ -3,7 +3,7 @@
 import numpy as np
 
 from ERPparam import Bands
-from ERPparam.core.info import (get_peak_indices, get_shape_indices, 
+from ERPparam.core.info import (get_shape_indices, 
                                 get_gauss_indices)
 from ERPparam.core.modutils import safe_import, check_dependency
 from ERPparam.analysis.periodic import get_band_peak_arr

@@ -15,23 +15,13 @@ def test_get_description(tfm):
         for it in va:
             assert it in objs
 
-
-def test_get_peak_indices():
-
-    indices = get_peak_indices()
-
-    # Check it returns a valid object & that values are correct
-    assert indices
-    for ind, val in enumerate(['CT', 'PW', 'BW']):
-        assert indices[val] == ind
-
 def test_get_gauss_indices():
 
     indices = get_gauss_indices()
 
     # Check it returns a valid object & that values are correct
     assert indices
-    for ind, val in enumerate(['MN', 'HT', 'SD']):
+    for ind, val in enumerate(['MN', 'HT', 'SD','SK']):
         assert indices[val] == ind
 
 def test_get_shape_indices():
@@ -40,7 +30,7 @@ def test_get_shape_indices():
 
     # Check it returns a valid object & that values are correct
     assert indices
-    for ind, val in enumerate(['FWHM', 'rise_time', 'decay_time', 'symmetry', 'sharpness', 'sharpness_rise', 'sharpness_decay']):
+    for ind, val in enumerate(['FWHM', 'rise_time', 'decay_time', 'symmetry', 'sharpness', 'sharpness_rise', 'sharpness_decay','CT', 'PW', 'BW','SK']):
         assert indices[val] == ind
 
 def test_get_info(tfm, tfg):

@@ -107,8 +107,6 @@ class ERPparam():
         If unspecified, the whole time window before time 0 will be used. If that cannot be found, the whole length of signal will be used.
     fs : float
         Sampling frequency.
-    peak_params_ : 2d array
-        Fitted parameter values for the peaks. Each row is a peak, as [CT, PW, BW, SK].
     gaussian_params_ : 2d array
         Parameters that define the gaussian fit(s).
         Each row is a gaussian, as [mean, height, standard deviation].
@@ -210,7 +208,7 @@ class ERPparam():
     def n_peaks_(self):
         """How many peaks were fit in the model."""
 
-        return self.peak_params_.shape[0] if self.has_model else None
+        return self.shape_params_.shape[0] if self.has_model else None
 
 
     def _reset_internal_settings(self):
@@ -257,7 +255,6 @@ class ERPparam():
 
         if clear_results:
 
-            self.peak_params_ = np.ones([0,4])*np.nan
             self.shape_params_ = np.ones([0,11])*np.nan
             self.r_squared_ = np.nan
             self.error_ = np.nan
@@ -339,7 +336,6 @@ class ERPparam():
         """
 
         self.gaussian_params_ = ERPparam_result.gaussian_params
-        self.peak_params_ = ERPparam_result.shape_params[:,7:]
         self.shape_params_ = ERPparam_result.shape_params
         self.peak_indices_ = ERPparam_result.peak_indices
         self.r_squared_ = ERPparam_result.r_squared
@@ -446,14 +442,11 @@ class ERPparam():
             self.gaussian_params_ = self._fit_peaks(np.copy(self.signal))
 
             # compute rise-decay symmetry
-            self.shape_params_, self.peak_params_, self.peak_indices_ = \
+            self.shape_params_, self.peak_indices_ = \
                 self._compute_shape_params()
 
             # drop peaks based on edge proximity (if shape could not be fit)
             self._drop_peaks_near_edge()
-
-            # Merge peak_params with shape params
-            self.shape_params_ = np.hstack([self.shape_params_, self.peak_params_])
 
             # Drop the smallest peaks, keep only the max_n_peaks largest peaks
             self._drop_extra_peaks()
@@ -1085,7 +1078,8 @@ class ERPparam():
                              sharpness, sharpness_rise, sharpness_decay]
             peak_indices[ii] = [start_index, peak_index, end_index]
 
-        return shape_params, peak_params, peak_indices
+        shape_params = np.hstack([shape_params, peak_params])
+        return shape_params, peak_indices
 
     def _drop_extra_peaks(self):
         """Check whether to drop peaks, if the number of peaks fit is greater than the user specified max_n_peaks.
@@ -1101,7 +1095,6 @@ class ERPparam():
             keepers_time_idx = self.shape_params_[tallest_amps_idx,:][:,-4].argsort()
             # extract the tallest peaks but sorted by peak time
             self.shape_params_ = self.shape_params_[tallest_amps_idx,:][keepers_time_idx,:]
-            self.peak_params_ = self.peak_params_[tallest_amps_idx,:][keepers_time_idx,:]
             self.gaussian_params_ = self.gaussian_params_[tallest_amps_idx,:][keepers_time_idx,:]
             self.peak_indices_ = self.peak_indices_[tallest_amps_idx,:][keepers_time_idx,:]
 
@@ -1195,7 +1188,6 @@ class ERPparam():
 
         to_drop = np.isnan(self.peak_indices_).any(axis=1)
         self.gaussian_params_ = self.gaussian_params_[~to_drop]
-        self.peak_params_ = self.peak_params_[~to_drop]
         self.shape_params_ = self.shape_params_[~to_drop]
         self.peak_indices_ = self.peak_indices_[~to_drop].astype(int)
 
@@ -1384,7 +1376,6 @@ class ERPparam():
         # If results loaded, check dimensions of peak parameters
         #   This fixes an issue where they end up the wrong shape if they are empty (no peaks)
         if set(OBJ_DESC['results']).issubset(set(data.keys())):
-            # self.peak_params_ = check_array_dim(self.peak_params_)
             self.gaussian_params_ = check_array_dim(self.gaussian_params_)
 
 

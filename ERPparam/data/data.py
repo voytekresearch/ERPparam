@@ -65,8 +65,6 @@ class ERPparamResults(namedtuple('ERPparamResults', ['r_squared', 'error',
 
     Parameters
     ----------
-    peak_params : 2d array
-        Fitted parameter values for the peaks. Each row is a peak, as [CF, PW, BW].
     r_squared : float
         R-squared of the fit between the full model fit and the input data.
     error : float
@@ -77,8 +75,8 @@ class ERPparamResults(namedtuple('ERPparamResults', ['r_squared', 'error',
     shape_params : 2d array
         ERP shape parameters 
         Each row is a waveform, as [FWHM, rise-time, decay-time, rise-decay symmetry,
-        sharpness, rising sharpeness, decaying sharpeness].
-    peak_indices : 1d array
+        sharpness, rising sharpeness, decaying sharpeness, CF, PW, BW].
+    peak_indices : 1d array, 
         Indices of the peaks in the input data.
 
     Notes
