@@ -85,7 +85,7 @@ class ERPparamGroup(ERPparam):
       and the BW of the peak, is 2*std of the gaussian (as 'two sided' bandwidth).
     - The ERPparamGroup object inherits from the ERPparam object. As such it also has data
       attributes (`signal`), and parameter attributes
-      ( `shape_params_`, `gaussian_params_`, `r_squared_`, `error_`)
+      ( `shape_params_`, `gaussian_params_`, `peak_indices_`, `r_squared_`, `error_`, `adj_r_squared_`)
       which are defined in the context of individual model fits. These attributes are
       used during the fitting process, but in the group context do not store results
       post-fitting. Rather, all model fit results are collected and stored into the
@@ -196,9 +196,10 @@ class ERPparamGroup(ERPparam):
         """
         format_dict = { 'gaussian_params_' : np.ones([0,4])*np.nan,
                         'shape_params_' : np.ones([0,11])*np.nan,
+                        'peak_indices_' : np.full(3, np.nan),
                         'r_squared_': np.nan,
                         'error_' : np.nan,
-                        'peak_indices_' : np.full(3, np.nan)
+                        'adj_r_squared_' : np.nan
                     }
         empty_res = ERPparamResults(**{key.strip('_') : format_dict[key] \
             for key in OBJ_DESC['results']})
@@ -355,7 +356,7 @@ class ERPparamGroup(ERPparam):
 
         Parameters
         ----------
-        name : { 'gaussian_params','shape_params', 'error', 'r_squared'}
+        name : {'gaussian_params', 'shape_params', 'peak_indices', 'error', 'r_squared', 'adj_r_squared'}
             Name of the data field to extract across the group.
         col :   {'MN','HT','SD', 'SK'}, 
                 {'CT', 'PW', 'BW' 'SK', FWHM, rise_time, decay_time, symmetry, sharpness, sharpness_rise, 

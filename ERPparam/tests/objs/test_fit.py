@@ -238,15 +238,13 @@ def test_add_data():
     # Test that prior data does not get cleared, when requesting not to clear
     tfm._reset_data_results(True, True, True)
     tfm.add_results(ERPparamResults(
-       r_squared=0.9973886245863048, error=0.01234299919871499, 
-       gaussian_params=np.asarray([[ 0.10157924,  1.8103013 ,  0.02937827],
-       [ 0.1980535 , -1.39908145,  0.04706476]]), 
-       shape_params=np.asarray([[0.064     , 0.04      , 0.024     , 0.625     , 0.97706828,
-        0.97134   , 0.98279656],
-       [0.103     , 0.041     , 0.062     , 0.39805825, 0.9560461 ,
-        0.96498029, 0.9471119 ]]), 
-        peak_indices=np.asarray([[562, 602, 626],
-       [657, 698, 760]])))
+        gaussian_params=np.asarray([[0.101,  1.810, 0.029],
+                                    [0.198, -1.399, 0.047]]), 
+        shape_params=np.asarray([[0.064, 0.04, 0.024, 0.625, 0.977, 0.971, 0.982],
+                                [0.103, 0.041, 0.062, 0.398, 0.956, 0.964, 0.947]]), 
+        peak_indices=np.asarray([[562, 602, 626], [657, 698, 760]]),
+        r_squared=0.97, error=0.01, adj_r_squared=0.95))
+
     tfm.add_data(time, signal, clear_results=False)
     assert tfm.has_data
     assert tfm.has_model
@@ -289,12 +287,12 @@ def test_add_results():
 
     # Test adding results
     ERPparam_results = ERPparamResults(
-        r_squared=0.99, error=0.01, 
-       gaussian_params=np.asarray([[ 0.10,  1.8 ,  0.02],
-                                    [ 0.19 , -1.39,  0.047]]), 
-       shape_params=np.asarray([[0.064 , 0.04 , 0.024, 0.625 , 0.97, 0.97   , 0.98],
-                                  [0.103 , 0.041 , 0.062 , 0.39, 0.951 , 0.964, 0.947 ]]), 
-        peak_indices=np.asarray([[562, 602, 626],  [657, 698, 760]]))
+        gaussian_params=np.asarray([[0.10, 1.8, 0.02], [0.19, -1.39, 0.047]]), 
+        shape_params=np.asarray([[0.064, 0.04, 0.024, 0.625, 0.97, 0.97, 0.98],
+                                  [0.103, 0.041, 0.062, 0.39, 0.951, 0.964, 0.947]]), 
+        peak_indices=np.asarray([[562, 602, 626],  [657, 698, 760]]),
+        r_squared=0.99, error=0.01, adj_r_squared=0.95)
+
     tfm.add_results(ERPparam_results)
     assert tfm.has_model
     for setting in OBJ_DESC['results']:

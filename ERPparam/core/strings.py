@@ -336,10 +336,11 @@ def gen_results_fm_str(fm, concise=False):
           for sp in fm.shape_params_],
         '',
 
-        # Goodness if fit
+        # Goodness of fit
         'Goodness of fit metrics:',
-        'R^2 of model fit is {:5.4f}'.format(fm.r_squared_),
-        'Error of the fit is {:5.4f}'.format(fm.error_),
+        '     R-squared: {:5.4f}'.format(fm.r_squared_),
+        '         Error: {:5.4f}'.format(fm.error_),
+        'Adj. R-squared: {:5.4f}'.format(fm.adj_r_squared_),
         '',
 
         # Footer
@@ -411,14 +412,13 @@ def gen_results_fg_str(fg, concise=False):
         #     'with' if fg.aperiodic_mode == 'knee' else 'without'),
         # '',
         'Peak Fit Values:',
-        *[el for el in ['    Amplitudes - Min: {:6.2f}, Max: {:6.2f}, Mean: {:5.2f}'
-                        .format(np.nanmin(pws), np.nanmax(pws), np.nanmean(pws)),
-                       ]],
+        'Amplitudes - Min: {:6.2f}, Max: {:6.2f}, Mean: {:5.2f}'
+        .format(np.nanmin(pws), np.nanmax(pws), np.nanmean(pws)),
         'Bandwidths - Min: {:6.3f}, Max: {:6.3f}, Mean: {:5.3f}'
         .format(np.nanmin(bws), np.nanmax(bws), np.nanmean(bws)),
-        'Symmetry - Min: {:6.3f}, Max: {:6.3f}, Mean: {:5.3f}'
+        '  Symmetry - Min: {:6.3f}, Max: {:6.3f}, Mean: {:5.3f}'
         .format(np.nanmin(symmetry), np.nanmax(symmetry), np.nanmean(symmetry)),
-        'Sharpness - Min: {:6.3f}, Max: {:6.3f}, Mean: {:5.3f}'
+        ' Sharpness - Min: {:6.3f}, Max: {:6.3f}, Mean: {:5.3f}'
         .format(np.nanmin(sharpness), np.nanmax(sharpness), np.nanmean(sharpness)),
         '',
 
@@ -427,12 +427,14 @@ def gen_results_fg_str(fg, concise=False):
         .format(n_peaks),
         '',
 
-        # Goodness if fit
+        # Goodness of fit
         'Goodness of fit metrics:',
-        '   R2s -  Min: {:6.3f}, Max: {:6.3f}, Mean: {:5.3f}'
+        '        R2s -  Min: {:6.3f}, Max: {:6.3f}, Mean: {:5.3f}'
         .format(np.nanmin(r2s), np.nanmax(r2s), np.nanmean(r2s)),
-        'Errors -  Min: {:6.3f}, Max: {:6.3f}, Mean: {:5.3f}'
+        '     Errors -  Min: {:6.3f}, Max: {:6.3f}, Mean: {:5.3f}'
         .format(np.nanmin(errors), np.nanmax(errors), np.nanmean(errors)),
+        'Adjusted R2s -  Min: {:6.3f}, Max: {:6.3f}, Mean: {:5.3f}'
+        .format(np.nanmin(r2s), np.nanmax(r2s), np.nanmean(r2s)),
         '',
 
         # Footer
