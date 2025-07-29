@@ -358,8 +358,8 @@ class ERPparamGroup(ERPparam):
         name : { 'gaussian_params','shape_params', 'error', 'r_squared'}
             Name of the data field to extract across the group.
         col :   {'MN','HT','SD', 'SK'}, 
-                {FWHM, rise_time, decay_time, symmetry, sharpness, sharpness_rise, 
-                    sharpness_decay, 'CT', 'PW', 'BW' 'SK'}, or
+                {'CT', 'PW', 'BW' 'SK', FWHM, rise_time, decay_time, symmetry, sharpness, sharpness_rise, 
+                    sharpness_decay}, or
                 int, optional
                 Column name / index to extract from selected data, if requested.
                 Only used for name of {'gaussian_params', 'shape_params}, 

@@ -70,7 +70,7 @@ def test_ERPparam_fit():
     for ii, gauss in enumerate(group_three(erp_params)):
         assert np.allclose(gauss, tfm.gaussian_params_[ii, :3], 
                            [2.0, 0.5, 1.0])
-        assert np.isnan(tfm.shape_params_[ii, -1])
+        assert np.isnan(tfm.shape_params_[ii, 3])
 
 def test_ERPparam_fit_noise():
     """Test ERPparam fit on noisy data, to make sure nothing breaks."""
@@ -103,7 +103,7 @@ def test_ERPparam_fit_skew():
 
         # Check model results - gaussian parameters
         assert tfm.has_model
-        assert np.allclose(erp_params, tfm.shape_params_[0,7:], [2.0, 1.0, 1.0, 2.0])
+        assert np.allclose(erp_params, tfm.shape_params_[0,:4], [2.0, 1.0, 1.0, 2.0])
 
 def test_ERPparam_fit_measures():
     """Test goodness of fit & error metrics, post model fitting."""
