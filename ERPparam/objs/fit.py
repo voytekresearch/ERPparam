@@ -618,17 +618,17 @@ class ERPparam():
         """
         if param_names:
 
-            params_dict = {'shape_params':{'FWHM':'full width at half magnitude', 
+            params_dict = {'shape_params':{'CT': "Center time of the peak, calculated from the raw signal", 
+                                            'PW': 'Peak amplitude, calculate from the raw signal', 
+                                            'BW': 'Bandwidth of the peak, 2-sided (ie, both halves from the peak center), calculated from the raw signal',
+                                            'SK': 'Skewness of the peak',
+                                            'FWHM':'full width at half magnitude', 
                                            'rise_time': 'time between peak and rising half-magnitude point', 
                                            'decay_time': 'time between peak and decaying half-magnitude point', 
                                            'symmetry': 'rise time / FWHM', 
                                            'sharpness': 'peak sharpness (normalized to be dimensionless 0-1)', 
                                            'sharpness_rise': 'sharpness of the rise (normalized to be dimensionless 0-1)', 
-                                           'sharpness_decay': 'sharpness of the decay (normalized to be dimensionless 0-1)',
-                                           'CT': "Center time of the peak, calculated from the raw signal", 
-                                            'PW': 'Peak amplitude, calculate from the raw signal', 
-                                            'BW': 'Bandwidth of the peak, 2-sided (ie, both halves from the peak center), calculated from the raw signal',
-                                            'SK': 'Skewness of the peak'},
+                                           'sharpness_decay': 'sharpness of the decay (normalized to be dimensionless 0-1)'},
 
                             'gaussian_params':{'MN':'mean of the gaussian',
                                                'HT':'height of the gaussian',
@@ -1023,6 +1023,10 @@ class ERPparam():
         -------
         shape_params : list
             List of shape parameters. In order:
+            * CT: center time of the peak
+            * PW: amplitude of the peak (estimated from the raw signal)
+            * BW: width of the peak
+            * SK: the skew
             * FWHM: full width at half magnitude
             * rise_time: rise time i.e. time between peak and rising half-magnitude point
             * decay_time: decay time i.e. time between peak and decaying half-magnitude point
@@ -1078,7 +1082,7 @@ class ERPparam():
                              sharpness, sharpness_rise, sharpness_decay]
             peak_indices[ii] = [start_index, peak_index, end_index]
 
-        shape_params = np.hstack([shape_params, peak_params])
+        shape_params = np.hstack([peak_params, shape_params])
         return shape_params, peak_indices
 
     def _drop_extra_peaks(self):
@@ -1089,10 +1093,10 @@ class ERPparam():
 
             # get the top n tallest peaks, determined by the peak amplitude
             # get the absolute values of the peak amps, sort by smallest to largest, and extract the inds of the top N tallest
-            tallest_amps_idx = np.abs(self.shape_params_[:,-3]).argsort()[-(self.max_n_peaks):]
+            tallest_amps_idx = np.abs(self.shape_params_[:,1]).argsort()[-(self.max_n_peaks):]
             # extract and sort shape params by the tallest, which will reorder them by smallest to tallest
             # extract the peak times so that we can reorder by that instead
-            keepers_time_idx = self.shape_params_[tallest_amps_idx,:][:,-4].argsort()
+            keepers_time_idx = self.shape_params_[tallest_amps_idx,:][:,0].argsort()
             # extract the tallest peaks but sorted by peak time
             self.shape_params_ = self.shape_params_[tallest_amps_idx,:][keepers_time_idx,:]
             self.gaussian_params_ = self.gaussian_params_[tallest_amps_idx,:][keepers_time_idx,:]

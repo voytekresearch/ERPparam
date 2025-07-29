@@ -332,7 +332,7 @@ def gen_results_fm_str(fm, concise=False):
         # Peak parameters
         '{} peaks were found:'.format(
             len(fm.shape_params_)),
-        *['Time: {:6.2f}, Amp: {:6.2f}, Dur: {:5.2f}, Sym: {:4.2f}, Sharp: {:1.4f}'.format(sp[7], sp[8], sp[9], sp[3], sp[4]) \
+        *['Time: {:6.2f}, Amp: {:6.2f}, Dur: {:5.2f}, Sym: {:4.2f}, Sharp: {:1.4f}'.format(sp[0], sp[1], sp[2], sp[7], sp[8]) \
           for sp in fm.shape_params_],
         '',
 
