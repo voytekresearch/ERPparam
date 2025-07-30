@@ -35,15 +35,15 @@ def get_band_peak_fm(fm, band, select_highest=True, threshold=None, thresh_param
 
     Returns
     -------
-    1d or 2d array
+    1d or 2d array, or None
         Peak data. Each row is a peak, as [CF, PW, BW] if attribute == "gaussian_params" and extract_param is False,
         and [CT, PW, BW, SK, FWHM, rise_time, decay_time, symmetry,sharpness, sharpness_rise, sharpness_decay] 
-        if attribute == "shape_params". Returns NaN if the ERPparam model doesn't have valid parameters, or if there are 
-        not peaks in the requested time range. 
+        if attribute == "shape_params". Returns None if the ERPparam model doesn't have valid parameters, or if there are 
+        not peaks in the requested time range or matching the given criteria. 
 
     Examples
     --------
-    Select an alpha peak from an already fit ERPparam object 'fm', selecting the highest power alpha:
+    Select a peak from an already fit ERPparam object 'fm', selecting the highest peak:
 
     >>> p3 = get_band_peak_fm(fm, [0.25, 0.6], select_highest=True)  # doctest:+SKIP
 
@@ -95,10 +95,11 @@ def get_band_peak_fm(fm, band, select_highest=True, threshold=None, thresh_param
                     return band_peaks[:, inds[extract_param]]
     
     if (params.size == 0) or (n_peaks < 1):
-        return np.array([np.nan])
+        return None
 
 
-def get_band_peak_fg(fg, band, threshold=None, thresh_param='PW', attribute='peak_params'):
+def get_band_peak_fg(fg, band, threshold=None, thresh_param='PW', 
+                     attribute='peak_params', extract_param=False):
     """Extract peaks from a band of interest from a ERPparamGroup object.
 
     Parameters
@@ -109,131 +110,55 @@ def get_band_peak_fg(fg, band, threshold=None, thresh_param='PW', attribute='pea
         Time range for the band of interest.
         Defined as: (lower_frequency_bound, upper_frequency_bound).
     threshold : float, optional
-        A minimum threshold value to apply.
+        A minimum threshold value to apply. 
+        If the peak doesn't meet the threshold, it is recorded as an array of NaNs
     thresh_param : {'PW', 'BW'}
         Which parameter to threshold on. 'PW' is power and 'BW' is bandwidth.
-    attribute : {'peak_params', 'gaussian_params'}
+    attribute : {'shape_params', 'gaussian_params'}
         Which attribute of peak data to extract data from.
+    extract_param : False or {'CF', 'PW', 'BW', 'CT', 'PW', 'BW', 'SK', 
+                    'FWHM', 'rise_time', 'decay_time', 'symmetry','sharpness', 
+                    'sharpness_rise', 'sharpness_decay'}, optional, Default False
+        Which attribute of peak data to return.
 
     Returns
     -------
-    2d array
-        Peak data. Each row is a peak, as [CF, PW, BW].
-        Each row represents an individual model from the input object.
+    1d or 2d array, or None
+        Peak data. Each entry is result of applying get_band_peak_fm() on a single ERP
+        Results can be formatted as [CF, PW, BW] if attribute == "gaussian_params" and extract_param is False,
+        or [CT, PW, BW, SK, FWHM, rise_time, decay_time, symmetry,sharpness, sharpness_rise, sharpness_decay] 
+        if attribute == "shape_params". 
+        
+        Returns NaNs if the ERPparam model doesn't have valid parameters, or if there are 
+        not peaks in the requested time range or matching the given criteria. 
 
-    Notes
-    -----
-    The returned array keeps track of which model each extracted peak comes from,
-    returning a [n_models, 3] array, with one peak returned per model.
+        Returns None if the ERPparamGroup does not have any peaks fit.
 
-    - To do so, this function necessarily extracts and returns one peak per model fit.
-    - Each row reflects an individual model fit, in order, filled with nan if no peak was present.
-
-    If, instead, you wish to extract all peaks within a band, per model fit,
-    you can do something like:
-
-    >>> peaks = np.empty((0, 3))
-    >>> for f_res in fg:  # doctest:+SKIP
-    ...     peaks = np.vstack((peaks, get_band_peak(f_res.peak_params, band, select_highest=False)))
-
-    Examples
-    --------
-    Extract alpha peaks from a ERPparamGroup object 'fg' that already has model results:
-
-    >>> alphas = get_band_peak_fg(fg, [7, 14])  # doctest:+SKIP
-
-    Extract peaks from a ERPparamGroup object 'fg', selecting those above a power threshold:
-
-    >>> betas = get_band_peak_fg(fg, [13, 30], threshold=0.1)  # doctest:+SKIP
     """
 
-    return get_band_peak_group(fg.get_params(attribute), band, len(fg),
-                               threshold, thresh_param)
+    n_fits = len(fg.group_results) 
 
-def get_band_peak_group(peak_params, band, n_fits, threshold=None, thresh_param='PW'):
-    """Extract peaks within a given band of interest, from peaks from a group fit.
+    if n_fits > 0:
+        if extract_param:
+            params_shape = 1
+        else:
+            params = fg.get_params(attribute)
+            params_shape = (params.shape[1])-1
 
-    Parameters
-    ----------
-    peak_params : 2d array
-        Peak parameters, for a group fit, with shape of [n_peaks, 4].
-    band : tuple of (float, float)
-        Frequency range for the band of interest.
-        Defined as: (lower_frequency_bound, upper_frequency_bound).
-    n_fits : int
-        The number of model fits in the ERPparamGroup data.
-    threshold : float, optional
-        A minimum threshold value to apply.
-    thresh_param : {'PW', 'BW'}
-        Which parameter to threshold on. 'PW' is power and 'BW' is bandwidth.
+        # Extracts an array per ERPparam fit, and extracts band pe(aks from it
+        band_peaks = np.empty((n_fits, params_shape)) # initialize empty array
+        band_peaks[:, :] = np.nan # fill with NaNs, since we'll want to just keep it as a NaN if there's nothing returned
+        for ind in range(n_fits):
+            each_param = get_band_peak_fm(fg.get_ERPparam(ind),
+                                            band=band, select_highest=True,
+                                            threshold=threshold,
+                                            thresh_param=thresh_param)
+            if not each_param is None:
+                band_peaks[ind,:] = each_param
 
-    Returns
-    -------
-    band_peaks : 2d array
-        Peak data. Each row is a peak, as [CF, PW, BW].
-        Each row represents an individual model from the input array of all peaks.
-
-    Notes
-    -----
-    The returned array keeps track of which model each extracted peak comes from,
-    returning a [n_models, 3] array, with one peak returned per model.
-
-    - To do so, this function necessarily extracts and returns one peak per model fit.
-    - Each row reflects an individual model fit, in order, filled with nan if no peak was present.
-    """
-
-    # Extracts an array per ERPparam fit, and extracts band peaks from it
-    band_peaks = np.zeros(shape=[n_fits, 3])
-    for ind in range(n_fits):
-        band_peaks[ind, :] = get_band_peak_fm(peak_params[tuple([peak_params[:, -1] == ind])][:, 0:3],
-                                           band=band, select_highest=True,
-                                           threshold=threshold,
-                                           thresh_param=thresh_param)
-
-    return band_peaks
-
-def get_band_peak_group_arr(peak_params, window, n_fits, threshold=None, 
-                            thresh_param='PW'):
-    """Extract peaks within a given band of interest, from peaks from a group fit.
-
-    Parameters
-    ----------
-    peak_params : 2d array
-        Peak parameters, for a group fit, with shape of [n_peaks, 4].
-    window : tuple of (float, float)
-        Time range for the band of interest.
-        Defined as: (start_time, end_time).
-    n_fits : int
-        The number of model fits in the group.
-    threshold : float, optional
-        A minimum threshold value to apply.
-    thresh_param : {'PW', 'BW'}
-        Which parameter to threshold on. 'PW' is power and 'BW' is bandwidth.
-
-    Returns
-    -------
-    band_peaks : 2d array
-        Peak data. Each row is a peak, as [CF, PW, BW].
-        Each row represents an individual model from the input array of all peaks.
-
-    Notes
-    -----
-    The returned array keeps track of which model each extracted peak comes from,
-    returning a [n_models, 3] array, with one peak returned per model.
-
-    - To do so, this function necessarily extracts and returns one peak per model fit.
-    - Each row reflects an individual model fit, in order, filled with nan if no peak was present.
-    """
-
-    # Extracts an array per model fit, and extracts band peaks from it
-    band_peaks = np.zeros(shape=[n_fits, 3])
-    for ind in range(n_fits):
-        band_peaks[ind, :] = get_band_peak_arr(\
-            peak_params[tuple([peak_params[:, -1] == ind])][:, 0:3],
-            window=window, select_highest=True, threshold=threshold, 
-            thresh_param=thresh_param)
-
-    return band_peaks
+        return band_peaks
+    else:
+        return None
 
 def get_band_peak_arr(peak_params, window, select_highest=True, threshold=None, 
                       thresh_param='PW'):
