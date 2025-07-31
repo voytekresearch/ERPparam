@@ -1225,7 +1225,7 @@ class ERPparam():
             p = self.gaussian_params_.shape[0] * 4
         elif self.peak_mode == 'gaussian':
             p = self.gaussian_params_.shape[0] * 3
-        self.adj_r_squared_ = 1 - (1 - self.r_squared_) * (n - 1) / (n - p - 1)
+        self.adj_r_squared_ = 1 - (((1 - self.r_squared_) * (n - 1)) / (n - p - 1))
 
 
     def _calc_error(self, metric=None):
