@@ -115,10 +115,14 @@ class ERPparam():
         ERP shape parameters for each peak.
         Each row is a peak, as [duration, rise-time, decay-time, rise-decay symmetry,
         FWHM, rising sharpness, decaying sharpness].
+    peak_indices_ : 1d array
+        Indices of the peaks and half-magnitude points in the signal.
     r_squared_ : float
         R-squared of the fit between the input signal and the full model fit.
     error_ : float
         Error of the full model fit.
+    adj_r_squared_ : float
+        Adjusted R-squared of the fit between the input signal and the full model fit.
     n_peaks_ : int
         The number of peaks fit in the model.
     has_data : bool
@@ -259,6 +263,7 @@ class ERPparam():
             self.shape_params_ = np.ones([0,11])*np.nan
             self.r_squared_ = np.nan
             self.error_ = np.nan
+            self.adj_r_squared_ = np.nan
             self.peak_indices_ = np.full(3, np.nan)
             self._peak_fit = None
 
@@ -341,6 +346,7 @@ class ERPparam():
         self.peak_indices_ = ERPparam_result.peak_indices
         self.r_squared_ = ERPparam_result.r_squared
         self.error_ = ERPparam_result.error
+        self.adj_r_squared_ = ERPparam_result.adj_r_squared
 
         self._check_loaded_results(ERPparam_result._asdict())
 
@@ -463,6 +469,7 @@ class ERPparam():
             # Calculate R^2 and error of the model fit
             self._calc_r_squared()
             self._calc_error()
+            self._calc_adj_r_squared()
 
         except FitError:
 
@@ -553,7 +560,7 @@ class ERPparam():
 
         Parameters
         ----------
-        name : {'gaussian_params', 'shape_params', 'error', 'r_squared'}
+        name : {'gaussian_params', 'shape_params', 'error', 'r_squared', 'adj_r_squared'}'}
             Name of the data field to extract.
         col : {'MN','HT','SD', 'SK'}, {CT, PW, BW, SK, FWHM, rise_time, decay_time, symmetry,
             sharpness, sharpness_rise, sharpness_decay} or int, optional
@@ -1201,10 +1208,28 @@ class ERPparam():
 
 
     def _calc_r_squared(self):
-        """Calculate the r-squared goodness of fit of the model, compared to the original data."""
+        """Calculate the r-squared goodness of fit of the model compared to the 
+        original data."""
 
         r_val = np.corrcoef(self.signal, self._peak_fit)
         self.r_squared_ = r_val[0][1] ** 2
+
+
+    def _calc_adj_r_squared(self):
+        """Calculate the adjusted r-squared goodness of fit of the model 
+        compared to the original data. This measure accounts for the number of 
+        parameters in the model using the formula:
+        adj_r_squared = 1 - (1 - r_squared) * (n - 1) / (n - p - 1)
+        where n is the number of data points, and p is the number of parameters 
+        in the model.
+        """
+
+        n = len(self.signal)
+        if self.peak_mode == 'skewed_gaussian':
+            p = self.gaussian_params_.shape[0] * 4
+        elif self.peak_mode == 'gaussian':
+            p = self.gaussian_params_.shape[0] * 3
+        self.adj_r_squared_ = 1 - (((1 - self.r_squared_) * (n - 1)) / (n - p - 1))
 
 
     def _calc_error(self, metric=None):
