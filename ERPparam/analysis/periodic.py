@@ -124,13 +124,13 @@ def get_band_peak_fg(fg, band, threshold=None, thresh_param='PW',
 
     Returns
     -------
-    1d or 2d array, or None
+    List of length N ERPs, or None
         Peak data. Each entry is result of applying get_band_peak_fm() on a single ERP
         Results can be formatted as [CF, PW, BW] if attribute == "gaussian_params" and extract_param is False,
         or [CT, PW, BW, SK, FWHM, rise_time, decay_time, symmetry,sharpness, sharpness_rise, sharpness_decay] 
         if attribute == "shape_params". 
         
-        Returns NaNs if the ERPparam model doesn't have valid parameters, or if there are 
+        Returns None if the ERPparam model doesn't have valid parameters, or if there are 
         not peaks in the requested time range or matching the given criteria. 
 
         Returns None if the ERPparamGroup does not have any peaks fit.
@@ -140,11 +140,6 @@ def get_band_peak_fg(fg, band, threshold=None, thresh_param='PW',
     n_fits = len(fg.group_results) 
 
     if n_fits > 0:
-        if extract_param:
-            params_shape = 1
-        else:
-            params = fg.get_params(attribute)
-            params_shape = (params.shape[1])-1
 
         # Extracts an array per ERPparam fit, and extracts band pe(aks from it
         band_peaks = []
@@ -186,10 +181,10 @@ def get_band_peak_arr(peak_params, window, select_highest=True, threshold=None,
     band_peaks : 1d or 2d array
         Peak data. Each row is a peak, as [CF, PW, BW].
     """
-
+    len_params_arr = peak_params.shape[1]
     # Return nan array if empty input
     if peak_params.size == 0:
-        return np.array([np.nan, np.nan, np.nan])
+        return np.array([np.nan]*len_params_arr)
 
     # Find indices of peaks in the specified range, and check the number found
     peak_inds = (peak_params[:, 0] >= window[0]) & (peak_params[:, 0] <= window[1])
@@ -198,7 +193,7 @@ def get_band_peak_arr(peak_params, window, select_highest=True, threshold=None,
     # If there are no peaks within the specified range, return nan
     #   Note: this also catches and returns if the original input was empty
     if n_peaks == 0:
-        return np.array([np.nan, np.nan, np.nan])
+        return np.array([np.nan]*len_params_arr)
 
     band_peaks = peak_params[peak_inds, :]
 
