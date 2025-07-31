@@ -77,7 +77,7 @@ def get_band_peak_fm(fm, band, select_highest=True, threshold=None, thresh_param
             band_peaks = params[peak_inds, :]
 
             # Apply a minimum threshold, if one was provided
-            if (len(band_peaks) > 1) and threshold:
+            if (len(band_peaks) > 0) and threshold:
                 band_peaks = threshold_peaks(band_peaks, threshold, inds, thresh_param)
 
             # If results > 1 and select_highest, then we return the highest peak
@@ -85,16 +85,17 @@ def get_band_peak_fm(fm, band, select_highest=True, threshold=None, thresh_param
             if (len(band_peaks) > 1) and select_highest:
                 band_peaks = get_highest_peak(band_peaks)
 
-            if not extract_param:
-                # Squeeze so that if there is only 1 result, return single peak in flat array
-                return band_peaks #np.squeeze(band_peaks)
-            else: 
-                if band_peaks.ndim == 1:
-                    return band_peaks[inds[extract_param]]
-                else:
-                    return band_peaks[:, inds[extract_param]]
+            if (len(band_peaks) > 0):
+                if not extract_param:
+                    # Squeeze so that if there is only 1 result, return single peak in flat array
+                    return band_peaks #np.squeeze(band_peaks)
+                else: 
+                    if band_peaks.ndim == 1:
+                        return band_peaks[inds[extract_param]]
+                    else:
+                        return band_peaks[:, inds[extract_param]]
     
-    if (params.size == 0) or (n_peaks < 1):
+    if (params.size == 0) or (n_peaks < 1) or (band_peaks.shape[0] == 0):
         return None
 
 
@@ -146,15 +147,16 @@ def get_band_peak_fg(fg, band, threshold=None, thresh_param='PW',
             params_shape = (params.shape[1])-1
 
         # Extracts an array per ERPparam fit, and extracts band pe(aks from it
-        band_peaks = np.empty((n_fits, params_shape)) # initialize empty array
-        band_peaks[:, :] = np.nan # fill with NaNs, since we'll want to just keep it as a NaN if there's nothing returned
+        band_peaks = []
         for ind in range(n_fits):
             each_param = get_band_peak_fm(fg.get_ERPparam(ind),
                                             band=band, select_highest=True,
                                             threshold=threshold,
                                             thresh_param=thresh_param)
             if not each_param is None:
-                band_peaks[ind,:] = each_param
+                band_peaks.append(each_param)
+            else:
+                band_peaks.append(None)
 
         return band_peaks
     else:
