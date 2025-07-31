@@ -5,7 +5,7 @@ import numpy as np
 from ERPparam.sim import gen_time_vector
 from ERPparam.data import ERPparamResults
 from ERPparam.objs import ERPparam, ERPparamGroup
-from ERPparam.analysis.periodic import get_band_peak_fg
+from ERPparam.analysis.periodic import get_band_peak_group_arr
 from ERPparam.core.errors import NoModelError, IncompatibleSettingsError
 
 ###################################################################################################
@@ -38,7 +38,7 @@ def compare_info(ERPparam_lst, aspect):
     return consistent
 
 
-def average_fg(fg, bands, avg_method='mean', regenerate=True):
+def average_fg(fg, bands, avg_method='mean', select_highest=True, regenerate=True):
     """Average across model fits in a ERPparamGroup object.
 
     Parameters
@@ -46,9 +46,11 @@ def average_fg(fg, bands, avg_method='mean', regenerate=True):
     fg : ERPparamGroup
         Object with model fit results to average across.
     bands : Bands
-        Bands object that defines the frequency bands to collapse peaks across.
-    avg : {'mean', 'median'}
+        Bands object that defines the time ranges to collapse peaks across.
+    avg_method : {'mean', 'median'}
         Averaging function to use.
+    select_highest : bool, default: True
+        Whether to extract the tallest peak of each ERP prior to averaging
     regenerate : bool, optional, default: True
         Whether to regenerate the model for the averaged parameters.
 
@@ -76,24 +78,19 @@ def average_fg(fg, bands, avg_method='mean', regenerate=True):
         avg_func = np.nanmedian
 
     # Parameters: extract & average
-    peak_params = []
     gauss_params = []
     shape_params = []
 
     for band_def in bands.definitions:
 
-        peaks = get_band_peak_fg(fg, band_def, attribute='peak_params')
-        gauss = get_band_peak_fg(fg, band_def, attribute='gaussian_params')
-        shape = get_band_peak_fg(fg, band_def, attribute='shape_params')
-
+        gauss = get_band_peak_group_arr(fg.get_results(), band_def, select_highest=select_highest, attribute='gaussian_params')
+        shape = get_band_peak_group_arr(fg.get_results(), band_def, select_highest=select_highest, attribute='shape_params')
         # Check if there are any extracted peaks - if not, don't add
         #   Note that we only check peaks, but gauss should be the same
-        if not np.all(np.isnan(peaks)):
-            peak_params.append(avg_func(peaks, 0))
+        if not np.all(np.isnan(gauss)):
             gauss_params.append(avg_func(gauss, 0))
             shape_params.append(avg_func(shape, 0))
 
-    peak_params = np.array(peak_params)
     gauss_params = np.array(gauss_params)
     shape_params = np.array(shape_params)
 
@@ -102,7 +99,7 @@ def average_fg(fg, bands, avg_method='mean', regenerate=True):
     error = avg_func(fg.get_params('error'))
 
     # Collect all results together, to be added to ERPparam object
-    results = ERPparamResults(peak_params, r2, error, gauss_params, 
+    results = ERPparamResults(r2, error, gauss_params, 
                               shape_params, fg.get_params('peak_indices'))
 
     # Create the new ERPparam object, with settings, data info & results
