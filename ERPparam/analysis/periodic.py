@@ -128,10 +128,8 @@ def get_band_peak_fg(fg, band, threshold=None, thresh_param='PW',
         Peak data. Each entry is result of applying get_band_peak_fm() on a single ERP
         Results can be formatted as [CF, PW, BW] if attribute == "gaussian_params" and extract_param is False,
         or [CT, PW, BW, SK, FWHM, rise_time, decay_time, symmetry,sharpness, sharpness_rise, sharpness_decay] 
-        if attribute == "shape_params". 
-        
-        Returns None if the ERPparam model doesn't have valid parameters, or if there are 
-        not peaks in the requested time range or matching the given criteria. 
+        if attribute == "shape_params". The list entry for a peak will be None if the ERPparam model doesn't have 
+        valid parameters, or if there are not peaks in the requested time range or matching the given criteria. 
 
         Returns None if the ERPparamGroup does not have any peaks fit.
 
@@ -214,7 +212,8 @@ def get_band_peak_arr(peak_params, window, select_highest=True, threshold=None,
 def get_band_peak_group_arr(fg_results, window, threshold=None, 
                             select_highest = True,
                             attribute = 'shape_params',
-                            thresh_param='PW'):
+                            thresh_param='PW',
+                            rmv_nans=False):
     """Extract peaks within a given band of interest, from peaks from a group fit.
 
     Parameters
@@ -234,6 +233,8 @@ def get_band_peak_group_arr(fg_results, window, threshold=None,
         Which attribute of peak data to extract data from.
     thresh_param : {'PW', 'BW'}
         Which parameter to threshold on. 'PW' is power and 'BW' is bandwidth.
+    rmv_nans : bool, default : False
+        Whether or not to remove rows where there were no peaks detected at all, or peaks didn't fit the search criteria
 
     Returns
     -------
@@ -258,6 +259,8 @@ def get_band_peak_group_arr(fg_results, window, threshold=None,
         band_peaks.append(this_band_arr)
 
     band_peaks = np.vstack(band_peaks)
+    if rmv_nans:
+        band_peaks = band_peaks[np.sum(np.isnan(band_peaks), axis=1) <= 1] # check for NaNs, if there are rows where there's a whole row of missing params
     return band_peaks
 
 def get_highest_peak(peak_params):

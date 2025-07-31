@@ -88,6 +88,9 @@ def average_fg(fg, bands, avg_method='mean', select_highest=True, regenerate=Tru
         # Check if there are any extracted peaks - if not, don't add
         #   Note that we only check peaks, but gauss should be the same
         if not np.all(np.isnan(gauss)):
+            ## removing any rows that are all NaNs due to no peaks being found or fit there
+            gauss = gauss[np.sum(np.isnan(gauss), axis=1) <= 1] # we allow one NaN in case the gaussian skew param is NaN
+            shape = shape[np.sum(np.isnan(shape), axis=1) <= 1]
             gauss_params.append(avg_func(gauss, 0))
             shape_params.append(avg_func(shape, 0))
 
