@@ -7,7 +7,7 @@ from ERPparam.core.items import PEAK_INDS, GAUS_INDS
 ###################################################################################################
 ###################################################################################################
 
-def get_band_peak_fm(fm, band, select_highest=True, threshold=None, thresh_param='PW',
+def get_band_peak_ep(fm, band, select_highest=True, threshold=None, thresh_param='PW',
                      attribute='shape_params', extract_param=False, dict_format = False):
     """Extract peaks from a band of interest from a ERPparam object.
 
@@ -27,7 +27,7 @@ def get_band_peak_fm(fm, band, select_highest=True, threshold=None, thresh_param
         Which parameter to threshold on. 'PW' is power and 'BW' is bandwidth.
     attribute : {'shape_params', 'gaussian_params'}
         Which attribute of peak data to extract data from.
-    extract_param : False or {'CF', 'PW', 'BW'} for gaussian_params, or {'CT', 'PW', 'BW', 'SK', 'FWHM', 
+    extract_param : False or {'MN', 'HT', 'SD', 'SK} for gaussian_params, or {'CT', 'PW', 'BW', 'SK', 'FWHM', 
                     'rise_time', 'decay_time', 'symmetry','sharpness', 'sharpness_rise', 'sharpness_decay'} 
                     for shape_params, optional, Default False
         Which attribute of peak data to return.
@@ -38,10 +38,14 @@ def get_band_peak_fm(fm, band, select_highest=True, threshold=None, thresh_param
 
     Returns
     -------
-    1d or 2d array, or None
-        Peak data. Each row is a peak, as [CF, PW, BW] if attribute == "gaussian_params" and extract_param is False,
+    1d or 2d array, dict, or None
+        Peak data. Each row is a peak, as [MN, HT, SD, SK] if attribute == "gaussian_params" and extract_param is False,
         and [CT, PW, BW, SK, FWHM, rise_time, decay_time, symmetry,sharpness, sharpness_rise, sharpness_decay] 
-        if attribute == "shape_params" and extract_param is False. Returns None if the ERPparam model doesn't have valid parameters, or if there are 
+        if attribute == "shape_params" and extract_param is False. 
+        
+        Return parameters in a dictionary as {parameter label : peak data} if dict_format is True.
+        
+        Returns None if the ERPparam model doesn't have valid parameters, or if there are 
         not peaks in the requested time range or matching the given criteria. 
 
     Examples
@@ -88,14 +92,17 @@ def get_band_peak_fm(fm, band, select_highest=True, threshold=None, thresh_param
             if (len(band_peaks) > 0):
                 if extract_param: 
                     if band_peaks.ndim == 1:
-                        band_peaks = band_peaks[inds[extract_param]]
+                        band_peaks = np.asarray([band_peaks[inds[extract_param]]])
                     else:
                         band_peaks = band_peaks[:, inds[extract_param]]
                 if dict_format:
                     if extract_param:
                         band_peaks = {extract_param : band_peaks}
                     elif not extract_param:
-                        construct = {pl:band_peaks[:,inds[pl]] for pl in inds.keys()}    
+                        if band_peaks.ndim == 1:
+                            construct = {pl:band_peaks[inds[pl]] for pl in inds.keys()}    
+                        else: 
+                            construct = {pl:band_peaks[:,inds[pl]] for pl in inds.keys()}   
                         band_peaks = construct
                 return band_peaks
     
@@ -103,7 +110,7 @@ def get_band_peak_fm(fm, band, select_highest=True, threshold=None, thresh_param
         return None
 
 
-def get_band_peak_fg(fg, band, threshold=None, thresh_param='PW', 
+def get_band_peak_eg(fg, band, threshold=None, thresh_param='PW', 
                      attribute='shape_params', extract_param=False, dict_format = False):
     """Extract peaks from a band of interest from a ERPparamGroup object.
 
@@ -121,7 +128,7 @@ def get_band_peak_fg(fg, band, threshold=None, thresh_param='PW',
         Which parameter to threshold on. 'PW' is power and 'BW' is bandwidth.
     attribute : {'shape_params', 'gaussian_params'}
         Which attribute of peak data to extract data from.
-    extract_param : False or {'CF', 'PW', 'BW', 'CT', 'PW', 'BW', 'SK', 
+    extract_param : False or {'MN', 'HT', 'SD', 'CT', 'PW', 'BW', 'SK', 
                     'FWHM', 'rise_time', 'decay_time', 'symmetry','sharpness', 
                     'sharpness_rise', 'sharpness_decay'}, optional, Default False
         Which attribute of peak data to return.
@@ -133,7 +140,7 @@ def get_band_peak_fg(fg, band, threshold=None, thresh_param='PW',
     -------
     List of length N ERPs, or None
         Peak data. Each entry is result of applying get_band_peak_fm() on a single ERP
-        Results can be formatted as [CF, PW, BW] if attribute == "gaussian_params" and extract_param is False,
+        Results can be formatted as [MN, HT, SD] if attribute == "gaussian_params" and extract_param is False,
         or [CT, PW, BW, SK, FWHM, rise_time, decay_time, symmetry,sharpness, sharpness_rise, sharpness_decay] 
         if attribute == "shape_params". The list entry for a peak will be None if the ERPparam model doesn't have 
         valid parameters, or if there are not peaks in the requested time range or matching the given criteria. 
@@ -149,7 +156,7 @@ def get_band_peak_fg(fg, band, threshold=None, thresh_param='PW',
         # Extracts an array per ERPparam fit, and extracts band pe(aks from it
         band_peaks = []
         for ind in range(n_fits):
-            each_param = get_band_peak_fm(fg.get_ERPparam(ind),
+            each_param = get_band_peak_ep(fg.get_ERPparam(ind),
                                             band=band, select_highest=True,
                                             threshold=threshold,
                                             thresh_param=thresh_param,
@@ -186,7 +193,7 @@ def get_band_peak_arr(peak_params, window, select_highest=True, threshold=None, 
     Returns
     -------
     band_peaks : 1d or 2d array
-        Peak data. Each row is a peak, as [CF, PW, BW].
+        Peak data. Each row is a peak, as [MN, HT, SD, SK] if gaussian_params and [CT, PW, BW, SK, FWHM, rise_time, decay_time, symmetry,sharpness, sharpness_rise, sharpness_decay] if shape params.
     """
     len_params_arr = peak_params.shape[1]
     # Return nan array if empty input
@@ -266,9 +273,11 @@ def get_band_peak_group_arr(fg_results, window, threshold=None,
                                             threshold=threshold, thresh_param=thresh_param)
         band_peaks.append(this_band_arr)
 
+    # stack peaks across fits
     band_peaks = np.vstack(band_peaks)
     if rmv_nans:
-        band_peaks = band_peaks[np.sum(np.isnan(band_peaks), axis=1) <= 1] # check for NaNs, if there are rows where there's a whole row of missing params
+        # check for NaNs, if there are rows where there's a whole row of missing params
+        band_peaks = band_peaks[np.sum(np.isnan(band_peaks), axis=1) <= 1] 
     return band_peaks
 
 def get_highest_peak(peak_params):
@@ -282,7 +291,7 @@ def get_highest_peak(peak_params):
     Returns
     -------
     1d array
-        Peak data. The row is a peak, as [CF, PW, BW].
+        Peak data. The row is a peak, as [MN, HT, SD, SK].
 
     Notes
     -----
@@ -328,20 +337,24 @@ def infer_desired_params(peak_params, thresh_param, verbose=True):
     len_params_arr = peak_params.shape[-1]
     ## infer whether we're dealing with shape or gaussian params
     inferred = thresh_param
-    if len_params_arr > 4:
+    if len_params_arr == len(PEAK_INDS.keys()):
         inds = PEAK_INDS
         params_label = 'shape_params'
         if thresh_param == 'HT':
             inferred = 'PW'
         elif thresh_param == 'SD':
             inferred = 'BW'
-    elif len_params_arr <= 4:
+    elif len_params_arr == len(GAUS_INDS.keys()):
         inds = GAUS_INDS
         params_label = 'gaussian_params'
         if thresh_param == 'PW':
             inferred = "HT"
         elif thresh_param == 'BW':
             inferred = 'SD'
+    else:
+        msg = "The type of parameters input cannot be inferred. The parameter array is shape {0}, which doesn't match expected gaussian or shape parameters".format(peak_params.shape)
+        raise ValueError(msg)
+
     if (inferred != thresh_param) and verbose:
         print(f"Inferring that the intended thresh_param is {inferred}, and the input parameters are {[params_label]}")
 

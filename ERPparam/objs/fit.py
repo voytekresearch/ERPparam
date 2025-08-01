@@ -64,6 +64,7 @@ from ERPparam.utils.params import compute_gauss_std
 from ERPparam.data import ERPparamResults, ERPparamSettings, ERPparamMetaData
 from ERPparam.data.conversions import model_to_dataframe
 from ERPparam.sim.gen import gen_time_vector, sim_erp
+from ERPparam.analysis.periodic import get_band_peak_arr, get_band_peak_ep
 
 ###################################################################################################
 ###################################################################################################
@@ -643,6 +644,53 @@ class ERPparam():
             return ERPparamResults(**{key.strip('_') : getattr(self, key) \
                 for key in OBJ_DESC['results']})
 
+    def get_filtered_results(self, time_range, select_highest=True, threshold=None, thresh_param='PW', attribute='shape_params', extract_param=False, dict_format = False):
+        """Extract peaks from a band of interest from a ERPparam object.
+
+        Parameters
+        ----------
+        time_range : tuple of (float, float)
+            Time range of interest for isolating fit ERPs
+            Defined as: (lower_time, upper_time).
+        select_highest : bool, optional, default: True
+            Whether to return single peak (if True) or all peaks within the range found (if False).
+            If True, returns the highest amplitude peak within the search range.
+        threshold : float, optional
+            A minimum threshold value to apply.
+        thresh_param : {'PW', 'BW'}
+            Which parameter to threshold on. 'PW' is power and 'BW' is bandwidth.
+        attribute : {'shape_params', 'gaussian_params'}
+            Which attribute of peak data to extract data from.
+        extract_param : False or {'CF', 'PW', 'BW'} for gaussian_params, or {'CT', 'PW', 'BW', 'SK', 'FWHM', 
+                        'rise_time', 'decay_time', 'symmetry','sharpness', 'sharpness_rise', 'sharpness_decay'} 
+                        for shape_params, optional, Default False
+            Which attribute of peak data to return.
+        dict_format : bool, Default False
+            Whether or not to format results as a dictionary with keys corresponding to 
+            the parameter label and values corresponding to the parameter.
+        
+
+        Returns
+        -------
+        1d or 2d array, dict, or None
+            Peak data. 
+            Each row is a peak, as [CF, PW, BW] if attribute == "gaussian_params" and extract_param is False,
+            and [CT, PW, BW, SK, FWHM, rise_time, decay_time, symmetry,sharpness, sharpness_rise, sharpness_decay] if attribute == "shape_params" and extract_param is False. 
+            
+            Return parameters in a dictionary as {parameter label : peak data (as 1d or 2d array)} if dict_format is True.
+            
+            Returns None if the ERPparam model doesn't have valid parameters, or if there are 
+            not peaks in the requested time range or matching the given criteria. 
+        """
+        if self.has_model:
+            params = get_band_peak_ep(self, time_range, 
+                                      select_highest=select_highest, threshold=threshold, 
+                                      thresh_param=thresh_param, 
+                                      attribute=attribute, extract_param=extract_param, 
+                                      dict_format = dict_format)
+        else:
+            raise NoModelError("No model fit results are available to extract, can not proceed.")
+    
 
     # @copy_doc_func_to_method(plot_fm)
     # def plot(self, plot_peaks=None, plot_aperiodic=True, plt_log=False,
