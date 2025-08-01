@@ -5,6 +5,9 @@ import numpy as np
 from ERPparam.analysis.periodic import *
 from ERPparam import ERPparam, ERPparamGroup
 from ERPparam.sim import simulate_erp
+from ERPparam.data.data import ERPparamResults
+
+from pytest import raises
 
 ###################################################################################################
 ###################################################################################################
@@ -121,12 +124,9 @@ def test_get_band_peak_ep():
 
 def test_empty_inputs():
 
-    data = np.empty(shape=[0, 3])
-
-    assert np.all(get_band_peak(data, [8, 12]))
-    assert np.all(get_highest_peak(data))
-    assert np.all(threshold_peaks(data, 1))
-
     data = np.empty(shape=[0, 4])
 
-    assert np.all(get_band_peak_group(data, [8, 12], 0))
+    assert np.sum(np.isnan(get_band_peak_arr(data, [8, 12]))) == 4
+
+    with raises(TypeError):
+        get_band_peak_group_arr(data, [1,2]) 

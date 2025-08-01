@@ -3,6 +3,7 @@
 import numpy as np
 
 from ERPparam.core.items import PEAK_INDS, GAUS_INDS
+from ERPparam.data.data import ERPparamResults
 
 ###################################################################################################
 ###################################################################################################
@@ -92,7 +93,7 @@ def get_band_peak_ep(fm, band, select_highest=True, threshold=None, thresh_param
             if (len(band_peaks) > 0):
                 if band_peaks.ndim == 1:
                     band_peaks = band_peaks[np.newaxis,:]
-                    
+
                 if extract_param: 
                     band_peaks = band_peaks[:, inds[extract_param]]
                 if dict_format:
@@ -259,6 +260,8 @@ def get_band_peak_group_arr(fg_results, window, threshold=None,
     -----
     - Each row reflects an individual model fit, in order, filled with nan if no peak was present or if no peaks fit the search criteria.
     """
+    if not isinstance(fg_results, ERPparamResults):
+        raise TypeError('Input to fg_results should be an ERPparamResults object')
     n_fits = len(fg_results) # how many signals were input to the Group object
 
     # Extracts an array per model fit, and extracts band peaks from it
