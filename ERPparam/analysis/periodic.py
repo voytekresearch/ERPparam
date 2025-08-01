@@ -52,18 +52,15 @@ def get_band_peak_fm(fm, band, select_highest=True, threshold=None, thresh_param
     >>> erps = get_band_peak_fm(fm, [0.0, 1.0], select_highest=False)  # doctest:+SKIP
     """
 
-    if attribute == 'shape_params':
-        inds = PEAK_INDS
-    elif attribute == 'gaussian_params':
-        inds = GAUS_INDS
-    else:
-        msg = "Parameter values '{}' not understood.".format(attribute)
+    if attribute not in ['shape_params','gaussian_params']:
+        msg = "Parameter values '{0}' not understood.".format(attribute)
         raise ValueError(msg)
 
     if extract_param:
         assert extract_param in list(inds.keys())
 
     params = getattr(fm, attribute + '_')
+    inds, thresh_param = infer_desired_params(params, thresh_param, verbose=True)
 
     # Return nan array if empty input
     if params.size > 0:
@@ -185,6 +182,7 @@ def get_band_peak_arr(peak_params, window, select_highest=True, threshold=None,
     # Return nan array if empty input
     if peak_params.size == 0:
         return np.array([np.nan]*len_params_arr)
+    inds, thresh_param = infer_desired_params(peak_params, thresh_param, verbose=True)
 
     # Find indices of peaks in the specified range, and check the number found
     peak_inds = (peak_params[:, 0] >= window[0]) & (peak_params[:, 0] <= window[1])
@@ -199,7 +197,7 @@ def get_band_peak_arr(peak_params, window, select_highest=True, threshold=None,
 
     # Apply a minimum threshold, if one was provided
     if threshold:
-        band_peaks = threshold_peaks(band_peaks, threshold, thresh_param)
+        band_peaks = threshold_peaks(band_peaks, threshold, inds, thresh_param)
 
     # If results > 1 and select_highest, then we return the highest peak
     #    Call a sub-function to select highest power peak in band
@@ -294,7 +292,7 @@ def threshold_peaks(peak_params, threshold, inds, param='PW'):
         Peak parameters, with shape of [n_peaks, 3] or [n_peaks, 4].
     threshold : float
         A minimum threshold value to apply.
-    inds : dict
+    inds : dict, or None
         Dictionary of attributes : indices for gaussian or shape parameters
     param : {'PW', 'BW'}
         Which parameter to threshold on. 'PW' is power and 'BW' is bandwidth.
@@ -309,9 +307,28 @@ def threshold_peaks(peak_params, threshold, inds, param='PW'):
     This function can be applied to periodic parameters from an individual model,
     or a set or parameters from a group.
     """
-
     # Apply a mask for the requested threshold
     thresh_mask = peak_params[:, inds[param]] > threshold
     thresholded_peaks = peak_params[thresh_mask]
 
     return thresholded_peaks
+
+def infer_desired_params(peak_params, thresh_param, verbose=True):
+
+    len_params_arr = peak_params.shape[-1]
+    ## infer whether we're dealing with shape or gaussian params
+    inferred = thresh_param
+    if len_params_arr > 4:
+        inds = PEAK_INDS
+        params_label = 'shape_params'
+        if thresh_param == 'PW':
+            inferred = 'CT'
+    elif len_params_arr <= 4:
+        inds = GAUS_INDS
+        params_label = 'gaussian_params'
+        if thresh_param == 'CT':
+            inferred = "PW"
+    if (inferred != thresh_param) and verbose:
+        print(f"Inferring that the intended thresh_param is {inferred}, and the input parameters are {[params_label]}")
+
+    return inds, inferred
