@@ -90,19 +90,16 @@ def get_band_peak_ep(fm, band, select_highest=True, threshold=None, thresh_param
                 band_peaks = get_highest_peak(band_peaks)
 
             if (len(band_peaks) > 0):
+                if band_peaks.ndim == 1:
+                    band_peaks = band_peaks[np.newaxis,:]
+                    
                 if extract_param: 
-                    if band_peaks.ndim == 1:
-                        band_peaks = np.asarray([band_peaks[inds[extract_param]]])
-                    else:
-                        band_peaks = band_peaks[:, inds[extract_param]]
+                    band_peaks = band_peaks[:, inds[extract_param]]
                 if dict_format:
                     if extract_param:
                         band_peaks = {extract_param : band_peaks}
                     elif not extract_param:
-                        if band_peaks.ndim == 1:
-                            construct = {pl:band_peaks[inds[pl]] for pl in inds.keys()}    
-                        else: 
-                            construct = {pl:band_peaks[:,inds[pl]] for pl in inds.keys()}   
+                        construct = {pl:band_peaks[:,inds[pl]] for pl in inds.keys()}   
                         band_peaks = construct
                 return band_peaks
     
