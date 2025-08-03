@@ -69,7 +69,7 @@ def get_shape_indices():
         'CT' : 0,
         'PW' : 1,
         'BW' : 2,
-        'SK' : 3,
+        'SQ' : 3,
         'FWHM' : 4,
         'rise_time' : 5,
         'decay_time' : 6,

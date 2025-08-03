@@ -556,7 +556,7 @@ class ERPparam():
         ----------
         name : {'gaussian_params', 'shape_params', 'error', 'r_squared'}
             Name of the data field to extract.
-        col : {'MN','HT','SD', 'SK'}, {CT, PW, BW, SK, FWHM, rise_time, decay_time, symmetry,
+        col : {'MN','HT','SD', 'SK'}, {CT, PW, BW, SQ, FWHM, rise_time, decay_time, symmetry,
             sharpness, sharpness_rise, sharpness_decay} or int, optional
             Column name / index to extract from selected data, if requested.
             Only used for name of { 'gaussian_params', 'shape_params}, 
@@ -623,7 +623,7 @@ class ERPparam():
             params_dict = {'shape_params':{'CT': "Center time of the peak, calculated from the raw signal", 
                                             'PW': 'Peak amplitude, calculate from the raw signal', 
                                             'BW': 'Bandwidth of the peak, 2-sided (ie, both halves from the peak center), calculated from the raw signal',
-                                            'SK': 'Skewness of the peak',
+                                            'SQ': 'Skewness of the peak',
                                             'FWHM':'full width at half magnitude', 
                                            'rise_time': 'time between peak and rising half-magnitude point', 
                                            'decay_time': 'time between peak and decaying half-magnitude point', 
@@ -661,7 +661,7 @@ class ERPparam():
             Which parameter to threshold on. 'PW' is power and 'BW' is bandwidth.
         attribute : {'shape_params', 'gaussian_params'}
             Which attribute of peak data to extract data from.
-        extract_param : False or {'CF', 'PW', 'BW'} for gaussian_params, or {'CT', 'PW', 'BW', 'SK', 'FWHM', 
+        extract_param : False or {'CF', 'PW', 'BW', 'SK'} for gaussian_params, or {'CT', 'PW', 'BW', 'SQ', 'FWHM', 
                         'rise_time', 'decay_time', 'symmetry','sharpness', 'sharpness_rise', 'sharpness_decay'} 
                         for shape_params, optional, Default False
             Which attribute of peak data to return.
@@ -674,8 +674,8 @@ class ERPparam():
         -------
         1d or 2d array, dict, or None
             Peak data. 
-            Each row is a peak, as [CF, PW, BW] if attribute == "gaussian_params" and extract_param is False,
-            and [CT, PW, BW, SK, FWHM, rise_time, decay_time, symmetry,sharpness, sharpness_rise, sharpness_decay] if attribute == "shape_params" and extract_param is False. 
+            Each row is a peak, as [CF, PW, BW, SK] if attribute == "gaussian_params" and extract_param is False,
+            and [CT, PW, BW, SQ, FWHM, rise_time, decay_time, symmetry,sharpness, sharpness_rise, sharpness_decay] if attribute == "shape_params" and extract_param is False. 
             
             Return parameters in a dictionary as {parameter label : peak data (as 1d or 2d array)} if dict_format is True.
             
@@ -1064,7 +1064,7 @@ class ERPparam():
             * CT: center time of the peak
             * PW: amplitude of the peak (estimated from the raw signal)
             * BW: width of the peak
-            * SK: the skew
+            * SQ: the skew
             * FWHM: full width at half magnitude
             * rise_time: rise time i.e. time between peak and rising half-magnitude point
             * decay_time: decay time i.e. time between peak and decaying half-magnitude point

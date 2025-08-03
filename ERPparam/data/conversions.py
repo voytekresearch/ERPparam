@@ -56,7 +56,9 @@ def model_to_dict(fit_results, peak_org=None):
 
     elif isinstance(peak_org, Bands):
         for band, f_range in peak_org:
-            band_peak = get_band_peak_arr(peaks, f_range)
+            band_peak_shape = get_band_peak_arr(shape_params, f_range)
+            band_peak_gaus = get_band_peak_arr(gaussian_params, f_range)
+            band_peak = np.hstack([band_peak_shape, band_peak_gaus])
             if band_peak[0] == np.nan:
                 band_peak = [np.nan] * peaks.shape[1]
             for label, param in zip(indices, band_peak):

@@ -148,7 +148,7 @@ def plot_annotated_model(fm, annotate_peaks=True, ax=None):
     if annotate_peaks and fm.n_peaks_:
 
         # Extract largest peak, to annotate, grabbing gaussian params
-        gauss = get_band_peak_arr(fm.get_results('gaussian_params'), fm.time_range)
+        gauss = get_band_peak_arr(fm.get_results().gaussian_params, fm.time_range)
 
         peak_ctr, peak_hgt, peak_wid, _ = gauss
         bw_time = [peak_ctr - 0.5 * compute_fwhm(peak_wid),

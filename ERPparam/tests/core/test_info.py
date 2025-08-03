@@ -30,7 +30,7 @@ def test_get_shape_indices():
 
     # Check it returns a valid object & that values are correct
     assert indices
-    for ind, val in enumerate(['CT', 'PW', 'BW','SK', 'FWHM', 'rise_time', 'decay_time', 'symmetry', 'sharpness', 'sharpness_rise', 'sharpness_decay']):
+    for ind, val in enumerate(['CT', 'PW', 'BW','SQ', 'FWHM', 'rise_time', 'decay_time', 'symmetry', 'sharpness', 'sharpness_rise', 'sharpness_decay']):
         assert indices[val] == ind
 
 def test_get_info(tfm, tfg):
