@@ -644,6 +644,7 @@ class ERPparam():
             return ERPparamResults(**{key.strip('_') : getattr(self, key) \
                 for key in OBJ_DESC['results']})
 
+
     def get_filtered_results(self, time_range, select_highest=True, threshold=None, thresh_param='PW', attribute='shape_params', extract_param=False, dict_format = False):
         """Extract peaks from a band of interest from a ERPparam object.
 
@@ -691,6 +692,8 @@ class ERPparam():
         else:
             raise NoModelError("No model fit results are available to extract, can not proceed.")
     
+        return params
+
 
     # @copy_doc_func_to_method(plot_fm)
     # def plot(self, plot_peaks=None, plot_aperiodic=True, plt_log=False,
