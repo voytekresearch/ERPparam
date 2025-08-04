@@ -379,6 +379,7 @@ def gen_results_fg_str(fg, concise=False):
     # Extract all the relevant data for printing
     n_peaks = len(fg.get_params('shape_params'))
     r2s = fg.get_params('r_squared')
+    adjr2s = fg.get_params('adj_r_squared')
     errors = fg.get_params('error')
     bws = fg.get_params('shape_params', 'BW')
     pws = fg.get_params('shape_params', 'PW')
@@ -434,7 +435,7 @@ def gen_results_fg_str(fg, concise=False):
         '     Errors -  Min: {:6.3f}, Max: {:6.3f}, Mean: {:5.3f}'
         .format(np.nanmin(errors), np.nanmax(errors), np.nanmean(errors)),
         'Adjusted R2s -  Min: {:6.3f}, Max: {:6.3f}, Mean: {:5.3f}'
-        .format(np.nanmin(r2s), np.nanmax(r2s), np.nanmean(r2s)),
+        .format(np.nanmin(adjr2s), np.nanmax(adjr2s), np.nanmean(adjr2s)),
         '',
 
         # Footer
