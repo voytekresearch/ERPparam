@@ -154,7 +154,7 @@ def get_band_peak_eg(fg, band, threshold=None, thresh_param='PW',
         # Extracts an array per ERPparam fit, and extracts band pe(aks from it
         band_peaks = []
         for ind in range(n_fits):
-            each_param = get_band_peak_ep(fg.get_ERPparam(ind),
+            each_param = get_band_peak_ep(fg.get_ERPparam(ind, regenerate=False),
                                             band=band, select_highest=True,
                                             threshold=threshold,
                                             thresh_param=thresh_param,
