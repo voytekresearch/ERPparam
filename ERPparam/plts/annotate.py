@@ -139,7 +139,7 @@ def plot_annotated_model(fm, annotate_peaks=True, ax=None):
     x_buff1 = max(time) * 0.1
     x_buff2 = max(time) * 0.25
     y_buff1 = 0.15 * np.ptp(ax.get_ylim())
-    shrink = 0.1
+    shrink = 0.3 #0.1
 
     # There is a bug in annotations for some perpendicular lines, so add small offset
     #   See: https://github.com/matplotlib/matplotlib/issues/12820. Fixed in 3.2.1.
@@ -156,32 +156,47 @@ def plot_annotated_model(fm, annotate_peaks=True, ax=None):
 
         peak_top = fm.signal[nearest_ind(time, peak_ctr)]
 
-        # Annotate Peak CF
-        ax.annotate('Center  Time',
-                    xy=(peak_ctr, peak_top),
-                    xytext=(peak_ctr, peak_top+np.abs(0.6*peak_hgt)),
-                    verticalalignment='center',
-                    horizontalalignment='center',
-                    arrowprops=dict(facecolor=PLT_COLORS['periodic'], shrink=shrink),
-                    color=PLT_COLORS['periodic'], fontsize=fontsize)
+        print(peak_top)
+        print(y_buff1)
+        print(x_buff1, x_buff2)
 
-        # Annotate Peak PW
-        ax.annotate('Height',
-                    xy=(peak_ctr, peak_top),
-                    xytext=(peak_ctr+x_buff1, peak_top),
-                    verticalalignment='center',
-                    arrowprops=dict(facecolor=PLT_COLORS['periodic'], shrink=shrink),
-                    color=PLT_COLORS['periodic'], fontsize=fontsize)
+        # # Annotate Peak CF
+        # ax.annotate('Center  Time',
+        #             xy=(peak_ctr, peak_top),
+        #             xytext=(peak_ctr, peak_top+np.abs(0.15*peak_hgt)),
+        #             verticalalignment='center',
+        #             horizontalalignment='center',
+        #             # arrowprops=dict(facecolor=PLT_COLORS['periodic'], shrink=shrink),
+        #             color=PLT_COLORS['periodic'], fontsize=fontsize)
 
-        # Annotate Peak BW
-        bw_buff = (peak_ctr - bw_time[0])/2
-        ax.annotate('Bandwidth',
-                    xy=(peak_ctr-bw_buff+bug_buff, peak_top-(0.5*peak_hgt)),
-                    xytext=(peak_ctr-bw_buff, peak_top-(1.5*peak_hgt)),
-                    verticalalignment='center',
-                    horizontalalignment='right',
-                    arrowprops=dict(facecolor=PLT_COLORS['periodic'], shrink=shrink),
-                    color=PLT_COLORS['periodic'], fontsize=fontsize, zorder=20)
+        # # Annotate Peak PW
+        # ax.annotate('Height',
+        #             xy=(peak_ctr, peak_top),
+        #             xytext=(peak_ctr+x_buff1, peak_top),
+        #             verticalalignment='center',
+        #             arrowprops=dict(facecolor=PLT_COLORS['periodic'], shrink=shrink),
+        #             color=PLT_COLORS['periodic'], fontsize=fontsize)
+
+        # # Annotate Peak BW
+        # bw_buff = (peak_ctr - bw_time[0])/2
+        # ax.annotate('Bandwidth',
+        #             xy=(peak_ctr-bw_buff+bug_buff, peak_top-(0.5*peak_hgt)),
+        #             xytext=(peak_ctr-bw_buff, peak_top-(1.5*peak_hgt)),
+        #             verticalalignment='center',
+        #             horizontalalignment='center',
+        #             arrowprops=dict(facecolor=PLT_COLORS['periodic'], shrink=shrink),
+        #             color=PLT_COLORS['periodic'], fontsize=fontsize, zorder=20)
+        
+        bw_y = (peak_top*0.5) #fm.signal[nearest_ind(time, bw_time[0])]
+        ax.hlines(y=bw_y, xmin=bw_time[0], xmax=bw_time[1], linewidth=5, color='blueviolet')
+        ax.vlines(x=peak_ctr, ymin=(peak_top-peak_hgt), ymax=peak_top, linewidth=5, color='blueviolet')
+
+        # ax.text((peak_ctr),(bw_y*1.1),"Bandwidth     ",color='k', fontsize=fontsize, fontweight='bold', ma='center', va='center_baseline')
+        # ax.text(peak_ctr,(peak_top-peak_hgt),"   Peak\n   Center",color='k', fontsize=fontsize, fontweight='bold')
+        ax.text(peak_ctr, y_buff1+(ax.get_ylim()[0]), 
+                "\nCenter Time =\n"+str(np.round(peak_ctr, decimals=3)), 
+                fontsize=fontsize, fontweight='bold', color='blueviolet', 
+                ma='center', va='center_baseline')
 
     
     # Apply style to plot & tune grid styling
@@ -192,9 +207,13 @@ def plot_annotated_model(fm, annotate_peaks=True, ax=None):
     da_patch = mpatches.Patch(color=PLT_COLORS['data'], label='Original Data')
     pe_patch = mpatches.Patch(color=PLT_COLORS['periodic'], label='Peak Parameters')
     mo_patch = mpatches.Patch(color=PLT_COLORS['model'], label='Full Model')
+    li_patch = mpatches.Patch(color='blueviolet', label='Bandwidth & Center Time')
 
     handles = [da_patch, 
-               pe_patch if annotate_peaks else None, mo_patch]
+               pe_patch,
+                li_patch if annotate_peaks else None, mo_patch]
     handles = [el for el in handles if el is not None]
 
     ax.legend(handles=handles, handlelength=1, fontsize='x-large')
+
+    return ax
