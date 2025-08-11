@@ -141,13 +141,13 @@ def test_fg_fail():
     # Test that get_params works with failed model fits
     outs1 = ntfg.get_params('gaussian_params')
     outs2 = ntfg.get_params('shape_params', 'sharpness')
-    outs3 = ntfg.get_params('shape_params', 'CT')
+    outs3 = ntfg.get_params('shape_params', 'latency')
     outs4 = ntfg.get_params('shape_params', 0)
     outs5 = ntfg.get_params('gaussian_params', 2)
 
     # Test shortcut labels
     outs6 = ntfg.get_params('gaussian')
-    outs6 = ntfg.get_params('shape', 'CT')
+    outs6 = ntfg.get_params('shape', 'latency')
 
     # Test the property attributes related to null model fits
     #   This checks that they do the right thing when there are null fits (failed fits)
@@ -254,7 +254,7 @@ def test_get_params(tfg):
                 assert np.any(tfg.get_params(dname, dtype))
 
         if dname == 'shape_params' or dname == 'shape':
-            for dtype in ['CT', 'PW', 'BW','FWHM', 'rise_time', 'decay_time', 'symmetry',
+            for dtype in ['latency', 'amplitude', 'width','fwhm', 'rise_time', 'decay_time', 'symmetry',
             'sharpness', 'sharpness_rise', 'sharpness_decay']:
                 assert np.any(tfg.get_params(dname, dtype))
 

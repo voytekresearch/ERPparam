@@ -71,8 +71,6 @@ class ERPparamGroup(ERPparam):
 
     Notes
     -----
-    - Commonly used abbreviations used in this module include:
-      CT: center time, PW: power, BW: Bandwidth, AP: aperiodic
     - Input power spectra must be provided in linear scale.
       Internally they are stored in log10 scale, as this is what the model operates upon.
     - Input power spectra should be smooth, as overly noisy power spectra may lead to bad fits.
@@ -80,9 +78,9 @@ class ERPparamGroup(ERPparam):
       longer time segments for power spectrum calculation to get smoother power spectra,
       as this will give better model fits.
     - The gaussian params are those that define the gaussian of the fit, where as the peak
-      params are a modified version, in which the CT of the peak is the mean of the gaussian,
-      the PW of the peak is the height of the gaussian over and above the aperiodic component,
-      and the BW of the peak, is 2*std of the gaussian (as 'two sided' bandwidth).
+      params are a modified version, in which the MN of the peak is the mean of the gaussian,
+      the HT of the peak is the height of the gaussian,
+      and the SD of the peak, is 2*std of the gaussian (as 'two sided' bandwidth).
     - The ERPparamGroup object inherits from the ERPparam object. As such it also has data
       attributes (`signal`), and parameter attributes
       ( `shape_params_`, `gaussian_params_`, `r_squared_`, `error_`)
@@ -358,7 +356,7 @@ class ERPparamGroup(ERPparam):
         name : { 'gaussian_params','shape_params', 'error', 'r_squared'}
             Name of the data field to extract across the group.
         col :   {'MN','HT','SD', 'SK'}, 
-                {'CT', 'PW', 'BW' 'SK', FWHM, rise_time, decay_time, symmetry, sharpness, sharpness_rise, 
+                {'latency', 'amplitude', 'width' 'skew', fwhm, rise_time, decay_time, symmetry, sharpness, sharpness_rise, 
                     sharpness_decay}, or
                 int, optional
                 Column name / index to extract from selected data, if requested.

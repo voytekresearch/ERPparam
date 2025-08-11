@@ -24,7 +24,7 @@ def get_window_peak_ep(fm, time_range, select_highest=True, threshold=None, thre
         If True, returns the highest amplitude peak within the search range.
     threshold : float, optional
         A minimum threshold value to apply.
-    thresh_param : {'PW', 'BW'}
+    thresh_param : {'PW', 'BW', any other valid shape or gaussian parameter label}
         Which parameter to threshold on. 'PW' is power and 'BW' is bandwidth.
     attribute : {'shape_params', 'gaussian_params'}
         Which attribute of peak data to extract data from.
@@ -108,7 +108,7 @@ def get_window_peak_ep(fm, time_range, select_highest=True, threshold=None, thre
         return None
 
 
-def get_window_peak_eg(fg, time_range, threshold=None, thresh_param='PW', 
+def get_window_peak_eg(fg, time_range, select_highest=True, threshold=None, thresh_param='PW', 
                      attribute='shape_params', extract_param=False, dict_format = False):
     """Extract peaks from a window of interest from a ERPparamGroup object.
 
@@ -155,7 +155,7 @@ def get_window_peak_eg(fg, time_range, threshold=None, thresh_param='PW',
         window_peaks = []
         for ind in range(n_fits):
             each_param = get_window_peak_ep(fg.get_ERPparam(ind, regenerate=False),
-                                            time_range=time_range, select_highest=True,
+                                            time_range=time_range, select_highest=select_highest,
                                             threshold=threshold,
                                             thresh_param=thresh_param,
                                             attribute=attribute,
@@ -192,6 +192,7 @@ def get_window_peak_arr(peak_params, time_range, select_highest=True, threshold=
     -------
     window_peaks : 1d or 2d array
         Peak data. Each row is a peak, as [MN, HT, SD, SK] if gaussian_params and [CT, PW, BW, SQ, FWHM, rise_time, decay_time, symmetry,sharpness, sharpness_rise, sharpness_decay] if shape params.
+        If no peaks fit the criteria, returns an array of NaNs
     """
     len_params_arr = peak_params.shape[1]
 
@@ -344,16 +345,34 @@ def infer_desired_params(peak_params, thresh_param, verbose=True):
         inds = PEAK_INDS
         params_label = 'shape_params'
         if thresh_param == 'HT':
-            inferred = 'PW'
+            inferred = 'amplitude'
         elif thresh_param == 'SD':
-            inferred = 'BW'
+            inferred = 'width'
+        elif thresh_param == 'MN':
+            inferred = 'latency'
+        elif thresh_param == 'SK':
+            inferred = 'skew'
+        elif thresh_param not in inds.keys():
+            msg = "The thresh parameter input cannot be inferred. The parameter array seems to be {0}, but '{1}' doesn't match any known parameter label.".format(params_label, thresh_param)
+            raise ValueError(msg)
     elif len_params_arr == len(GAUS_INDS.keys()):
         inds = GAUS_INDS
         params_label = 'gaussian_params'
-        if thresh_param == 'PW':
+        if thresh_param == 'amplitude':
             inferred = "HT"
-        elif thresh_param == 'BW':
+        elif thresh_param == 'width':
             inferred = 'SD'
+        elif thresh_param == 'latency':
+            inferred = 'MN'
+        elif thresh_param == 'skew':
+            inferred = 'SK'
+        elif (thresh_param not in inds.keys()):
+            if thresh_param in PEAK_INDS.keys():
+                msg = "The thresh parameter input cannot be inferred. The parameter array seems to be {0}, but '{1}' is a shape parameter. Did you mean to input shape parameters?".format(params_label, thresh_param)
+                raise ValueError(msg)
+            else:
+                msg = "The thresh parameter input cannot be inferred. The parameter array seems to be {0}, but '{1}' doesn't match any known parameter label.".format(params_label, thresh_param)
+                raise ValueError(msg)
     else:
         msg = "The type of parameters input cannot be inferred. The parameter array is shape {0}, which doesn't match expected gaussian or shape parameters".format(peak_params.shape)
         raise ValueError(msg)

@@ -64,7 +64,7 @@ from ERPparam.utils.params import compute_gauss_std
 from ERPparam.data import ERPparamResults, ERPparamSettings, ERPparamMetaData
 from ERPparam.data.conversions import model_to_dataframe
 from ERPparam.sim.gen import gen_time_vector, sim_erp
-from ERPparam.analysis.periodic import get_window_peak_arr, get_window_peak_ep
+from ERPparam.analysis.peaks import get_window_peak_arr, get_window_peak_ep
 
 ###################################################################################################
 ###################################################################################################
@@ -130,12 +130,12 @@ class ERPparam():
     Notes
     -----
     - Commonly used abbreviations used in this module include:
-      CT: peak time, PW: power, BW: Bandwidth
+      MN: peak time, HT: height, SD: Bandwidth
     - Input signal must be provided.
     - Input signals should be smooth, as overly noisy signals may lead to bad fits.
     - The gaussian params are those that define the gaussian of the fit, where as the peak
-      params are a modified version, in which the CT of the peak is the mean of the gaussian,
-      the PW of the peak is the height of the gaussian, and the BW of the peak, is 2*std of the 
+      params are a modified version, in which the MN of the peak is the mean of the gaussian,
+      the HT of the peak is the height of the gaussian, and the SD of the peak, is 2*std of the 
       gaussian (as 'two sided' bandwidth).
     """
     # pylint: disable=attribute-defined-outside-init
@@ -556,7 +556,7 @@ class ERPparam():
         ----------
         name : {'gaussian_params', 'shape_params', 'error', 'r_squared'}
             Name of the data field to extract.
-        col : {'MN','HT','SD', 'SK'}, {CT, PW, BW, SQ, FWHM, rise_time, decay_time, symmetry,
+        col : {'MN','HT','SD', 'SK'}, {latency, amplitude, width, skew, fwhm, rise_time, decay_time, symmetry,
             sharpness, sharpness_rise, sharpness_decay} or int, optional
             Column name / index to extract from selected data, if requested.
             Only used for name of { 'gaussian_params', 'shape_params}, 
@@ -620,11 +620,11 @@ class ERPparam():
         """
         if param_names:
 
-            params_dict = {'shape_params':{'CT': "Center time of the peak, calculated from the raw signal", 
-                                            'PW': 'Peak amplitude, calculate from the raw signal', 
-                                            'BW': 'Bandwidth of the peak, 2-sided (ie, both halves from the peak center), calculated from the raw signal',
-                                            'SQ': 'Skewness of the peak',
-                                            'FWHM':'full width at half magnitude', 
+            params_dict = {'shape_params':{'latency': "Center time of the peak, calculated from the raw signal", 
+                                            'amplitude': 'Peak amplitude, calculate from the raw signal', 
+                                            'width': 'Bandwidth of the peak, 2-sided (ie, both halves from the peak center), calculated from the raw signal',
+                                            'skew': 'Skewness of the peak',
+                                            'fwhm':'full width at half magnitude', 
                                            'rise_time': 'time between peak and rising half-magnitude point', 
                                            'decay_time': 'time between peak and decaying half-magnitude point', 
                                            'symmetry': 'rise time / FWHM', 
@@ -645,7 +645,7 @@ class ERPparam():
                 for key in OBJ_DESC['results']})
 
 
-    def get_filtered_results(self, time_range, select_highest=True, threshold=None, thresh_param='PW', attribute='shape_params', extract_param=False, dict_format = False):
+    def get_filtered_results(self, time_range, select_highest=True, threshold=None, thresh_param='amplitude', attribute='shape_params', extract_param=False, dict_format = False):
         """Extract peaks from a band of interest from a ERPparam object.
 
         Parameters
@@ -658,11 +658,11 @@ class ERPparam():
             If True, returns the highest amplitude peak within the search range.
         threshold : float, optional
             A minimum threshold value to apply.
-        thresh_param : {'PW', 'BW'}
-            Which parameter to threshold on. 'PW' is power and 'BW' is bandwidth.
+        thresh_param : {'amplitude', 'width'}
+            Which parameter to threshold on.
         attribute : {'shape_params', 'gaussian_params'}
             Which attribute of peak data to extract data from.
-        extract_param : False or {'CF', 'PW', 'BW', 'SK'} for gaussian_params, or {'CT', 'PW', 'BW', 'SQ', 'FWHM', 
+        extract_param : False or {'MN', 'HT', 'SD', 'SK'} for gaussian_params, or {'latency', 'amplitude', 'width', 'skew', 'fwhm', 
                         'rise_time', 'decay_time', 'symmetry','sharpness', 'sharpness_rise', 'sharpness_decay'} 
                         for shape_params, optional, Default False
             Which attribute of peak data to return.
@@ -675,8 +675,8 @@ class ERPparam():
         -------
         1d or 2d array, dict, or None
             Peak data. 
-            Each row is a peak, as [CF, PW, BW, SK] if attribute == "gaussian_params" and extract_param is False,
-            and [CT, PW, BW, SQ, FWHM, rise_time, decay_time, symmetry,sharpness, sharpness_rise, sharpness_decay] if attribute == "shape_params" and extract_param is False. 
+            Each row is a peak, as [MN, HT, SD, SK] if attribute == "gaussian_params" and extract_param is False,
+            and ['latency', 'amplitude', 'width', 'skew', 'fwhm',  rise_time, decay_time, symmetry,sharpness, sharpness_rise, sharpness_decay] if attribute == "shape_params" and extract_param is False. 
             
             Return parameters in a dictionary as {parameter label : peak data (as 1d or 2d array)} if dict_format is True.
             
@@ -1064,11 +1064,11 @@ class ERPparam():
         -------
         shape_params : list
             List of shape parameters. In order:
-            * CT: center time of the peak
-            * PW: amplitude of the peak (estimated from the raw signal)
-            * BW: width of the peak
-            * SQ: the skew
-            * FWHM: full width at half magnitude
+            * latency: center time of the peak
+            * amplitdue: amplitude of the peak (estimated from the raw signal)
+            * width: width of the peak
+            * skew: the skew
+            * fwhm: full width at half magnitude
             * rise_time: rise time i.e. time between peak and rising half-magnitude point
             * decay_time: decay time i.e. time between peak and decaying half-magnitude point
             * symmetry: rise time / FWHM

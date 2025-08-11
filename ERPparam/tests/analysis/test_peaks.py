@@ -39,7 +39,7 @@ def test_get_window_peak_ep():
     # test whether we output a dictionary when desired
     assert type(get_window_peak_ep(tfm, (0,1), dict_format=True)) == dict
     # test whether we correctly extract the center time
-    assert np.isclose(get_window_peak_ep(tfm, (0,1), extract_param='CT')[0], 0.5)
+    assert np.isclose(get_window_peak_ep(tfm, (0,1), extract_param='latency')[0], 0.5)
 
     # simulate ERP
     erp_latency = [ 0.25, 0.75]
@@ -60,9 +60,75 @@ def test_get_window_peak_ep():
     # test whether we find that there's one peak over our threshold
     assert (get_window_peak_ep(tfm, (0,1), threshold = 0.9)).shape[0] == 1
     # test whether we correctly extract the center time of the second peak
-    assert np.isclose(get_window_peak_ep(tfm, (0.5,1), extract_param='CT')[0], 0.75)
+    assert np.isclose(get_window_peak_ep(tfm, (0.5,1), extract_param='latency')[0], 0.75)
     # test whether we correctly extract the center time of the second peak from gauss params
     assert np.isclose(get_window_peak_ep(tfm, (0.5,1), attribute='gaussian_params')[0][0], 0.75)
+
+def test_get_window_peak_eg():
+    time_range = (-0.2, 1)
+    nlv = 0.0
+    fs = 1000
+
+    erp_latency = [ 0.25, 0.75]
+    erp_amplitude = [1.0, 0.5]
+    erp_width = [ 0.1, 0.1]
+    erp_params = np.ravel(np.column_stack([erp_latency, erp_amplitude, erp_width]))
+    time, erp = simulate_erp(time_range, erp_params, nlv=nlv, fs=fs)
+
+    erp_latency = [ 0.15, 0.6]
+    erp_amplitude = [1.2, 0.5]
+    erp_width = [ 0.1, 0.1]
+    erp_params2 = np.ravel(np.column_stack([erp_latency, erp_amplitude, erp_width]))
+    _, erp2 = simulate_erp(time_range, erp_params2, nlv=nlv, fs=fs)
+
+    erp_latency = [ 0.4]
+    erp_amplitude = [0.75]
+    erp_width = [ 0.15]
+    erp_params3 = np.ravel(np.column_stack([erp_latency, erp_amplitude, erp_width]))
+    _, erp3 = simulate_erp(time_range, erp_params3, nlv=nlv, fs=fs)
+
+    erps = np.vstack([erp,erp2,erp3])
+    eg = ERPparamGroup(verbose=False, max_n_peaks=3)
+    eg.fit(time=time, signals=erps, time_range=[0,1])
+
+    # test whether we get out the same number of peaks that our group has
+    out = get_window_peak_eg(eg, (0.0, 1), threshold=0.8, thresh_param='HT', attribute='gaussian_params', dict_format=True)
+    assert len(out) == len(eg)
+    assert type(out[0]) == dict
+    assert (out[0] is not None) and (out[1] is not None) and (out[2] is None)
+    # test whether we get the right shape if we don't filter out highest peaks
+    out = get_window_peak_eg(eg, (0.0, 1), select_highest=False, threshold=0.0, thresh_param='HT', attribute='gaussian_params', dict_format=False)
+    assert out[0].shape == (2,4)
+
+def test_get_window_peak_arr():
+
+    time_range = (-0.2, 1)
+    nlv = 0.0
+    fs = 1000
+    
+    erp_latency = [ 0.25, 0.75]
+    erp_amplitude = [1.0, 0.5]
+    erp_width = [ 0.1, 0.1]
+    erp_params = np.ravel(np.column_stack([erp_latency, erp_amplitude, erp_width]))
+    time, erp = simulate_erp(time_range, erp_params, nlv=nlv, fs=fs)
+
+    tfm = ERPparam(verbose=False, max_n_peaks=2)
+    tfm.fit(time, erp, time_range=[0, 1.0])
+
+    # check for any output
+    out = get_window_peak_arr(tfm.get_params('gaussian_params'), tfm.time_range, select_highest=False, threshold=None, thresh_param='HT')
+    assert out.any()
+    # check that our thresholding allows for multiple peaks
+    out = get_window_peak_arr(tfm.get_params('gaussian_params'), tfm.time_range, select_highest=False, threshold=0.4, thresh_param='HT')
+    assert out.shape == (2,4)
+    # filter peaks
+    out = get_window_peak_arr(tfm.get_params('gaussian_params'), tfm.time_range, select_highest=False, threshold=0.8, thresh_param='HT')
+    assert out.shape == (1,4)
+    # check for nans with absurdly high threshold
+    out = get_window_peak_arr(tfm.get_params('gaussian_params'), tfm.time_range, select_highest=False, threshold=100, thresh_param='HT')
+    assert out.shape == (4,)
+    assert np.isnan(out[0])
+
 
 def test_get_window_peak_group_arr():
     time_range = (-0.2, 1)
@@ -101,7 +167,7 @@ def test_get_window_peak_group_arr():
     out = get_window_peak_group_arr(eg.get_results(), (0.0,1), select_highest=False, threshold=0.8, attribute='gaussian_params', rmv_nans=True)
     assert out.shape[0] == 2
     # test whether our bandwidth filter works
-    out = get_window_peak_group_arr(eg.get_results(), (0.0,1), select_highest=False, threshold=0.11, thresh_param='BW', attribute='gaussian_params', rmv_nans=True)
+    out = get_window_peak_group_arr(eg.get_results(), (0.0,1), select_highest=False, threshold=0.11, thresh_param='SD', attribute='gaussian_params', rmv_nans=True)
     assert out.shape[0] == 1
 
 def test_get_highest_peak():
@@ -118,8 +184,30 @@ def test_threshold_peaks():
 
     # Check it works using a bandwidth threshold
     data = np.array([[10, 1, 1.8], [14, 2, 4], [12, 3, 2.5]])
-    assert np.array_equal(threshold_peaks(data, 2, PEAK_INDS, param='BW'),
+    assert np.array_equal(threshold_peaks(data, 2, PEAK_INDS, param='SD'),
                           np.array([[14, 2, 4], [12, 3, 2.5]]))
+
+def test_infer_desired_params():
+
+    gaus = np.asarray([0.25, 1.0, 0.1, 0])
+    shape = np.asarray([0.25, 1.0, 0.1, 0, 0.25, 1.0, 0.1, 0,0.25, 1.0, 0.1])
+    non = np.asarray([0.25, 1.0, 0.1, 0, 0.25, 1.0])
+
+    # check that the correct gaussian param was correctly detected
+    out = infer_desired_params(gaus, 'amplitude')
+    assert out[1] == 'HT'
+    out = infer_desired_params(gaus, 'latency')
+    assert out[1] == 'MN'
+    out = infer_desired_params(shape, 'amplitude')
+    assert out[1] == 'amplitude'
+    out = infer_desired_params(shape, 'SK')
+    assert out[1] == 'skew'
+    with raises(ValueError):
+        infer_desired_params(gaus, 'symmetry')
+    with raises(ValueError):
+        infer_desired_params(shape, 'ABC')
+    with raises(ValueError):
+        infer_desired_params(non, 'symmetry')
 
 def test_empty_inputs():
 

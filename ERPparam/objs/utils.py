@@ -5,7 +5,7 @@ import numpy as np
 from ERPparam.sim import gen_time_vector
 from ERPparam.data import ERPparamResults
 from ERPparam.objs import ERPparam, ERPparamGroup
-from ERPparam.analysis.peaks import get_band_peak_group_arr
+from ERPparam.analysis.peaks import get_window_peak_group_arr
 from ERPparam.core.errors import NoModelError, IncompatibleSettingsError
 
 ###################################################################################################
