@@ -3,7 +3,7 @@
 import numpy as np
 
 from ERPparam import Bands
-from ERPparam.core.info import (get_peak_indices, get_shape_indices, 
+from ERPparam.core.info import (get_shape_indices, 
                                 get_gauss_indices)
 from ERPparam.core.modutils import safe_import, check_dependency
 from ERPparam.analysis.periodic import get_band_peak_arr
@@ -65,6 +65,7 @@ def model_to_dict(fit_results, peak_org=None):
     # goodness-of-fit metrics
     fr_dict['error'] = fit_results.error
     fr_dict['r_squared'] = fit_results.r_squared
+    fr_dict['adj_r_squared'] = fit_results.adj_r_squared
 
     return fr_dict
 

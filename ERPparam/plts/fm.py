@@ -152,10 +152,10 @@ def _add_peaks_dot(fm,  ax, **plot_kwargs):
     defaults = {'color' : PLT_COLORS['periodic'], 'alpha' : 0.6, 'lw' : 2.5, 'ms' : 6}
     plot_kwargs = check_plot_kwargs(plot_kwargs, defaults)
 
-    for peak in fm.peak_params_:
+    for peak in fm.shape_params_:
 
-        ap_point = np.interp(peak[0], fm.time, fm.signal)
-        freq_point = peak[0]
+        ap_point = np.interp(peak[7], fm.time, fm.signal)
+        freq_point = peak[7]
 
         # Add the line from the aperiodic fit up the tip of the peak
         ax.plot([freq_point, freq_point], [ap_point, ap_point + peak[1]], **plot_kwargs)
@@ -211,9 +211,9 @@ def _add_peaks_line(fm, ax, **plot_kwargs):
 
     ylims = ax.get_ylim()
 
-    for peak in fm.peak_params_:
+    for peak in fm.shape_params_:
 
-        freq_point = peak[0]
+        freq_point = peak[7]
         ax.plot([freq_point, freq_point], ylims, '-', **plot_kwargs)
         ax.plot(freq_point, ylims[1], 'v', **plot_kwargs)
 

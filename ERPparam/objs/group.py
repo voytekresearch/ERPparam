@@ -85,7 +85,7 @@ class ERPparamGroup(ERPparam):
       and the BW of the peak, is 2*std of the gaussian (as 'two sided' bandwidth).
     - The ERPparamGroup object inherits from the ERPparam object. As such it also has data
       attributes (`signal`), and parameter attributes
-      ( `shape_params_`, `gaussian_params_`, `r_squared_`, `error_`)
+      ( `shape_params_`, `gaussian_params_`, `peak_indices_`, `r_squared_`, `error_`, `adj_r_squared_`)
       which are defined in the context of individual model fits. These attributes are
       used during the fitting process, but in the group context do not store results
       post-fitting. Rather, all model fit results are collected and stored into the
@@ -195,11 +195,11 @@ class ERPparamGroup(ERPparam):
             Length of list of empty lists to initialize. If 0, creates a single empty list.
         """
         format_dict = { 'gaussian_params_' : np.ones([0,4])*np.nan,
-                        'peak_params_' : np.ones([0,4])*np.nan,
                         'shape_params_' : np.ones([0,11])*np.nan,
+                        'peak_indices_' : np.full(3, np.nan),
                         'r_squared_': np.nan,
                         'error_' : np.nan,
-                        'peak_indices_' : np.full(3, np.nan)
+                        'adj_r_squared_' : np.nan
                     }
         empty_res = ERPparamResults(**{key.strip('_') : format_dict[key] \
             for key in OBJ_DESC['results']})
@@ -356,11 +356,11 @@ class ERPparamGroup(ERPparam):
 
         Parameters
         ----------
-        name : { 'gaussian_params','shape_params', 'error', 'r_squared'}
+        name : {'gaussian_params', 'shape_params', 'peak_indices', 'error', 'r_squared', 'adj_r_squared'}
             Name of the data field to extract across the group.
         col :   {'MN','HT','SD', 'SK'}, 
-                {FWHM, rise_time, decay_time, symmetry, sharpness, sharpness_rise, 
-                    sharpness_decay, 'CT', 'PW', 'BW' 'SK'}, or
+                {'CT', 'PW', 'BW' 'SK', FWHM, rise_time, decay_time, symmetry, sharpness, sharpness_rise, 
+                    sharpness_decay}, or
                 int, optional
                 Column name / index to extract from selected data, if requested.
                 Only used for name of {'gaussian_params', 'shape_params}, 
@@ -399,7 +399,7 @@ class ERPparamGroup(ERPparam):
                 raise ValueError("Input value for `col` not valid.")
 
         # Pull out the requested data field from the group data
-        # As a special case, peak_params are pulled out in a way that appends
+        # As a special case, shape_params are pulled out in a way that appends
         #  an extra column, indicating which ERPparam run each peak comes from
         if name in ('gaussian_params'):
 
@@ -608,20 +608,6 @@ class ERPparamGroup(ERPparam):
         print("Dropping {0} ERP fits".format(str(len(np.unique(dirty_inds)))))
 
         return_group = self.get_group(inds=clean_inds)
-
-        # if bw_bounds != None:
-        #     get_bws = self.get_params('peak_params', col='BW')
-        #     dirty_inds_bws = [i for i in np.where( ((get_bws < bw_bounds[0])|(get_bws > bw_bounds[1])) )[0]]
-        # else:
-        #     dirty_inds_bws = []
-
-        # if amp_bounds != None:
-        #     get_amps = self.get_params('peak_params', col='PW')
-        #     dirty_inds_amps = [i for i in np.where( ((get_amps < amp_bounds[0])|(get_amps > amp_bounds[1])) )[0]]
-        # else:
-        #     dirty_inds_amps = []   
-
-        # print("Dropping {0} peak fits from {1} ERP fits".format())
 
         return return_group
 

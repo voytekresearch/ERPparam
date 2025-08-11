@@ -63,7 +63,7 @@ def test_gen_group_erps():
     assert ys.ndim == 2
     assert ys.shape[0] == n_sigs
 
-def test_gen_group_power_spectra_return_params():
+def test_gen_group_return_params():
 
     n_sigs = 3
 
