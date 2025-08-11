@@ -13,7 +13,7 @@ from pytest import raises
 ###################################################################################################
 ###################################################################################################
 
-def test_get_band_peak_ep():
+def test_get_window_peak_ep():
 
     time_range = (-0.2, 1)
     nlv = 0.0
@@ -31,15 +31,15 @@ def test_get_band_peak_ep():
     tfm.fit(time, erp, time_range=[0, 1.0])
 
     # test whether any output is given
-    assert np.all(get_band_peak_ep(tfm, (0,1)))
+    assert np.all(get_window_peak_ep(tfm, (0,1)))
     # test whether None is returned if there's no peak in our time range
-    assert get_band_peak_ep(tfm, (0,0.5)) is None
+    assert get_window_peak_ep(tfm, (0,0.5)) is None
     # test whether None is returned if there's no peak in our threshold
-    assert get_band_peak_ep(tfm, (0,1), threshold = 1.1) is None
+    assert get_window_peak_ep(tfm, (0,1), threshold = 1.1) is None
     # test whether we output a dictionary when desired
-    assert type(get_band_peak_ep(tfm, (0,1), dict_format=True)) == dict
+    assert type(get_window_peak_ep(tfm, (0,1), dict_format=True)) == dict
     # test whether we correctly extract the center time
-    assert np.isclose(get_band_peak_ep(tfm, (0,1), extract_param='CT')[0], 0.5)
+    assert np.isclose(get_window_peak_ep(tfm, (0,1), extract_param='CT')[0], 0.5)
 
     # simulate ERP
     erp_latency = [ 0.25, 0.75]
@@ -53,18 +53,18 @@ def test_get_band_peak_ep():
     tfm.fit(time, erp, time_range=[0, 1.0])
 
     # test whether we find that there's one peak in our time range
-    assert np.all(get_band_peak_ep(tfm, (0,0.5)))
-    assert (get_band_peak_ep(tfm, (0,0.5))).shape[0] == 1
+    assert np.all(get_window_peak_ep(tfm, (0,0.5)))
+    assert (get_window_peak_ep(tfm, (0,0.5))).shape[0] == 1
     # test whether we find that there's two peaks in our time range
-    assert (get_band_peak_ep(tfm, (0,1), select_highest=False)).shape[0] == 2
+    assert (get_window_peak_ep(tfm, (0,1), select_highest=False)).shape[0] == 2
     # test whether we find that there's one peak over our threshold
-    assert (get_band_peak_ep(tfm, (0,1), threshold = 0.9)).shape[0] == 1
+    assert (get_window_peak_ep(tfm, (0,1), threshold = 0.9)).shape[0] == 1
     # test whether we correctly extract the center time of the second peak
-    assert np.isclose(get_band_peak_ep(tfm, (0.5,1), extract_param='CT')[0], 0.75)
+    assert np.isclose(get_window_peak_ep(tfm, (0.5,1), extract_param='CT')[0], 0.75)
     # test whether we correctly extract the center time of the second peak from gauss params
-    assert np.isclose(get_band_peak_ep(tfm, (0.5,1), attribute='gaussian_params')[0][0], 0.75)
+    assert np.isclose(get_window_peak_ep(tfm, (0.5,1), attribute='gaussian_params')[0][0], 0.75)
 
-def test_get_band_peak_group_arr():
+def test_get_window_peak_group_arr():
     time_range = (-0.2, 1)
     nlv = 0.0
     fs = 1000
@@ -92,16 +92,16 @@ def test_get_band_peak_group_arr():
     eg.fit(time=time, signals=erps, time_range=[0,1])
 
     # test whether we get out the same number of peaks that our group has
-    out = get_band_peak_group_arr(eg.get_results(), (0.0,1), select_highest=False, threshold=None, attribute='gaussian_params')
+    out = get_window_peak_group_arr(eg.get_results(), (0.0,1), select_highest=False, threshold=None, attribute='gaussian_params')
     assert out.shape[0] == 5
     # test whether we get out one peak per signals since select_highest is True
-    out = get_band_peak_group_arr(eg.get_results(), (0.0,1), select_highest=True, threshold=None, attribute='gaussian_params', rmv_nans=True)
+    out = get_window_peak_group_arr(eg.get_results(), (0.0,1), select_highest=True, threshold=None, attribute='gaussian_params', rmv_nans=True)
     assert out.shape[0] == 3
     # test whether our amplitude filter works
-    out = get_band_peak_group_arr(eg.get_results(), (0.0,1), select_highest=False, threshold=0.8, attribute='gaussian_params', rmv_nans=True)
+    out = get_window_peak_group_arr(eg.get_results(), (0.0,1), select_highest=False, threshold=0.8, attribute='gaussian_params', rmv_nans=True)
     assert out.shape[0] == 2
     # test whether our bandwidth filter works
-    out = get_band_peak_group_arr(eg.get_results(), (0.0,1), select_highest=False, threshold=0.11, thresh_param='BW', attribute='gaussian_params', rmv_nans=True)
+    out = get_window_peak_group_arr(eg.get_results(), (0.0,1), select_highest=False, threshold=0.11, thresh_param='BW', attribute='gaussian_params', rmv_nans=True)
     assert out.shape[0] == 1
 
 def test_get_highest_peak():
@@ -125,7 +125,7 @@ def test_empty_inputs():
 
     data = np.empty(shape=[0, 4])
 
-    assert np.sum(np.isnan(get_band_peak_arr(data, [8, 12]))) == 4
+    assert np.sum(np.isnan(get_window_peak_arr(data, [8, 12]))) == 4
 
     with raises(TypeError):
-        get_band_peak_group_arr(data, [1,2]) 
+        get_window_peak_group_arr(data, [1,2]) 

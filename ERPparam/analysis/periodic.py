@@ -8,16 +8,16 @@ from ERPparam.data.data import ERPparamResults
 ###################################################################################################
 ###################################################################################################
 
-def get_band_peak_ep(fm, band, select_highest=True, threshold=None, thresh_param='PW',
+def get_window_peak_ep(fm, time_range, select_highest=True, threshold=None, thresh_param='PW',
                      attribute='shape_params', extract_param=False, dict_format = False):
-    """Extract peaks from a band of interest from a ERPparam object.
+    """Extract peaks from a time range of interest from a ERPparam object.
 
     Parameters
     ----------
     fm : ERPparam
         Object to extract peak data from.
-    band : tuple of (float, float)
-        Time range for the band of interest.
+    time_range : tuple of (float, float)
+        Time range of interest.
         Defined as: (lower_time, upper_time).
     select_highest : bool, optional, default: True
         Whether to return single peak (if True) or all peaks within the range found (if False).
@@ -53,11 +53,11 @@ def get_band_peak_ep(fm, band, select_highest=True, threshold=None, thresh_param
     --------
     Select a peak from an already fit ERPparam object 'fm', selecting the highest peak:
 
-    >>> p3 = get_band_peak_fm(fm, [0.25, 0.6], select_highest=True)  # doctest:+SKIP
+    >>> p3 = get_window_peak_fm(fm, [0.25, 0.6], select_highest=True)  # doctest:+SKIP
 
     Select beta peaks from a ERPparam object 'fm', extracting all peaks in the range:
 
-    >>> erps = get_band_peak_fm(fm, [0.0, 1.0], select_highest=False)  # doctest:+SKIP
+    >>> erps = get_window_peak_fm(fm, [0.0, 1.0], select_highest=False)  # doctest:+SKIP
     """
 
     if attribute not in ['shape_params','gaussian_params']:
@@ -73,51 +73,51 @@ def get_band_peak_ep(fm, band, select_highest=True, threshold=None, thresh_param
     # Return nan array if empty input
     if params.size > 0:
         # Find indices of peaks in the specified range, and check the number found
-        peak_inds = (params[:, 0] >= band[0]) & (params[:, 0] <= band[1])
+        peak_inds = (params[:, 0] >= time_range[0]) & (params[:, 0] <= time_range[1])
         n_peaks = sum(peak_inds)
 
         # If there are no peaks within the specified range, return nan
         #   Note: this also catches and returns if the original input was empty
         if n_peaks > 0:
-            band_peaks = params[peak_inds, :]
+            window_peaks = params[peak_inds, :]
 
             # Apply a minimum threshold, if one was provided
-            if (len(band_peaks) > 0) and threshold:
-                band_peaks = threshold_peaks(band_peaks, threshold, inds, thresh_param)
+            if (len(window_peaks) > 0) and threshold:
+                window_peaks = threshold_peaks(window_peaks, threshold, inds, thresh_param)
 
             # If results > 1 and select_highest, then we return the highest peak
-            #    Call a sub-function to select highest power peak in band
-            if (len(band_peaks) > 1) and select_highest:
-                band_peaks = get_highest_peak(band_peaks)
+            #    Call a sub-function to select highest power peak in window
+            if (len(window_peaks) > 1) and select_highest:
+                window_peaks = get_highest_peak(window_peaks)
 
-            if (len(band_peaks) > 0):
-                if band_peaks.ndim == 1:
-                    band_peaks = band_peaks[np.newaxis,:]
+            if (len(window_peaks) > 0):
+                if window_peaks.ndim == 1:
+                    window_peaks = window_peaks[np.newaxis,:]
 
                 if extract_param: 
-                    band_peaks = band_peaks[:, inds[extract_param]]
+                    window_peaks = window_peaks[:, inds[extract_param]]
                 if dict_format:
                     if extract_param:
-                        band_peaks = {extract_param : band_peaks}
+                        window_peaks = {extract_param : window_peaks}
                     elif not extract_param:
-                        construct = {pl:band_peaks[:,inds[pl]] for pl in inds.keys()}   
-                        band_peaks = construct
-                return band_peaks
+                        construct = {pl:window_peaks[:,inds[pl]] for pl in inds.keys()}   
+                        window_peaks = construct
+                return window_peaks
     
-    if (params.size == 0) or (n_peaks < 1) or (band_peaks.shape[0] == 0):
+    if (params.size == 0) or (n_peaks < 1) or (window_peaks.shape[0] == 0):
         return None
 
 
-def get_band_peak_eg(fg, band, threshold=None, thresh_param='PW', 
+def get_window_peak_eg(fg, time_range, threshold=None, thresh_param='PW', 
                      attribute='shape_params', extract_param=False, dict_format = False):
-    """Extract peaks from a band of interest from a ERPparamGroup object.
+    """Extract peaks from a window of interest from a ERPparamGroup object.
 
     Parameters
     ----------
     fg : ERPparamGroup
         Object to extract peak data from.
-    band : tuple of (float, float)
-        Time range for the band of interest.
+    time_range : tuple of (float, float)
+        Time range of interest.
         Defined as: (lower_frequency_bound, upper_frequency_bound).
     threshold : float, optional
         A minimum threshold value to apply. 
@@ -137,7 +137,7 @@ def get_band_peak_eg(fg, band, threshold=None, thresh_param='PW',
     Returns
     -------
     List of length N ERPs, or None
-        Peak data. Each entry is result of applying get_band_peak_fm() on a single ERP
+        Peak data. Each entry is result of applying get_window_peak_fm() on a single ERP
         Results can be formatted as [MN, HT, SD, SK] if attribute == "gaussian_params" and extract_param is False,
         or [CT, PW, BW, SQ, FWHM, rise_time, decay_time, symmetry,sharpness, sharpness_rise, sharpness_decay] 
         if attribute == "shape_params". The list entry for a peak will be None if the ERPparam model doesn't have 
@@ -151,34 +151,34 @@ def get_band_peak_eg(fg, band, threshold=None, thresh_param='PW',
 
     if n_fits > 0:
 
-        # Extracts an array per ERPparam fit, and extracts band pe(aks from it
-        band_peaks = []
+        # Extracts an array per ERPparam fit, and extracts window pe(aks from it
+        window_peaks = []
         for ind in range(n_fits):
-            each_param = get_band_peak_ep(fg.get_ERPparam(ind, regenerate=False),
-                                            band=band, select_highest=True,
+            each_param = get_window_peak_ep(fg.get_ERPparam(ind, regenerate=False),
+                                            time_range=time_range, select_highest=True,
                                             threshold=threshold,
                                             thresh_param=thresh_param,
                                             attribute=attribute,
                                             extract_param=extract_param,
                                             dict_format=dict_format)
             if not each_param is None:
-                band_peaks.append(each_param)
+                window_peaks.append(each_param)
             else:
-                band_peaks.append(None)
+                window_peaks.append(None)
 
-        return band_peaks
+        return window_peaks
     else:
         return None
 
-def get_band_peak_arr(peak_params, window, select_highest=True, threshold=None, thresh_param='PW'):
-    """Extract peaks within a given band of interest.
+def get_window_peak_arr(peak_params, time_range, select_highest=True, threshold=None, thresh_param='PW'):
+    """Extract peaks within a given time range of interest.
 
     Parameters
     ----------
     peak_params : 2d array
         Peak parameters, with shape of [n_peaks, 3].
-    window : tuple of (float, float)
-        Time range for the band of interest.
+    time_range : tuple of (float, float)
+        Time range of interest.
         Defined as: (start_time, end_time).
     select_highest : bool, optional, default: True
         Whether to return single peak (if True) or all peaks within the range found (if False).
@@ -190,7 +190,7 @@ def get_band_peak_arr(peak_params, window, select_highest=True, threshold=None, 
 
     Returns
     -------
-    band_peaks : 1d or 2d array
+    window_peaks : 1d or 2d array
         Peak data. Each row is a peak, as [MN, HT, SD, SK] if gaussian_params and [CT, PW, BW, SQ, FWHM, rise_time, decay_time, symmetry,sharpness, sharpness_rise, sharpness_decay] if shape params.
     """
     len_params_arr = peak_params.shape[1]
@@ -199,42 +199,42 @@ def get_band_peak_arr(peak_params, window, select_highest=True, threshold=None, 
         inds, thresh_param = infer_desired_params(peak_params, thresh_param, verbose=True)
 
         # Find indices of peaks in the specified range, and check the number found
-        peak_inds = (peak_params[:, 0] >= window[0]) & (peak_params[:, 0] <= window[1])
+        peak_inds = (peak_params[:, 0] >= time_range[0]) & (peak_params[:, 0] <= time_range[1])
         n_peaks = sum(peak_inds)
 
-        band_peaks = peak_params[peak_inds, :]
+        window_peaks = peak_params[peak_inds, :]
 
         # Apply a minimum threshold, if one was provided
         if threshold:
-            band_peaks = threshold_peaks(band_peaks, threshold, inds, thresh_param)
+            window_peaks = threshold_peaks(window_peaks, threshold, inds, thresh_param)
 
         # If results > 1 and select_highest, then we return the highest peak
-        #    Call a sub-function to select highest power peak in band
-        if band_peaks.size > 1 and select_highest:
-            band_peaks = get_highest_peak(band_peaks)
+        #    Call a sub-function to select highest power peak in window
+        if window_peaks.size > 1 and select_highest:
+            window_peaks = get_highest_peak(window_peaks)
 
-        if band_peaks.shape[0] != 0:
+        if window_peaks.shape[0] != 0:
             # Squeeze so that if there is only 1 result, return single peak in flat array
-            return band_peaks
+            return window_peaks
     
     # Return nan array if empty input
-    if (peak_params.size == 0) or (n_peaks==0) or (band_peaks.shape[0] == 0):
+    if (peak_params.size == 0) or (n_peaks==0) or (window_peaks.shape[0] == 0):
         return np.array([np.nan]*len_params_arr)
 
-def get_band_peak_group_arr(fg_results, window, threshold=None, 
+def get_window_peak_group_arr(fg_results, time_range, threshold=None, 
                             select_highest = True,
                             attribute = 'shape_params',
                             thresh_param='PW',
                             rmv_nans=False):
-    """Extract peaks within a given band of interest, from peaks from a group fit.
+    """Extract peaks within a given window of interest, from peaks from a group fit.
 
     Parameters
     ----------
     fg_results : list of ERPparamGroup Results 
         List of ERPparamGroup Results objects, one for each ERP input to the Group object.
         Generated by ERPparamGroup.get_results()
-    window : tuple of (float, float)
-        Time range for the band of interest.
+    time_range : tuple of (float, float)
+        Time range of interest.
         Defined as: (start_time, end_time).
     threshold : float, optional
         A minimum threshold value to apply.
@@ -250,7 +250,7 @@ def get_band_peak_group_arr(fg_results, window, threshold=None,
 
     Returns
     -------
-    band_peaks : 2d array
+    window_peaks : 2d array
         Peak data. Each row is a peak found in one of the signals input to the ERPparamGroup object.
         Each row represents an individual model from the input array of all peaks, which will be one per
         ERP signal if select_highest = True and a fit is found in the given time range.
@@ -267,21 +267,21 @@ def get_band_peak_group_arr(fg_results, window, threshold=None,
         raise TypeError('Input to fg_results should be an ERPparamResults object')
     n_fits = len(fg_results) # how many signals were input to the Group object
 
-    # Extracts an array per model fit, and extracts band peaks from it
-    band_peaks = []
+    # Extracts an array per model fit, and extracts window peaks from it
+    window_peaks = []
     for sig_fit in range(n_fits):
         peak_params = getattr(fg_results[sig_fit],attribute) # for each signal, get the shape or gauss params of the fit
-        this_band_arr = get_band_peak_arr(peak_params, window=window, \
+        this_window_arr = get_window_peak_arr(peak_params, window=time_range, \
                                           select_highest=select_highest, \
                                             threshold=threshold, thresh_param=thresh_param)
-        band_peaks.append(this_band_arr)
+        window_peaks.append(this_window_arr)
 
     # stack peaks across fits
-    band_peaks = np.vstack(band_peaks)
+    window_peaks = np.vstack(window_peaks)
     if rmv_nans:
         # check for NaNs, if there are rows where there's a whole row of missing params
-        band_peaks = band_peaks[np.sum(np.isnan(band_peaks), axis=1) <= 1] 
-    return band_peaks
+        window_peaks = window_peaks[np.sum(np.isnan(window_peaks), axis=1) <= 1] 
+    return window_peaks
 
 def get_highest_peak(peak_params):
     """Extract the highest power peak.
