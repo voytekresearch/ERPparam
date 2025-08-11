@@ -106,6 +106,12 @@ class ERPparam():
         Time range of the signal from which to estimate the noise threshold at which iterative peak fitting stops (typically a pre-stimulus window).
         Input as [earliest_time, latest_time].
         If unspecified, the whole time window before time 0 will be used. If that cannot be found, the whole length of signal will be used.
+    uncropped_time : 1d array
+        The uncropped version of the time vector, before trimming based on
+        the time_range attribute. This is useful for plotting.
+    uncropped_signal : 1d array
+        The uncropped version of the signal, before trimming based on
+        the time_range attribute. This is useful for plotting.
     fs : float
         Sampling frequency.
     gaussian_params_ : 2d array

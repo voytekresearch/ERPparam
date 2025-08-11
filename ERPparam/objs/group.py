@@ -55,11 +55,11 @@ class ERPparamGroup(ERPparam):
     time_range : list of [float, float]
         Frequency range of the power spectra, as [lowest_freq, highest_freq].
     uncropped_time : 1d array
-        The uncropped version of the time vector, before any trimming.
-        This is useful for visualizing the original time vector.
+        The uncropped version of the time vector, before trimming based on
+        the time_range attribute.
     uncropped_signals : 1d array
-        The uncropped version of the signal, before any trimming.
-        This is useful for visualizing the original signal.
+        The uncropped version of the signal, before trimming based on
+        the time_range attribute.
     group_results : list of ERPparamResults
         Results of ERPparam model fit for each power spectrum.
     has_data : bool
