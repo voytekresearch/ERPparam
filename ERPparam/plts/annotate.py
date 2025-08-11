@@ -8,7 +8,7 @@ from ERPparam.core.funcs import get_pe_func
 from ERPparam.core.modutils import safe_import, check_dependency
 
 #from ERPparam.sim.gen import gen_aperiodic
-from ERPparam.analysis.periodic import get_band_peak_arr
+from ERPparam.analysis.peaks import get_band_peak_arr
 from ERPparam.utils.params import compute_fwhm
 
 from ERPparam.plts.signals import plot_signals

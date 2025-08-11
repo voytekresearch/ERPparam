@@ -64,7 +64,7 @@ from ERPparam.utils.params import compute_gauss_std
 from ERPparam.data import ERPparamResults, ERPparamSettings, ERPparamMetaData
 from ERPparam.data.conversions import model_to_dataframe
 from ERPparam.sim.gen import gen_time_vector, sim_erp
-from ERPparam.analysis.periodic import get_band_peak_arr, get_band_peak_ep
+from ERPparam.analysis.periodic import get_window_peak_arr, get_window_peak_ep
 
 ###################################################################################################
 ###################################################################################################
@@ -684,7 +684,7 @@ class ERPparam():
             not peaks in the requested time range or matching the given criteria. 
         """
         if self.has_model:
-            params = get_band_peak_ep(self, time_range, 
+            params = get_window_peak_ep(self, time_range, 
                                       select_highest=select_highest, threshold=threshold, 
                                       thresh_param=thresh_param, 
                                       attribute=attribute, extract_param=extract_param, 

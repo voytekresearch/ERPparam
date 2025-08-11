@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from ERPparam.analysis.periodic import *
+from ERPparam.analysis.peaks import *
 from ERPparam import ERPparam, ERPparamGroup
 from ERPparam.sim import simulate_erp
 from ERPparam.data.data import ERPparamResults
