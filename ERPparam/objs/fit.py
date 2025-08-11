@@ -658,7 +658,7 @@ class ERPparam():
             If True, returns the highest amplitude peak within the search range.
         threshold : float, optional
             A minimum threshold value to apply.
-        thresh_param : {'amplitude', 'width'}
+        thresh_param : {'amplitude', 'width', any other valid shape or gaussian parameter label}
             Which parameter to threshold on.
         attribute : {'shape_params', 'gaussian_params'}
             Which attribute of peak data to extract data from.

@@ -379,8 +379,8 @@ def gen_results_fg_str(fg, concise=False):
     n_peaks = len(fg.get_params('shape_params'))
     r2s = fg.get_params('r_squared')
     errors = fg.get_params('error')
-    bws = fg.get_params('shape_params', 'BW')
-    pws = fg.get_params('shape_params', 'PW')
+    bws = fg.get_params('shape_params', 'width')
+    pws = fg.get_params('shape_params', 'amplitude')
     symmetry = fg.get_params('shape_params', 'symmetry')
     sharpness = fg.get_params('shape_params', 'sharpness')
 

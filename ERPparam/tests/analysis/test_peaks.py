@@ -184,7 +184,7 @@ def test_threshold_peaks():
 
     # Check it works using a bandwidth threshold
     data = np.array([[10, 1, 1.8], [14, 2, 4], [12, 3, 2.5]])
-    assert np.array_equal(threshold_peaks(data, 2, PEAK_INDS, param='SD'),
+    assert np.array_equal(threshold_peaks(data, 2, PEAK_INDS, param='width'),
                           np.array([[14, 2, 4], [12, 3, 2.5]]))
 
 def test_infer_desired_params():

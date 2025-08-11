@@ -390,3 +390,15 @@ def test_fg_to_df(tfg, tbands, skip_if_no_pandas):
     assert isinstance(df1, pd.DataFrame)
     df2 = tfg.to_df(tbands)
     assert isinstance(df2, pd.DataFrame)
+
+def test_fg_get_filtered_results(tfg):
+
+    res = tfg.get_filtered_results(tfg.time_range, select_highest=True, threshold=None, thresh_param='amplitude', attribute='shape_params', extract_param=False, dict_format = False)
+    assert len(res) == 3
+    assert res[0].shape == (1,11)
+    res_dict = tfg.get_filtered_results(tfg.time_range, select_highest=True, threshold=None, thresh_param='amplitude', attribute='shape_params', extract_param=False, dict_format = True)
+    assert type(res_dict[0]) == dict
+    assert np.isclose(res_dict[0]['latency'], 0.098)
+    res_high_threshold = tfg.get_filtered_results(tfg.time_range, select_highest=True, threshold=100, thresh_param='amplitude', attribute='shape_params', extract_param=False, dict_format = False)
+    assert len(res_high_threshold) == 3
+    assert (res_high_threshold[0] is None) and (res_high_threshold[1] is None) and (res_high_threshold[2] is None)

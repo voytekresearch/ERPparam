@@ -23,6 +23,7 @@ from ERPparam.core.io import save_fg, load_jsonlines
 from ERPparam.core.modutils import copy_doc_func_to_method, safe_import
 from ERPparam.data.conversions import group_to_dataframe
 from ERPparam.data import ERPparamResults
+from ERPparam.analysis.peaks import get_window_peak_eg
 
 ###################################################################################################
 ###################################################################################################
@@ -431,6 +432,51 @@ class ERPparamGroup(ERPparam):
 
         return out
 
+    def get_filtered_results(self, time_range, select_highest=True, threshold=None, thresh_param='amplitude', attribute='shape_params', extract_param=False, dict_format = False):
+            """Extract peaks from a window of interest from a ERPparamGroup object.
+
+            Parameters
+            ----------
+            fg : ERPparamGroup
+                Object to extract peak data from.
+            time_range : tuple of (float, float)
+                Time range of interest.
+                Defined as: (lower_frequency_bound, upper_frequency_bound).
+            threshold : float, optional
+                A minimum threshold value to apply. 
+                If the peak doesn't meet the threshold, it is recorded as an array of NaNs
+            thresh_param : {'amplitude', 'width', 'HT', 'SD', or any other valid shape or gaussian parameter label}
+                Which parameter to threshold on. 'amplitude' is power and 'width' is bandwidth.
+            attribute : {'shape_params', 'gaussian_params'}
+                Which attribute of peak data to extract data from.
+            extract_param : False or {'MN', 'HT', 'SD','SK', 'latency', 'amplitude', 'width', 'skew', 
+                            'fwhm', 'rise_time', 'decay_time', 'symmetry','sharpness', 
+                            'sharpness_rise', 'sharpness_decay'}, optional, Default False
+                Which attribute of peak data to return.
+            dict_format : bool, Default False
+                Whether or not to format results as a dictionary with keys corresponding to 
+                the parameter label and values corresponding to the parameter.
+
+            Returns
+            -------
+            List of length N ERPs, or None
+                Peak data. Each entry is result of applying get_window_peak_fm() on a single ERP
+                Results can be formatted as [MN, HT, SD, SK] if attribute == "gaussian_params" and extract_param is False,
+                or [latency, amplitude, width, skew, fwhm, rise_time, decay_time, symmetry,sharpness, sharpness_rise, sharpness_decay] 
+                if attribute == "shape_params". The list entry for a peak will be None if the ERPparam model doesn't have 
+                valid parameters, or if there are not peaks in the requested time range or matching the given criteria. 
+
+                Returns None if the ERPparamGroup does not have any peaks fit.
+
+            """
+
+            params = get_window_peak_eg(self, time_range, 
+                                    select_highest=select_highest, threshold=threshold, 
+                                    thresh_param=thresh_param, 
+                                    attribute=attribute, extract_param=extract_param, 
+                                    dict_format = dict_format)
+        
+            return params
 
     @copy_doc_func_to_method(plot_fg)
     def plot(self, save_fig=False, file_name=None, file_path=None, **plot_kwargs):
