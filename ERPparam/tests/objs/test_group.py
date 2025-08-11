@@ -215,7 +215,7 @@ def test_fg_fit_skew():
                             peak_mode='skewed_gaussian')
 
         tfg = ERPparamGroup(verbose=False, max_n_peaks=4, peak_mode='skewed_gaussian')
-        tfg.fit(xs, ys, n_jobs=2)
+        tfg.fit(xs, ys)
         out = tfg.get_results()
 
         assert out
