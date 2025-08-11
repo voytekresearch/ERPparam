@@ -634,9 +634,9 @@ class ERPparam():
                                            'rise_time': 'time between peak and rising half-magnitude point', 
                                            'decay_time': 'time between peak and decaying half-magnitude point', 
                                            'symmetry': 'rise time / FWHM', 
-                                           'sharpness': 'peak sharpness (normalized to be dimensionless 0-1)', 
-                                           'sharpness_rise': 'sharpness of the rise (normalized to be dimensionless 0-1)', 
-                                           'sharpness_decay': 'sharpness of the decay (normalized to be dimensionless 0-1)'},
+                                           'sharpness': 'peak sharpness (voltage / seconds)', 
+                                           'sharpness_rise': 'sharpness (voltage / seconds)', 
+                                           'sharpness_decay': 'sharpness of the decay (voltage / seconds)'},
 
                             'gaussian_params':{'MN':'mean of the gaussian',
                                                'HT':'height of the gaussian',
@@ -1028,9 +1028,9 @@ class ERPparam():
             * rise_time: rise time i.e. time between peak and rising half-magnitude point
             * decay_time: decay time i.e. time between peak and decaying half-magnitude point
             * symmetry: rise time / FWHM
-            * sharpness: peak sharpness (normalized to be dimensionless 0-1)
-            * sharpness_rise: sharpness of the rise (normalized to be dimensionless 0-1)
-            * sharpness_decay: sharpness of the decay (normalized to be dimensionless 0-1)
+            * sharpness: peak sharpness (voltage / seconds)
+            * sharpness_rise: sharpness of the rise (voltage / seconds)
+            * sharpness_decay: sharpness of the decay (voltage / seconds)
         """
 
         # get gaussian parameters
