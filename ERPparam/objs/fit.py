@@ -634,9 +634,9 @@ class ERPparam():
                                            'rise_time': 'time between peak and rising half-magnitude point', 
                                            'decay_time': 'time between peak and decaying half-magnitude point', 
                                            'symmetry': 'rise time / FWHM', 
-                                           'sharpness': 'peak sharpness (normalized to be dimensionless 0-1)', 
-                                           'sharpness_rise': 'sharpness of the rise (normalized to be dimensionless 0-1)', 
-                                           'sharpness_decay': 'sharpness of the decay (normalized to be dimensionless 0-1)'},
+                                           'sharpness': 'peak sharpness (voltage / seconds)', 
+                                           'sharpness_rise': 'sharpness (voltage / seconds)', 
+                                           'sharpness_decay': 'sharpness of the decay (voltage / seconds)'},
 
                             'gaussian_params':{'MN':'mean of the gaussian',
                                                'HT':'height of the gaussian',
@@ -1028,9 +1028,9 @@ class ERPparam():
             * rise_time: rise time i.e. time between peak and rising half-magnitude point
             * decay_time: decay time i.e. time between peak and decaying half-magnitude point
             * symmetry: rise time / FWHM
-            * sharpness: peak sharpness (normalized to be dimensionless 0-1)
-            * sharpness_rise: sharpness of the rise (normalized to be dimensionless 0-1)
-            * sharpness_decay: sharpness of the decay (normalized to be dimensionless 0-1)
+            * sharpness: peak sharpness (voltage / seconds)
+            * sharpness_rise: sharpness of the rise (voltage / seconds)
+            * sharpness_decay: sharpness of the decay (voltage / seconds)
         """
 
         # get gaussian parameters
@@ -1076,12 +1076,12 @@ class ERPparam():
                 # compute rise-decay symmetry
                 rise_decay_symmetry = rise_time / fwhm
 
-                # compute sharpness
+                # compute sharpness (voltage per second)
                 half_mag = np.abs(self.signal[peak_index] / 2)
-                sharpness_rise = np.arctan(half_mag / rise_time) * (180 / np.pi) / 90
-                sharpness_decay = np.arctan(half_mag / decay_time) * (180 / np.pi) / 90
-                sharpness = 1 - ((180 - ((np.arctan(half_mag / rise_time) * (180 / np.pi)) + (np.arctan(half_mag / decay_time)) * (180 / np.pi))) / 180)
-            
+                sharpness_rise = half_mag / rise_time
+                sharpness_decay = half_mag / decay_time
+                sharpness = np.mean([sharpness_rise, sharpness_decay])
+
             except ZeroDivisionError:
                 # if the rise or decay time is zero, set all shape params to NaN
                 shape_params[ii] = [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
