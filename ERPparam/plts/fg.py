@@ -11,6 +11,7 @@ from ERPparam.plts.settings import PLT_FIGSIZES
 from ERPparam.plts.templates import plot_scatter_1, plot_scatter_2, plot_hist
 from ERPparam.plts.utils import savefig
 from ERPparam.plts.style import style_plot
+import numpy as np
 
 plt = safe_import('.pyplot', 'matplotlib')
 gridspec = safe_import('.gridspec', 'matplotlib')
@@ -98,7 +99,7 @@ def plot_fg_gf(fg, ax=None, **plot_kwargs):
     """
 
     plot_scatter_2(fg.get_params('error'), 'Error',
-                   fg.get_params('r_squared'), 'R^2', 'Goodness of Fit', ax=ax)
+                   np.asarray([np.round(r, decimals=6) for r in fg.get_params('r_squared')]), 'R^2', 'Goodness of Fit', ax=ax)
 
 
 @savefig
