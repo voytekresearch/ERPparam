@@ -420,7 +420,7 @@ def gen_results_fg_str(fg, concise=False):
         .format(np.nanmin(bws), np.nanmax(bws), np.nanmean(bws)),
         '  Symmetry - Min: {:6.3f}, Max: {:6.3f}, Mean: {:5.3f}'
         .format(np.nanmin(symmetry), np.nanmax(symmetry), np.nanmean(symmetry)),
-        ' Sharpness - Min: {:6.3f}, Max: {:6.3f}, Mean: {:5.3f}'
+        '  Sharpness - Min: {:6.3f}, Max: {:6.3f}, Mean: {:5.3f}'
         .format(np.nanmin(sharpness), np.nanmax(sharpness), np.nanmean(sharpness)),
         '',
 
