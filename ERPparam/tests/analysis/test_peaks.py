@@ -5,8 +5,7 @@ import numpy as np
 from ERPparam.analysis.peaks import *
 from ERPparam import ERPparam, ERPparamGroup
 from ERPparam.sim import simulate_erp
-from ERPparam.data.data import ERPparamResults
-from ERPparam.core.items import PEAK_INDS, GAUS_INDS
+from ERPparam.core.items import PEAK_INDS
 
 from pytest import raises
 
