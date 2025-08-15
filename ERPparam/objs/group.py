@@ -55,8 +55,12 @@ class ERPparamGroup(ERPparam):
         Power values are stored internally in log10 scale.
     time_range : list of [float, float]
         Frequency range of the power spectra, as [lowest_freq, highest_freq].
-    freq_res : float
-        Frequency resolution of the power spectra.
+    uncropped_time : 1d array
+        The uncropped version of the time vector, before trimming based on
+        the time_range attribute.
+    uncropped_signals : 1d array
+        The uncropped version of the signal, before trimming based on
+        the time_range attribute.
     group_results : list of ERPparamResults
         Results of ERPparam model fit for each power spectrum.
     has_data : bool
@@ -84,7 +88,7 @@ class ERPparamGroup(ERPparam):
       and the SD of the peak, is 2*std of the gaussian (as 'two sided' bandwidth).
     - The ERPparamGroup object inherits from the ERPparam object. As such it also has data
       attributes (`signal`), and parameter attributes
-      ( `shape_params_`, `gaussian_params_`, `r_squared_`, `error_`)
+      ( `shape_params_`, `gaussian_params_`, `peak_indices_`, `r_squared_`, `error_`, `adj_r_squared_`)
       which are defined in the context of individual model fits. These attributes are
       used during the fitting process, but in the group context do not store results
       post-fitting. Rather, all model fit results are collected and stored into the
@@ -195,9 +199,10 @@ class ERPparamGroup(ERPparam):
         """
         format_dict = { 'gaussian_params_' : np.ones([0,4])*np.nan,
                         'shape_params_' : np.ones([0,11])*np.nan,
+                        'peak_indices_' : np.full(3, np.nan),
                         'r_squared_': np.nan,
                         'error_' : np.nan,
-                        'peak_indices_' : np.full(3, np.nan)
+                        'adj_r_squared_' : np.nan
                     }
         empty_res = ERPparamResults(**{key.strip('_') : format_dict[key] \
             for key in OBJ_DESC['results']})
@@ -306,8 +311,8 @@ class ERPparamGroup(ERPparam):
         if n_jobs == 1:
             self._reset_group_results(len(self.signals))
             for ind, signal in \
-                _progress(enumerate(self.signals), progress, len(self)):
-                self._fit(time=None, signal=signal, time_range=self.time_range, baseline=self.baseline)
+                _progress(enumerate(self.uncropped_signals), progress, len(self)):
+                self._fit(time=self.uncropped_time, signal=signal, time_range=self.time_range, baseline=self.baseline)
                 self.group_results[ind] = self._get_results()
 
         # Run in parallel
@@ -316,7 +321,7 @@ class ERPparamGroup(ERPparam):
             n_jobs = cpu_count() if n_jobs == -1 else n_jobs
             with Pool(processes=n_jobs) as pool:
                 self.group_results = list(_progress(pool.imap(partial(_par_fit, fg=self),
-                                                              self.signals),
+                                                              self.uncropped_signals),
                                                     progress, len(self.signals)))
 
         # Clear the individual power spectrum and fit results of the current fit``
@@ -354,7 +359,7 @@ class ERPparamGroup(ERPparam):
 
         Parameters
         ----------
-        name : { 'gaussian_params','shape_params', 'error', 'r_squared'}
+        name : {'gaussian_params', 'shape_params', 'peak_indices', 'error', 'r_squared', 'adj_r_squared'}
             Name of the data field to extract across the group.
         col :   {'MN','HT','SD', 'SK'}, 
                 {'latency', 'amplitude', 'width' 'skew', fwhm, rise_time, decay_time, symmetry, sharpness, sharpness_rise, 
@@ -720,7 +725,7 @@ class ERPparamGroup(ERPparam):
 def _par_fit(signal, fg):
     """Helper function for running in parallel."""
 
-    fg._fit(time=fg.time, signal=signal, time_range=fg.time_range, baseline=fg.baseline)
+    fg._fit(time=fg.uncropped_time, signal=signal, time_range=fg.time_range, baseline=fg.baseline)
 
     return fg._get_results()
 

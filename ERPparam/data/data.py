@@ -13,10 +13,14 @@ from collections import namedtuple
 ###################################################################################################
 ###################################################################################################
 
-class ERPparamSettings(namedtuple('ERPparamSettings', ['peak_width_limits', 'max_n_peaks',
-                                                 'min_peak_height', 'peak_threshold',
-                                                 'peak_mode', 'gauss_overlap_thresh', 'maxfev', 
-                                                 'amplitude_fraction'])):
+class ERPparamSettings(namedtuple('ERPparamSettings', ['peak_width_limits', 
+                                                       'max_n_peaks',
+                                                       'min_peak_height', 
+                                                       'peak_threshold',
+                                                       'peak_mode', 
+                                                       'gauss_overlap_thresh', 
+                                                       'maxfev', 
+                                                       'amplitude_fraction'])):
     """User defined settings for the fitting algorithm.
     Parameters
     ----------
@@ -30,6 +34,10 @@ class ERPparamSettings(namedtuple('ERPparamSettings', ['peak_width_limits', 'max
         Relative threshold for detecting peaks, in units of standard deviation of the input data.
     peak_mode : {'gaussian', 'skewed_gaussian'}
         Mode for fitting the peaks.
+    gauss_overlap_thresh : float
+        Overlap threshold for Gaussian peaks, as a fraction of the peak width.
+    maxfev : int
+        Maximum number of function evaluations for the fitting algorithm.
     amplitude_fraction : float, optional, default: 0.5
         Fraction of the peak amplitude to use as a threshold for computing
         the shape parameters of the ERP peak.
@@ -58,17 +66,16 @@ class ERPparamMetaData(namedtuple('ERPparamMetaData', ['time_range', 'fs'])):
     __slots__ = ()
 
 
-class ERPparamResults(namedtuple('ERPparamResults', ['r_squared', 'error', 
-                                                     'gaussian_params','shape_params',
-                                                     'peak_indices'])):
+class ERPparamResults(namedtuple('ERPparamResults', ['gaussian_params',
+                                                     'shape_params',
+                                                     'peak_indices',
+                                                     'r_squared', 
+                                                     'error',
+                                                     'adj_r_squared'])):
     """Model results from parameterizing a power spectrum.
 
     Parameters
     ----------
-    r_squared : float
-        R-squared of the fit between the full model fit and the input data.
-    error : float
-        Error of the full model fit.
     gaussian_params : 2d array
         Parameters that define the gaussian fit( s).
         Each row is a gaussian, as [mean, height, standard deviation].
@@ -78,6 +85,12 @@ class ERPparamResults(namedtuple('ERPparamResults', ['r_squared', 'error',
         sharpness, rising sharpeness, decaying sharpeness, CF, PW, BW].
     peak_indices : 1d array, 
         Indices of the peaks in the input data.
+    r_squared : float
+        R-squared of the fit between the full model fit and the input data.
+    error : float
+        Error of the full model fit.
+    adj_r_squared : float
+        Adjusted R-squared of the fit between the full model fit and the input data.
 
     Notes
     -----

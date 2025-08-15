@@ -67,6 +67,7 @@ def model_to_dict(fit_results, peak_org=None):
     # goodness-of-fit metrics
     fr_dict['error'] = fit_results.error
     fr_dict['r_squared'] = fit_results.r_squared
+    fr_dict['adj_r_squared'] = fit_results.adj_r_squared
 
     return fr_dict
 

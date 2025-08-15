@@ -107,6 +107,12 @@ class ERPparam():
         Time range of the signal from which to estimate the noise threshold at which iterative peak fitting stops (typically a pre-stimulus window).
         Input as [earliest_time, latest_time].
         If unspecified, the whole time window before time 0 will be used. If that cannot be found, the whole length of signal will be used.
+    uncropped_time : 1d array
+        The uncropped version of the time vector, before trimming based on
+        the time_range attribute. This is useful for plotting.
+    uncropped_signal : 1d array
+        The uncropped version of the signal, before trimming based on
+        the time_range attribute. This is useful for plotting.
     fs : float
         Sampling frequency.
     gaussian_params_ : 2d array
@@ -116,10 +122,14 @@ class ERPparam():
         ERP shape parameters for each peak.
         Each row is a peak, as [duration, rise-time, decay-time, rise-decay symmetry,
         FWHM, rising sharpness, decaying sharpness].
+    peak_indices_ : 1d array
+        Indices of the peaks and half-magnitude points in the signal.
     r_squared_ : float
         R-squared of the fit between the input signal and the full model fit.
     error_ : float
         Error of the full model fit.
+    adj_r_squared_ : float
+        Adjusted R-squared of the fit between the input signal and the full model fit.
     n_peaks_ : int
         The number of peaks fit in the model.
     has_data : bool
@@ -260,6 +270,7 @@ class ERPparam():
             self.shape_params_ = np.ones([0,11])*np.nan
             self.r_squared_ = np.nan
             self.error_ = np.nan
+            self.adj_r_squared_ = np.nan
             self.peak_indices_ = np.full(3, np.nan)
             self._peak_fit = None
 
@@ -342,6 +353,7 @@ class ERPparam():
         self.peak_indices_ = ERPparam_result.peak_indices
         self.r_squared_ = ERPparam_result.r_squared
         self.error_ = ERPparam_result.error
+        self.adj_r_squared_ = ERPparam_result.adj_r_squared
 
         self._check_loaded_results(ERPparam_result._asdict())
 
@@ -464,6 +476,7 @@ class ERPparam():
             # Calculate R^2 and error of the model fit
             self._calc_r_squared()
             self._calc_error()
+            self._calc_adj_r_squared()
 
         except FitError:
 
@@ -554,7 +567,7 @@ class ERPparam():
 
         Parameters
         ----------
-        name : {'gaussian_params', 'shape_params', 'error', 'r_squared'}
+        name : {'gaussian_params', 'shape_params', 'error', 'r_squared', 'adj_r_squared'}'}
             Name of the data field to extract.
         col : {'MN','HT','SD', 'SK'}, {latency, amplitude, width, skew, fwhm, rise_time, decay_time, symmetry,
             sharpness, sharpness_rise, sharpness_decay} or int, optional
@@ -628,9 +641,9 @@ class ERPparam():
                                            'rise_time': 'time between peak and rising half-magnitude point', 
                                            'decay_time': 'time between peak and decaying half-magnitude point', 
                                            'symmetry': 'rise time / FWHM', 
-                                           'sharpness': 'peak sharpness (normalized to be dimensionless 0-1)', 
-                                           'sharpness_rise': 'sharpness of the rise (normalized to be dimensionless 0-1)', 
-                                           'sharpness_decay': 'sharpness of the decay (normalized to be dimensionless 0-1)'},
+                                           'sharpness': 'peak sharpness (voltage / seconds)', 
+                                           'sharpness_rise': 'sharpness (voltage / seconds)', 
+                                           'sharpness_decay': 'sharpness of the decay (voltage / seconds)'},
 
                             'gaussian_params':{'MN':'mean of the gaussian',
                                                'HT':'height of the gaussian',
@@ -1072,9 +1085,9 @@ class ERPparam():
             * rise_time: rise time i.e. time between peak and rising half-magnitude point
             * decay_time: decay time i.e. time between peak and decaying half-magnitude point
             * symmetry: rise time / FWHM
-            * sharpness: peak sharpness (normalized to be dimensionless 0-1)
-            * sharpness_rise: sharpness of the rise (normalized to be dimensionless 0-1)
-            * sharpness_decay: sharpness of the decay (normalized to be dimensionless 0-1)
+            * sharpness: peak sharpness (voltage / seconds)
+            * sharpness_rise: sharpness of the rise (voltage / seconds)
+            * sharpness_decay: sharpness of the decay (voltage / seconds)
         """
 
         # get gaussian parameters
@@ -1120,12 +1133,12 @@ class ERPparam():
                 # compute rise-decay symmetry
                 rise_decay_symmetry = rise_time / fwhm
 
-                # compute sharpness
+                # compute sharpness (voltage per second)
                 half_mag = np.abs(self.signal[peak_index] / 2)
-                sharpness_rise = np.arctan(half_mag / rise_time) * (180 / np.pi) / 90
-                sharpness_decay = np.arctan(half_mag / decay_time) * (180 / np.pi) / 90
-                sharpness = 1 - ((180 - ((np.arctan(half_mag / rise_time) * (180 / np.pi)) + (np.arctan(half_mag / decay_time)) * (180 / np.pi))) / 180)
-            
+                sharpness_rise = half_mag / rise_time
+                sharpness_decay = half_mag / decay_time
+                sharpness = np.mean([sharpness_rise, sharpness_decay])
+
             except ZeroDivisionError:
                 # if the rise or decay time is zero, set all shape params to NaN
                 shape_params[ii] = [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
@@ -1252,10 +1265,28 @@ class ERPparam():
 
 
     def _calc_r_squared(self):
-        """Calculate the r-squared goodness of fit of the model, compared to the original data."""
+        """Calculate the r-squared goodness of fit of the model compared to the 
+        original data."""
 
         r_val = np.corrcoef(self.signal, self._peak_fit)
         self.r_squared_ = r_val[0][1] ** 2
+
+
+    def _calc_adj_r_squared(self):
+        """Calculate the adjusted r-squared goodness of fit of the model 
+        compared to the original data. This measure accounts for the number of 
+        parameters in the model using the formula:
+        adj_r_squared = 1 - (1 - r_squared) * (n - 1) / (n - p - 1)
+        where n is the number of data points, and p is the number of parameters 
+        in the model.
+        """
+
+        n = len(self.signal)
+        if self.peak_mode == 'skewed_gaussian':
+            p = self.gaussian_params_.shape[0] * 4
+        elif self.peak_mode == 'gaussian':
+            p = self.gaussian_params_.shape[0] * 3
+        self.adj_r_squared_ = 1 - (((1 - self.r_squared_) * (n - 1)) / (n - p - 1))
 
 
     def _calc_error(self, metric=None):
