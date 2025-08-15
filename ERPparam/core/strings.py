@@ -381,10 +381,10 @@ def gen_results_fg_str(fg, concise=False):
     r2s = fg.get_params('r_squared')
     adjr2s = fg.get_params('adj_r_squared')
     errors = fg.get_params('error')
-    bws = fg.get_params('shape_params', 'BW')
-    pws = fg.get_params('shape_params', 'PW')
-    symmetry = fg.get_params('shape_params', 'symmetry')
-    sharpness = fg.get_params('shape_params', 'sharpness')
+    bws = fg.get_params('shape_params', 'BW')[:,0]
+    pws = fg.get_params('shape_params', 'PW')[:,0]
+    symmetry = fg.get_params('shape_params', 'symmetry')[:,0]
+    sharpness = fg.get_params('shape_params', 'sharpness')[:,0]
 
     # Check if there are any power spectra that failed to fit
     n_failed = fg.n_null_#sum(np.isnan(bws))
@@ -403,8 +403,8 @@ def gen_results_fg_str(fg, concise=False):
         '',
 
         # Frequency range and resolution
-        'The model was run on the time range {} - {} '.format( fg.time_range[0], fg.time_range[1]),
-        'The baseline variance was calculated on {} - {} '.format( fg.baseline[0], fg.baseline[1]),
+        'The model was run on the time range {} - {} '.format( np.round(fg.time_range[0], decimals=3), np.round(fg.time_range[1], decimals=3)),
+        'The baseline variance was calculated on {} - {} '.format( np.round(fg.baseline[0], decimals=3), np.round(fg.baseline[1], decimals=3)),
         'Time Resolution is {:1.2f}'.format(fg.time_res),
         '',
 
