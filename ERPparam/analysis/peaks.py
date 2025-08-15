@@ -20,8 +20,9 @@ def get_peaks(model, time_range, **kwargs):
         return get_window_peak_ep(model, time_range, **kwargs)
 
 
-def get_window_peak_ep(fm, time_range, select_highest=True, threshold=None, thresh_param='amplitude',
-                     attribute='shape_params', extract_param=False, dict_format = False):
+def get_window_peak_ep(fm, time_range, select_highest=True, threshold=None, 
+                       thresh_param='amplitude', attribute='shape_params', 
+                       extract_param=False, dict_format=False):
     """Extract peaks from a time range of interest from a ERPparam object.
 
     Parameters
@@ -32,34 +33,42 @@ def get_window_peak_ep(fm, time_range, select_highest=True, threshold=None, thre
         Time range of interest.
         Defined as: (lower_time, upper_time).
     select_highest : bool, optional, default: True
-        Whether to return single peak (if True) or all peaks within the range found (if False).
-        If True, returns the highest amplitude peak within the search range.
+        Whether to return single peak (if True) or all peaks within the range 
+        found (if False). If True, returns the highest amplitude peak within 
+        the search range.
     threshold : float, optional
         A minimum threshold value to apply.
-    thresh_param : {'amplitude', 'width', any other valid shape or gaussian parameter label}
-        Which parameter to threshold on. 'amplitude' is power and 'width' is bandwidth.
+    thresh_param : {'amplitude', 'width', or any other valid shape or gaussian
+                    parameter label}
+        Which parameter to threshold on. 'amplitude' is power and 'width' is 
+        bandwidth.
     attribute : {'shape_params', 'gaussian_params'}
         Which attribute of peak data to extract data from.
-    extract_param : False or {'MN', 'HT', 'SD', 'SK} for gaussian_params, or {'latency', 'amplitude', 'width', 'skew', 'fwhm', 
-                    'rise_time', 'decay_time', 'symmetry','sharpness', 'sharpness_rise', 'sharpness_decay'} 
-                    for shape_params, optional, Default False
+    extract_param : False or {'MN', 'HT', 'SD', 'SK} for gaussian_params, or 
+        {'latency', 'amplitude', 'width', 'skew', 'fwhm', 'rise_time', 
+        'decay_time', 'symmetry','sharpness', 'sharpness_rise', 
+        'sharpness_decay'} for shape_params, optional, Default False
         Which attribute of peak data to return.
     dict_format : bool, Default False
-        Whether or not to format results as a dictionary with keys corresponding to 
-        the parameter label and values corresponding to the parameter.
+        Whether or not to format results as a dictionary with keys corresponding 
+        to the parameter label and values corresponding to the parameter.
     
 
     Returns
     -------
     1d or 2d array, dict, or None
-        Peak data. Each row is a peak, as [MN, HT, SD, SK] if attribute == "gaussian_params" and extract_param is False,
-        and [latency, amplitude, width, skew, fwhm, rise_time, decay_time, symmetry,sharpness, sharpness_rise, sharpness_decay] 
-        if attribute == "shape_params" and extract_param is False. 
+        Peak data. Each row is a peak, as [MN, HT, SD, SK] if attribute == 
+        "gaussian_params" and extract_param is False; 
+        and [latency, amplitude, width, skew, fwhm, rise_time, decay_time, 
+        symmetry, sharpness, sharpness_rise, sharpness_decay] if attribute == 
+        "shape_params" and extract_param is False. 
         
-        Return parameters in a dictionary as {parameter label : peak data} if dict_format is True.
+        Return parameters in a dictionary as {parameter label : peak data} if 
+        dict_format is True.
         
-        Returns None if the ERPparam model doesn't have valid parameters, or if there are 
-        not peaks in the requested time range or matching the given criteria. 
+        Returns None if the ERPparam model doesn't have valid parameters, or if 
+        there are not peaks in the requested time range or matching the given 
+        criteria. 
 
     Examples
     --------
@@ -85,7 +94,8 @@ def get_window_peak_ep(fm, time_range, select_highest=True, threshold=None, thre
     # Return nan array if empty input
     if params.size > 0:
         # Find indices of peaks in the specified range, and check the number found
-        peak_inds = (params[:, 0] >= time_range[0]) & (params[:, 0] <= time_range[1])
+        peak_inds = (params[:, 0] >= time_range[0]) & \
+                    (params[:, 0] <= time_range[1])
         n_peaks = sum(peak_inds)
 
         # If there are no peaks within the specified range, return nan
@@ -95,7 +105,8 @@ def get_window_peak_ep(fm, time_range, select_highest=True, threshold=None, thre
 
             # Apply a minimum threshold, if one was provided
             if (len(window_peaks) > 0) and threshold:
-                window_peaks = threshold_peaks(window_peaks, threshold, inds, thresh_param)
+                window_peaks = threshold_peaks(window_peaks, threshold, inds, 
+                                               thresh_param)
 
             # If results > 1 and select_highest, then we return the highest peak
             #    Call a sub-function to select highest power peak in window
@@ -120,8 +131,9 @@ def get_window_peak_ep(fm, time_range, select_highest=True, threshold=None, thre
         return None
 
 
-def get_window_peak_eg(fg, time_range, select_highest=True, threshold=None, thresh_param='amplitude', 
-                     attribute='shape_params', extract_param=False, dict_format = False):
+def get_window_peak_eg(fg, time_range, select_highest=True, threshold=None,
+                       thresh_param='amplitude', attribute='shape_params',
+                       extract_param=False, dict_format=False):
     """Extract peaks from a window of interest from a ERPparamGroup object.
 
     Parameters
@@ -134,17 +146,19 @@ def get_window_peak_eg(fg, time_range, select_highest=True, threshold=None, thre
     threshold : float, optional
         A minimum threshold value to apply. 
         If the peak doesn't meet the threshold, it is recorded as an array of NaNs
-    thresh_param : {'amplitude', 'width', 'HT', 'SD', or any other valid shape or gaussian parameter label}
+    thresh_param : {'amplitude', 'width', 'HT', 'SD', or any other valid shape 
+                    or gaussian parameter label}
         Which parameter to threshold on. 'amplitude' is power and 'width' is bandwidth.
     attribute : {'shape_params', 'gaussian_params'}
         Which attribute of peak data to extract data from.
-    extract_param : False or {'MN', 'HT', 'SD','SK', 'latency', 'amplitude', 'width', 'skew', 
-                    'fwhm', 'rise_time', 'decay_time', 'symmetry','sharpness', 
-                    'sharpness_rise', 'sharpness_decay'}, optional, Default False
+    extract_param : False or {'MN', 'HT', 'SD','SK', 'latency','amplitude', 
+                              'width', 'skew', 'fwhm', 'rise_time', 'decay_time', 
+                              'symmetry', 'sharpness', 'sharpness_rise', 
+                              'sharpness_decay'}, optional, Default False
         Which attribute of peak data to return.
     dict_format : bool, Default False
-        Whether or not to format results as a dictionary with keys corresponding to 
-        the parameter label and values corresponding to the parameter.
+        Whether or not to format results as a dictionary with keys corresponding
+        to the parameter label and values corresponding to the parameter.
 
     Returns
     -------
@@ -167,7 +181,8 @@ def get_window_peak_eg(fg, time_range, select_highest=True, threshold=None, thre
         window_peaks = []
         for ind in range(n_fits):
             each_param = get_window_peak_ep(fg.get_ERPparam(ind, regenerate=False),
-                                            time_range=time_range, select_highest=select_highest,
+                                            time_range=time_range, 
+                                            select_highest=select_highest,
                                             threshold=threshold,
                                             thresh_param=thresh_param,
                                             attribute=attribute,
@@ -182,7 +197,9 @@ def get_window_peak_eg(fg, time_range, select_highest=True, threshold=None, thre
     else:
         return None
 
-def get_window_peak_arr(peak_params, time_range, select_highest=True, threshold=None, thresh_param='amplitude'):
+
+def get_window_peak_arr(peak_params, time_range, select_highest=True, 
+                        threshold=None, thresh_param='amplitude'):
     """Extract peaks within a given time range of interest.
 
     Parameters
@@ -198,12 +215,15 @@ def get_window_peak_arr(peak_params, time_range, select_highest=True, threshold=
     threshold : float, optional
         A minimum threshold value to apply.
     thresh_param : {'amplitude', 'width', any other valid shape or gaussian parameter label}}
-        Which parameter to threshold on. 'amplitude' is the height of the peak, and 'width' is bandwidth.
+        Which parameter to threshold on. 'amplitude' is the height of the peak, 
+        and 'width' is bandwidth.
 
     Returns
     -------
     window_peaks : 1d or 2d array
-        Peak data. Each row is a peak, as [MN, HT, SD, SK] if gaussian_params and [latency, amplitude, width, skew, fwhm, rise_time, decay_time, symmetry,sharpness, sharpness_rise, sharpness_decay] if shape params.
+        Peak data. Each row is a peak, as [MN, HT, SD, SK] if gaussian_params 
+        and [latency, amplitude, width, skew, fwhm, rise_time, decay_time, 
+        symmetry, sharpness, sharpness_rise, sharpness_decay] if shape params.
         If no peaks fit the criteria, returns an array of NaNs
     """
     len_params_arr = peak_params.shape[1]
@@ -212,7 +232,8 @@ def get_window_peak_arr(peak_params, time_range, select_highest=True, threshold=
         inds, thresh_param = infer_desired_params(peak_params, thresh_param, verbose=True)
 
         # Find indices of peaks in the specified range, and check the number found
-        peak_inds = (peak_params[:, 0] >= time_range[0]) & (peak_params[:, 0] <= time_range[1])
+        peak_inds = (peak_params[:, 0] >= time_range[0]) & \
+                    (peak_params[:, 0] <= time_range[1])
         n_peaks = sum(peak_inds)
 
         window_peaks = peak_params[peak_inds, :]
@@ -233,6 +254,7 @@ def get_window_peak_arr(peak_params, time_range, select_highest=True, threshold=
     # Return nan array if empty input
     if (peak_params.size == 0) or (n_peaks==0) or (window_peaks.shape[0] == 0):
         return np.array([np.nan]*len_params_arr)
+
 
 def get_window_peak_group_arr(fg_results, time_range, threshold=None, 
                             select_highest = True,
@@ -259,7 +281,8 @@ def get_window_peak_group_arr(fg_results, time_range, threshold=None,
     thresh_param : {'amplitude', 'width', any other valid shape or gaussian parameter label}
         Which parameter to threshold on. 'amplitude' is power and 'width' is bandwidth.
     rmv_nans : bool, default : False
-        Whether or not to remove rows where there were no peaks detected at all, or peaks didn't fit the search criteria
+        Whether or not to remove rows where there were no peaks detected at all, 
+        or peaks didn't fit the search criteria
 
     Returns
     -------
@@ -270,11 +293,13 @@ def get_window_peak_group_arr(fg_results, time_range, threshold=None,
 
     Notes
     -----
-    - Each row reflects an individual model fit, in order, filled with nan if no peak was present or if no peaks fit the search criteria.
+    - Each row reflects an individual model fit, in order, filled with nan if no 
+    peak was present or if no peaks fit the search criteria.
     - First dimension is >= the number of signals input into the ERPparamGroup object,
         with at least one entry per signal (full of NaNs if no matching peaks were found), 
-        or more if more than one matching peak is detected. If rmv_nans = True then the first dimension can be less
-        than the number of ERPs the Group was fit on.
+        or more if more than one matching peak is detected. If rmv_nans = True 
+        then the first dimension can be less than the number of ERPs the Group 
+        was fit on.
     """
     if (not isinstance(fg_results, list)) or (not isinstance(fg_results[0], ERPparamResults)):
         raise TypeError('Input to fg_results should be an ERPparamResults object')
@@ -284,9 +309,10 @@ def get_window_peak_group_arr(fg_results, time_range, threshold=None,
     window_peaks = []
     for sig_fit in range(n_fits):
         peak_params = getattr(fg_results[sig_fit],attribute) # for each signal, get the shape or gauss params of the fit
-        this_window_arr = get_window_peak_arr(peak_params, time_range=time_range, \
-                                          select_highest=select_highest, \
-                                            threshold=threshold, thresh_param=thresh_param)
+        this_window_arr = get_window_peak_arr(peak_params, time_range=time_range,
+                                              select_highest=select_highest, 
+                                              threshold=threshold, 
+                                              thresh_param=thresh_param)
         window_peaks.append(this_window_arr)
 
     # stack peaks across fits
@@ -295,6 +321,7 @@ def get_window_peak_group_arr(fg_results, time_range, threshold=None,
         # check for NaNs, if there are rows where there's a whole row of missing params
         window_peaks = window_peaks[np.sum(np.isnan(window_peaks), axis=1) <= 1] 
     return window_peaks
+
 
 def get_highest_peak(peak_params):
     """Extract the highest power peak.
@@ -311,12 +338,13 @@ def get_highest_peak(peak_params):
 
     Notes
     -----
-    This function returns the singular highest power peak from the input set, and as
-    such is defined to work on periodic parameters from a single model fit.
+    This function returns the singular highest power peak from the input set, 
+    and as such is defined to work on periodic parameters from a single model fit.
     """
     high_ind = np.argmax(peak_params[:, 1])
 
     return peak_params[high_ind, :]
+
 
 def threshold_peaks(peak_params, threshold, inds, param='amplitude'):
     """Extract peaks that are above a given threshold value.
@@ -347,6 +375,7 @@ def threshold_peaks(peak_params, threshold, inds, param='amplitude'):
     thresholded_peaks = peak_params[thresh_mask]
 
     return thresholded_peaks
+
 
 def infer_desired_params(peak_params, thresh_param, verbose=True):
 
@@ -393,4 +422,3 @@ def infer_desired_params(peak_params, thresh_param, verbose=True):
         print(f"Inferring that the intended thresh_param is {inferred}, and the input parameters are {[params_label]}")
 
     return inds, inferred
-

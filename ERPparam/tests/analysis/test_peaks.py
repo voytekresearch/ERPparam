@@ -100,12 +100,14 @@ def test_get_window_peak_eg():
     eg.fit(time=time, signals=erps, time_range=[0,1])
 
     # test whether we get out the same number of peaks that our group has
-    out = get_window_peak_eg(eg, (0.0, 1), threshold=0.8, thresh_param='HT', attribute='gaussian_params', dict_format=True)
+    out = get_window_peak_eg(eg, (0.0, 1), threshold=0.8, thresh_param='HT', 
+                             attribute='gaussian_params', dict_format=True)
     assert len(out) == len(eg)
     assert type(out[0]) == dict
     assert (out[0] is not None) and (out[1] is not None) and (out[2] is None)
     # test whether we get the right shape if we don't filter out highest peaks
-    out = get_window_peak_eg(eg, (0.0, 1), select_highest=False, threshold=0.0, thresh_param='HT', attribute='gaussian_params', dict_format=False)
+    out = get_window_peak_eg(eg, (0.0, 1), select_highest=False, threshold=0.0, 
+                             thresh_param='HT', attribute='gaussian_params', dict_format=False)
     assert out[0].shape == (2,4)
 
 def test_get_window_peak_arr():
@@ -124,16 +126,21 @@ def test_get_window_peak_arr():
     tfm.fit(time, erp, time_range=[0, 1.0])
 
     # check for any output
-    out = get_window_peak_arr(tfm.get_params('gaussian_params'), tfm.time_range, select_highest=False, threshold=None, thresh_param='HT')
+    out = get_window_peak_arr(tfm.get_params('gaussian_params'), tfm.time_range, 
+                              select_highest=False, threshold=None, 
+                              thresh_param='HT')
     assert out.any()
     # check that our thresholding allows for multiple peaks
-    out = get_window_peak_arr(tfm.get_params('gaussian_params'), tfm.time_range, select_highest=False, threshold=0.4, thresh_param='HT')
+    out = get_window_peak_arr(tfm.get_params('gaussian_params'), tfm.time_range, 
+                              select_highest=False, threshold=0.4, thresh_param='HT')
     assert out.shape == (2,4)
     # filter peaks
-    out = get_window_peak_arr(tfm.get_params('gaussian_params'), tfm.time_range, select_highest=False, threshold=0.8, thresh_param='HT')
+    out = get_window_peak_arr(tfm.get_params('gaussian_params'), tfm.time_range, 
+                              select_highest=False, threshold=0.8, thresh_param='HT')
     assert out.shape == (1,4)
     # check for nans with absurdly high threshold
-    out = get_window_peak_arr(tfm.get_params('gaussian_params'), tfm.time_range, select_highest=False, threshold=100, thresh_param='HT')
+    out = get_window_peak_arr(tfm.get_params('gaussian_params'), tfm.time_range, 
+                              select_highest=False, threshold=100, thresh_param='HT')
     assert out.shape == (4,)
     assert np.isnan(out[0])
 
@@ -166,16 +173,25 @@ def test_get_window_peak_group_arr():
     eg.fit(time=time, signals=erps, time_range=[0,1])
 
     # test whether we get out the same number of peaks that our group has
-    out = get_window_peak_group_arr(eg.get_results(), (0.0,1), select_highest=False, threshold=None, attribute='gaussian_params')
+    out = get_window_peak_group_arr(eg.get_results(), (0.0,1), 
+                                    select_highest=False, threshold=None, 
+                                    attribute='gaussian_params')
     assert out.shape[0] == 5
     # test whether we get out one peak per signals since select_highest is True
-    out = get_window_peak_group_arr(eg.get_results(), (0.0,1), select_highest=True, threshold=None, attribute='gaussian_params', rmv_nans=True)
+    out = get_window_peak_group_arr(eg.get_results(), (0.0,1), 
+                                    select_highest=True, threshold=None, 
+                                    attribute='gaussian_params', rmv_nans=True)
     assert out.shape[0] == 3
     # test whether our amplitude filter works
-    out = get_window_peak_group_arr(eg.get_results(), (0.0,1), select_highest=False, threshold=0.8, attribute='gaussian_params', rmv_nans=True)
+    out = get_window_peak_group_arr(eg.get_results(), (0.0,1), 
+                                    select_highest=False, threshold=0.8, 
+                                    attribute='gaussian_params', rmv_nans=True)
     assert out.shape[0] == 2
     # test whether our bandwidth filter works
-    out = get_window_peak_group_arr(eg.get_results(), (0.0,1), select_highest=False, threshold=0.11, thresh_param='SD', attribute='gaussian_params', rmv_nans=True)
+    out = get_window_peak_group_arr(eg.get_results(), (0.0,1), 
+                                    select_highest=False, threshold=0.11, 
+                                    thresh_param='SD', 
+                                    attribute='gaussian_params', rmv_nans=True)
     assert out.shape[0] == 1
 
 def test_get_highest_peak():
@@ -188,7 +204,8 @@ def test_threshold_peaks():
 
     # Check it works, with a standard height threshold
     data = np.array([[10, 1, 1.8], [14, 2, 4], [12, 3, 2.5]])
-    assert np.array_equal(threshold_peaks(data, 2.5, PEAK_INDS), np.array([[12, 3, 2.5]]))
+    assert np.array_equal(threshold_peaks(data, 2.5, PEAK_INDS), 
+                          np.array([[12, 3, 2.5]]))
 
     # Check it works using a bandwidth threshold
     data = np.array([[10, 1, 1.8], [14, 2, 4], [12, 3, 2.5]])
