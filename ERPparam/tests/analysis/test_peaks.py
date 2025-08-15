@@ -13,6 +13,15 @@ from pytest import raises
 ###################################################################################################
 ###################################################################################################
 
+def test_get_peaks(tfm, tfg):
+    # Test extracting peaks from ERPparam model
+    peaks = get_peaks(tfm, (0, 1))
+    assert peaks is not None
+
+    # Test extracting peaks from ERPparamGroup model
+    peaks = get_peaks(tfg, (0, 1))
+    assert peaks is not None
+
 def test_get_window_peak_ep():
 
     time_range = (-0.2, 1)

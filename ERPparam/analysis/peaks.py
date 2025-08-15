@@ -8,6 +8,18 @@ from ERPparam.data.data import ERPparamResults
 ###################################################################################################
 ###################################################################################################
 
+
+def get_peaks(model, time_range, **kwargs):
+    """
+    Wrapper function for extracting peaks from ERPparam or ERPparamGroup objects.
+    """
+
+    if hasattr(model, 'group_results'):
+        return get_window_peak_eg(model, time_range, **kwargs)
+    else:
+        return get_window_peak_ep(model, time_range, **kwargs)
+
+
 def get_window_peak_ep(fm, time_range, select_highest=True, threshold=None, thresh_param='amplitude',
                      attribute='shape_params', extract_param=False, dict_format = False):
     """Extract peaks from a time range of interest from a ERPparam object.
