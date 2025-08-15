@@ -259,7 +259,7 @@ def get_window_peak_arr(peak_params, time_range, select_highest=True,
 
         # If results > 1 and select_highest, then we return the highest peak
         #    Call a sub-function to select highest power peak in window
-        if window_peaks.size > 1 and select_highest:
+        if window_peaks.shape[0] > 1 and select_highest:
             window_peaks = get_highest_peak(window_peaks)
 
         if window_peaks.shape[0] != 0:
