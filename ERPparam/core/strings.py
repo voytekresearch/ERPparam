@@ -399,14 +399,14 @@ def gen_results_fg_str(fg, concise=False):
         '',
 
         # Group information
-        'Number of Events in the Group: {}'.format(len(fg.group_results)),
+        'Number of events in the group: {}'.format(len(fg.group_results)),
         *[el for el in ['{} Events failed to fit'.format(n_failed)] if n_failed],
         '',
 
         # Frequency range and resolution
         'The model was run on the time range {} - {} '.format( np.round(fg.time_range[0], decimals=3), np.round(fg.time_range[1], decimals=3)),
         'The baseline variance was calculated on {} - {} '.format( np.round(fg.baseline[0], decimals=3), np.round(fg.baseline[1], decimals=3)),
-        'Time Resolution is {0}'.format('%.2E' % Decimal(str(fg.time_res))),
+        'Time resolution is {0}'.format('%.2E' % Decimal(str(fg.time_res))),
         '',
 
         # Aperiodic parameters - knee fit status, and quick exponent description
