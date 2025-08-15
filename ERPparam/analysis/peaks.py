@@ -434,6 +434,6 @@ def infer_desired_params(peak_params, thresh_param, verbose=True):
         raise ValueError(msg)
 
     if (inferred != thresh_param) and verbose:
-        print(f"Inferring that the intended thresh_param is {inferred}, and the input parameters are {[params_label]}")
+        print(f"Inferring that the intended thresh_param is {inferred}, and the input parameters are {params_label}")
 
     return inds, inferred
