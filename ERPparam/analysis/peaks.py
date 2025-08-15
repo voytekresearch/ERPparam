@@ -272,10 +272,8 @@ def get_window_peak_arr(peak_params, time_range, select_highest=True,
 
 
 def get_window_peak_group_arr(fg_results, time_range, threshold=None, 
-                            select_highest = True,
-                            attribute = 'shape_params',
-                            thresh_param='amplitude',
-                            rmv_nans=False):
+                              select_highest = True, attribute = 'shape_params',
+                              thresh_param='amplitude', rmv_nans=False):
     """Extract peaks within a given window of interest, from peaks from a group fit.
 
     Parameters
