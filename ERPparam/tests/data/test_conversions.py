@@ -16,22 +16,22 @@ def test_model_to_dict(tresults, tbands):
 
     out = model_to_dict(tresults, peak_org=1)
     assert isinstance(out, dict)
-    assert 'ct_0' in out
-    assert out['ct_0'] == tresults.shape_params[0, 0]
-    assert not 'ct_1' in out
+    assert 'latency_0' in out
+    assert out['latency_0'] == tresults.shape_params[0, 0]
+    assert not 'latency_1' in out
 
     out = model_to_dict(tresults, peak_org=2)
-    assert 'ct_0' in out
-    assert 'ct_1' in out
-    assert out['ct_1'] == tresults.shape_params[1, 0]
+    assert 'latency_0' in out
+    assert 'latency_1' in out
+    assert out['latency_1'] == tresults.shape_params[1, 0]
 
     out = model_to_dict(tresults, peak_org=3)
-    assert 'ct_2' in out
-    assert np.isnan(out['ct_2'])
+    assert 'latency_2' in out
+    assert np.isnan(out['latency_2'])
 
     out = model_to_dict(tresults, peak_org=tbands)
-    assert 'p1_ct' in out
-    assert out['p1_ct'] == tresults.shape_params[0, 0]
+    assert 'p1_latency' in out
+    assert out['p1_latency'] == tresults.shape_params[0, 0]
 
 
 def test_model_to_dataframe(tresults, skip_if_no_pandas):

@@ -66,11 +66,11 @@ def get_shape_indices():
     """
 
     indices = {
-        'CT' : 0,
-        'PW' : 1,
-        'BW' : 2,
-        'SK' : 3,
-        'FWHM' : 4,
+        'latency' : 0,
+        'amplitude' : 1,
+        'width' : 2,
+        'skew' : 3,
+        'fwhm' : 4,
         'rise_time' : 5,
         'decay_time' : 6,
         'symmetry' : 7,
