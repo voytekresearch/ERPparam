@@ -264,7 +264,7 @@ def get_window_peak_arr(peak_params, time_range, select_highest=True,
 
         if window_peaks.shape[0] != 0:
             # Squeeze so that if there is only 1 result, return single peak in flat array
-            return window_peaks
+            return np.squeeze(window_peaks)
     
     # Return nan array if empty input
     if (peak_params.size == 0) or (n_peaks==0) or (window_peaks.shape[0] == 0):

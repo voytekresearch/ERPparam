@@ -137,7 +137,7 @@ def test_get_window_peak_arr():
     # filter peaks
     out = get_window_peak_arr(tfm.get_params('gaussian_params'), tfm.time_range, 
                               select_highest=False, threshold=0.8, thresh_param='HT')
-    assert out.shape == (1,4)
+    assert out.shape == (4,)
     # check for nans with absurdly high threshold
     out = get_window_peak_arr(tfm.get_params('gaussian_params'), tfm.time_range, 
                               select_highest=False, threshold=100, thresh_param='HT')
