@@ -404,8 +404,8 @@ def gen_results_fg_str(fg, concise=False):
         '',
 
         # Frequency range and resolution
-        'The model was run on the time range {} - {} s'.format( np.round(fg.time_range[0], decimals=3), np.round(fg.time_range[1], decimals=3)),
-        'The baseline variance was calculated on {} - {} s'.format( np.round(fg.baseline[0], decimals=3), np.round(fg.baseline[1], decimals=3)),
+        'The model was run on the time range {} \u2013 {} s'.format( np.round(fg.time_range[0], decimals=3), np.round(fg.time_range[1], decimals=3)),
+        'The baseline variance was calculated on {} \u2013 {} s'.format( np.round(fg.baseline[0], decimals=3), np.round(fg.baseline[1], decimals=3)),
         'Time resolution is {0} s'.format('%.2E' % Decimal(str(fg.time_res))),
         '',
 
