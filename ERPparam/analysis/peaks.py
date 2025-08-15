@@ -12,6 +12,21 @@ from ERPparam.data.data import ERPparamResults
 def get_peaks(model, time_range, **kwargs):
     """
     Wrapper function for extracting peaks from ERPparam or ERPparamGroup objects.
+
+    Parameters
+    ----------
+    model : ERPparam or ERPparamGroup
+        The model object to extract peaks from.
+    time_range : list of float
+        The time range to search for peaks within.
+    **kwargs : keyword arguments
+        Additional arguments to pass to the peak extraction function. See
+        get_window_peak_ep and get_window_peak_eg for details.
+
+    Returns
+    -------
+    list of dict
+        A list of arrays or dictionaries containing peak information.
     """
 
     if hasattr(model, 'group_results'):
