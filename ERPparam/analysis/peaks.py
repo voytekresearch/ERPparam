@@ -220,7 +220,7 @@ def get_window_peak_arr(peak_params, time_range, select_highest=True,
     Parameters
     ----------
     peak_params : 2d array
-        Peak parameters, with shape of [n_peaks, 3].
+        Either Gaussian or shape parameters [n_peaks, n_params]
     time_range : tuple of (float, float)
         Time range of interest.
         Defined as: (start_time, end_time).
@@ -344,7 +344,7 @@ def get_highest_peak(peak_params):
     Parameters
     ----------
     peak_params : 2d array
-        Peak parameters, with shape of [n_peaks, 3].
+        Either Gaussian or shape parameters [n_peaks, n_params]
 
     Returns
     -------
@@ -367,7 +367,7 @@ def threshold_peaks(peak_params, threshold, inds, param='amplitude'):
     Parameters
     ----------
     peak_params : 2d array
-        Peak parameters, with shape of [n_peaks, 3] or [n_peaks, 4].
+        Either Gaussian or shape parameters [n_peaks, n_params]
     threshold : float
         A minimum threshold value to apply.
     inds : dict
