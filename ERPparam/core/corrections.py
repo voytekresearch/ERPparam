@@ -1,6 +1,8 @@
 """
 Correction functions for ERPparam.
-- correct_overlapping_peaks
+- correct_overlapping_peaks: Correct the indices of overlapping peaks.
+- _find_overlapping_peaks: helper func to identify overlapping peaks
+- _find_troughs: helper func to identify troughs between overlapping peaks
 
 """
 
@@ -94,14 +96,14 @@ def _find_troughs(signal, peak_indices, overlap_start, overlap_end):
         if overlap_start[i_overlap]:
             overlap = signal[int(peak_indices[i_overlap-1][1]) : \
                              int(peak_indices[i_overlap][1])]
-            idx_trough[i_overlap] = np.argmin(overlap) + \
-                                        peak_indices[i_overlap-1][1]
+            idx_trough[i_overlap] = np.argmin(np.abs(overlap)) + \
+                peak_indices[i_overlap-1][1]
         
     for i_overlap in range(len(overlap_start)-1):      
         if overlap_end[i_overlap] and not overlap_start[i_overlap+1]:
             overlap = signal[int(peak_indices[i_overlap][1]) : \
                              int(peak_indices[i_overlap+1][1])]
-            idx_trough[i_overlap] = np.argmin(overlap) + \
-                                        peak_indices[i_overlap][1]
+            idx_trough[i_overlap] = np.argmin(np.abs(overlap)) + \
+                peak_indices[i_overlap][1]
             
     return idx_trough

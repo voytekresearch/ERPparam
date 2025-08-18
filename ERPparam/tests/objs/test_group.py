@@ -339,7 +339,7 @@ def test_fg_report(skip_if_no_mpl):
     assert tfm1
     # Check that regenerated model is created
     for result in OBJ_DESC['results']:
-        if (result == 'gaussian_params_') or (result == 'peak_params_'):
+        if (result == 'gaussian_params_') or (result == 'shape_params_'):
             assert np.all(getattr(tfm1, result)[:, :3])
         else:
             assert np.all(getattr(tfm1, result))
