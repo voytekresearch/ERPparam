@@ -1,6 +1,8 @@
 """
 Correction functions for ERPparam.
-- correct_overlapping_peaks
+- correct_overlapping_peaks: Correct the indices of overlapping peaks.
+- _find_overlapping_peaks: helper func to identify overlapping peaks
+- _find_troughs: helper func to identify troughs between overlapping peaks
 
 """
 
