@@ -261,9 +261,13 @@ class ERPparam():
             self.time = None
             self.time_range = None
             self.fs = None
+            self.baseline = None
+            self.uncropped_time = None
 
         if clear_signal:
             self.signal = None
+            self.baseline_signal = None
+            self.uncropped_signal = None
 
         if clear_results:
 

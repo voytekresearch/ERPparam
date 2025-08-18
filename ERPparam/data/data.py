@@ -49,7 +49,7 @@ class ERPparamSettings(namedtuple('ERPparamSettings', ['peak_width_limits',
     __slots__ = ()
 
 
-class ERPparamMetaData(namedtuple('ERPparamMetaData', ['time_range', 'fs'])):
+class ERPparamMetaData(namedtuple('ERPparamMetaData', ['time_range', 'fs', 'baseline', 'time_res'])):
     """Metadata information about a power spectrum.
 
     Parameters
