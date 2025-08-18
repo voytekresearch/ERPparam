@@ -88,7 +88,8 @@ def test_fg_fit_nk():
     """Test ERPparamGroup fit, no noise. Intialize empty Group obj, then feed data into fit func. """
 
     n_signals = 2
-    xs, ys = simulate_erps(n_signals, *default_group_params())
+    time_range, erp_params, _ = default_group_params()
+    xs, ys = simulate_erps(n_signals,time_range, erp_params, nlvs=0)
 
     tfg = ERPparamGroup(verbose=False, max_n_peaks=4)
     tfg.fit(xs, ys)
