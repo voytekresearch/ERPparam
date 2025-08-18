@@ -354,7 +354,7 @@ def get_highest_peak(peak_params):
     This function returns the singular highest power peak from the input set, 
     and as such is defined to work on periodic parameters from a single model fit.
     """
-    high_ind = np.argmax(peak_params[:, 1])
+    high_ind = np.argmax(np.abs(peak_params[:, 1]))
 
     return peak_params[high_ind, :]
 
@@ -384,7 +384,10 @@ def threshold_peaks(peak_params, threshold, inds, param='amplitude'):
     or a set or parameters from a group.
     """
     # Apply a mask for the requested threshold
-    thresh_mask = peak_params[:, inds[param]] > threshold
+    if 'amplitude' in param:
+        thresh_mask = np.abs(peak_params[:, inds[param]]) > threshold
+    else:
+        thresh_mask = peak_params[:, inds[param]] > threshold
     thresholded_peaks = peak_params[thresh_mask]
 
     return thresholded_peaks
