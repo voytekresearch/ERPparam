@@ -381,10 +381,10 @@ def gen_results_fg_str(fg, concise=False):
     r2s = fg.get_params('r_squared')
     adjr2s = fg.get_params('adj_r_squared')
     errors = fg.get_params('error')
-    bws = fg.get_params('shape_params', 'width')
-    pws = fg.get_params('shape_params', 'amplitude')
-    symmetry = fg.get_params('shape_params', 'symmetry')
-    sharpness = fg.get_params('shape_params', 'sharpness')
+    bws = fg.get_params('shape_params', 'width')[:,0]
+    pws = fg.get_params('shape_params', 'amplitude')[:,0]
+    symmetry = fg.get_params('shape_params', 'symmetry')[:,0]
+    sharpness = fg.get_params('shape_params', 'sharpness')[:,0]
 
     # Check if there are any power spectra that failed to fit
     n_failed = fg.n_null_#sum(np.isnan(bws))
