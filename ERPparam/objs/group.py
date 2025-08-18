@@ -241,7 +241,7 @@ class ERPparamGroup(ERPparam):
             = self._prepare_data(time=time, signal=signals, time_range=time_range, baseline=baseline, signal_dim=2)
 
 
-    def report(self, time=None, signals=None, time_range=None, n_jobs=1, progress=None):
+    def report(self, time=None, signals=None, time_range=None, baseline=None, n_jobs=1, progress=None):
         """Fit a group of power spectra and display a report, with a plot and printed results.
 
         Parameters
@@ -264,7 +264,7 @@ class ERPparamGroup(ERPparam):
         """
 
         if time is not None and signals is not None:
-            self.fit(time, signals, time_range, n_jobs=n_jobs, progress=progress)
+            self.fit(time, signals, time_range, baseline=baseline, n_jobs=n_jobs, progress=progress)
         self.plot()
         self.print_results(False)
 
