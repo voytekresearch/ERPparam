@@ -77,13 +77,14 @@ def get_shape_indices():
         'amplitude' : 1,
         'width' : 2,
         'skew' : 3,
-        'fwhm' : 4,
-        'rise_time' : 5,
-        'decay_time' : 6,
-        'symmetry' : 7,
-        'sharpness' : 8,
-        'sharpness_rise' : 9,
-        'sharpness_decay' : 10
+        'relative_amplitude' : 4,
+        'fwhm' : 5,
+        'rise_time' : 6,
+        'decay_time' : 7,
+        'symmetry' : 8,
+        'sharpness' : 9,
+        'sharpness_rise' : 10,
+        'sharpness_decay' : 11,
     }
 
     return indices

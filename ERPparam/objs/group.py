@@ -13,7 +13,7 @@ import numpy as np
 
 from ERPparam.objs import ERPparam
 from ERPparam.plts.fg import plot_fg
-from ERPparam.core.items import OBJ_DESC
+from ERPparam.core.items import OBJ_DESC, PEAK_INDS, GAUS_INDS
 from ERPparam.core.info import get_indices
 from ERPparam.core.utils import check_inds
 from ERPparam.core.errors import NoModelError, NoDataError
@@ -197,8 +197,8 @@ class ERPparamGroup(ERPparam):
         length : int, optional, default: 0
             Length of list of empty lists to initialize. If 0, creates a single empty list.
         """
-        format_dict = { 'gaussian_params_' : np.ones([0,4])*np.nan,
-                        'shape_params_' : np.ones([0,11])*np.nan,
+        format_dict = { 'gaussian_params_' : np.ones([0, len(GAUS_INDS)])*np.nan,
+                        'shape_params_' : np.ones([0, len(PEAK_INDS)])*np.nan,
                         'peak_indices_' : np.full(3, np.nan),
                         'r_squared_': np.nan,
                         'error_' : np.nan,
@@ -362,9 +362,9 @@ class ERPparamGroup(ERPparam):
         name : {'gaussian_params', 'shape_params', 'peak_indices', 'error', 'r_squared', 'adj_r_squared'}
             Name of the data field to extract across the group.
         col :   {'MN','HT','SD', 'SK'}, 
-                {'latency', 'amplitude', 'width' 'skew', fwhm, rise_time, decay_time, symmetry, sharpness, sharpness_rise, 
-                    sharpness_decay}, or
-                int, optional
+                {'latency', 'amplitude', 'width', 'skew', 'relative_amplitude', 
+                'fwhm', 'rise_time', 'decay_time', 'symmetry', 'sharpness', 
+                'sharpness_rise', 'sharpness_decay'}, or int, optional
                 Column name / index to extract from selected data, if requested.
                 Only used for name of {'gaussian_params', 'shape_params}, 
                 respectively.
@@ -421,7 +421,8 @@ class ERPparamGroup(ERPparam):
         elif name in ('shape_params'):
 
             # Collect peak data, appending the index of the model it comes from
-            out = np.vstack([np.insert(getattr(data, name), 11, index, axis=1)
+            out = np.vstack([np.insert(getattr(data, name), len(PEAK_INDS), 
+                                       index, axis=1)
                              for index, data in enumerate(self.group_results)])
 
             # This updates index to grab selected column, and the last column
@@ -449,25 +450,30 @@ class ERPparamGroup(ERPparam):
                 Defined as: (lower_frequency_bound, upper_frequency_bound).
             threshold : float, optional
                 A minimum threshold value to apply. 
-                If the peak doesn't meet the threshold, it is recorded as an array of NaNs
-            thresh_param : {'amplitude', 'width', 'HT', 'SD', or any other valid shape or gaussian parameter label}
-                Which parameter to threshold on. 'amplitude' is power and 'width' is bandwidth.
+                If the peak doesn't meet the threshold, it is recorded as an 
+                array of NaNs
+            thresh_param : {'amplitude', 'width', 'HT', 'SD', or any other valid 
+                shape or gaussian parameter label}
+                Which parameter to threshold on. 'amplitude' is power and 
+                'width' is bandwidth.
             attribute : {'shape_params', 'gaussian_params'}
                 Which attribute of peak data to extract data from.
-            extract_param : False or {'MN', 'HT', 'SD','SK', 'latency', 'amplitude', 'width', 'skew', 
-                            'fwhm', 'rise_time', 'decay_time', 'symmetry','sharpness', 
-                            'sharpness_rise', 'sharpness_decay'}, optional, Default False
+            extract_param : False or {'MN', 'HT', 'SD','SK', 'latency', 
+                'amplitude', 'width', 'skew', 'relative_amplitude',
+                'fwhm', 'rise_time', 'decay_time', 'symmetry','sharpness', 
+                'sharpness_rise', 'sharpness_decay'}, optional, Default False
                 Which attribute of peak data to return.
             dict_format : bool, Default False
-                Whether or not to format results as a dictionary with keys corresponding to 
-                the parameter label and values corresponding to the parameter.
+                Whether or not to format results as a dictionary with keys 
+                corresponding to the parameter label and values corresponding to 
+                the parameter.
 
             Returns
             -------
             List of length N ERPs, or None
                 Peak data. Each entry is result of applying get_window_peak_fm() on a single ERP
                 Results can be formatted as [MN, HT, SD, SK] if attribute == "gaussian_params" and extract_param is False,
-                or [latency, amplitude, width, skew, fwhm, rise_time, decay_time, symmetry,sharpness, sharpness_rise, sharpness_decay] 
+                or [latency, amplitude, width, skew, relative_amplitude, fwhm, rise_time, decay_time, symmetry, sharpness, sharpness_rise, sharpness_decay] 
                 if attribute == "shape_params". The list entry for a peak will be None if the ERPparam model doesn't have 
                 valid parameters, or if there are not peaks in the requested time range or matching the given criteria. 
 

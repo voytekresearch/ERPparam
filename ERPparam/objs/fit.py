@@ -45,17 +45,18 @@ import numpy as np
 from numpy.linalg import LinAlgError
 from scipy.optimize import curve_fit
 
-from ERPparam.core.items import OBJ_DESC
+from ERPparam.core.items import OBJ_DESC, PEAK_INDS
 from ERPparam.core.info import get_indices
 from ERPparam.core.io import save_fm, load_json
 from ERPparam.core.reports import save_report_fm
 from ERPparam.core.modutils import copy_doc_func_to_method
 from ERPparam.core.utils import group_three, group_four, check_array_dim
-from ERPparam.core.funcs import gaussian_function, skewed_gaussian_function, get_pe_func
+from ERPparam.core.funcs import gaussian_function, skewed_gaussian_function
 from ERPparam.core.errors import (FitError, NoModelError, DataError,
                                NoDataError, InconsistentDataError)
 from ERPparam.core.strings import (gen_settings_str, gen_results_fm_str,
-                                gen_issue_str, gen_width_warning_str, gen_model_exists_str)
+                                   gen_issue_str, gen_width_warning_str, 
+                                   gen_model_exists_str)
 from ERPparam.core.corrections import correct_overlapping_peaks
 
 from ERPparam.plts.model import plot_ERPparam
@@ -64,7 +65,7 @@ from ERPparam.utils.params import compute_gauss_std
 from ERPparam.data import ERPparamResults, ERPparamSettings, ERPparamMetaData
 from ERPparam.data.conversions import model_to_dataframe
 from ERPparam.sim.gen import gen_time_vector, sim_erp
-from ERPparam.analysis.peaks import get_window_peak_arr, get_window_peak_ep
+from ERPparam.analysis.peaks import get_window_peak_ep
 
 ###################################################################################################
 ###################################################################################################
@@ -271,7 +272,7 @@ class ERPparam():
 
         if clear_results:
 
-            self.shape_params_ = np.ones([0,11])*np.nan
+            self.shape_params_ = np.ones([0, len(PEAK_INDS)])*np.nan
             self.r_squared_ = np.nan
             self.error_ = np.nan
             self.adj_r_squared_ = np.nan
@@ -573,7 +574,8 @@ class ERPparam():
         ----------
         name : {'gaussian_params', 'shape_params', 'error', 'r_squared', 'adj_r_squared'}'}
             Name of the data field to extract.
-        col : {'MN','HT','SD', 'SK'}, {latency, amplitude, width, skew, fwhm, rise_time, decay_time, symmetry,
+        col : {'MN','HT','SD', 'SK'}, {latency, amplitude, width, skew, 
+            relative_amplitude, fwhm, rise_time, decay_time, symmetry,
             sharpness, sharpness_rise, sharpness_decay} or int, optional
             Column name / index to extract from selected data, if requested.
             Only used for name of { 'gaussian_params', 'shape_params}, 
@@ -642,12 +644,13 @@ class ERPparam():
                                             'width': 'Bandwidth of the peak, 2-sided (ie, both halves from the peak center), calculated from the raw signal',
                                             'skew': 'Skewness of the peak',
                                             'fwhm':'full width at half magnitude', 
-                                           'rise_time': 'time between peak and rising half-magnitude point', 
-                                           'decay_time': 'time between peak and decaying half-magnitude point', 
-                                           'symmetry': 'rise time / FWHM', 
-                                           'sharpness': 'peak sharpness (voltage / seconds)', 
-                                           'sharpness_rise': 'sharpness (voltage / seconds)', 
-                                           'sharpness_decay': 'sharpness of the decay (voltage / seconds)'},
+                                            'relative_amplitude': 'relative amplitude of the peak',
+                                            'rise_time': 'time between peak and rising half-magnitude point', 
+                                            'decay_time': 'time between peak and decaying half-magnitude point', 
+                                            'symmetry': 'rise time / FWHM', 
+                                            'sharpness': 'peak sharpness (voltage / seconds)', 
+                                            'sharpness_rise': 'sharpness (voltage / seconds)',
+                                            'sharpness_decay': 'sharpness of the decay (voltage / seconds)'},
 
                             'gaussian_params':{'MN':'mean of the gaussian',
                                                'HT':'height of the gaussian',
@@ -662,7 +665,10 @@ class ERPparam():
                 for key in OBJ_DESC['results']})
 
 
-    def get_filtered_results(self, time_range, select_highest=True, threshold=None, thresh_param='amplitude', attribute='shape_params', extract_param=False, dict_format = False):
+    def get_filtered_results(self, time_range, select_highest=True, 
+                             threshold=None, thresh_param='amplitude', 
+                             attribute='shape_params', extract_param=False, 
+                             dict_format = False):
         """Extract peaks from a band of interest from a ERPparam object.
 
         Parameters
@@ -671,34 +677,44 @@ class ERPparam():
             Time range of interest for isolating fit ERPs
             Defined as: (lower_time, upper_time).
         select_highest : bool, optional, default: True
-            Whether to return single peak (if True) or all peaks within the range found (if False).
-            If True, returns the highest amplitude peak within the search range.
+            Whether to return single peak (if True) or all peaks within the 
+            range found (if False). If True, returns the highest amplitude peak 
+            within the search range.
         threshold : float, optional
             A minimum threshold value to apply.
         thresh_param : {'amplitude', 'width', any other valid shape or gaussian parameter label}
             Which parameter to threshold on.
         attribute : {'shape_params', 'gaussian_params'}
             Which attribute of peak data to extract data from.
-        extract_param : False or {'MN', 'HT', 'SD', 'SK'} for gaussian_params, or {'latency', 'amplitude', 'width', 'skew', 'fwhm', 
-                        'rise_time', 'decay_time', 'symmetry','sharpness', 'sharpness_rise', 'sharpness_decay'} 
-                        for shape_params, optional, Default False
+        extract_param : False or {'MN', 'HT', 'SD', 'SK'} for gaussian_params, 
+            or {'latency', 'amplitude', 'width', 'skew', 'relative_amplitude', 
+            'fwhm', 'rise_time', 'decay_time', 'symmetry','sharpness', 
+            'sharpness_rise', 'sharpness_decay'} for shape_params, optional, 
+            Default False
             Which attribute of peak data to return.
         dict_format : bool, Default False
-            Whether or not to format results as a dictionary with keys corresponding to 
-            the parameter label and values corresponding to the parameter.
+            Whether or not to format results as a dictionary with keys 
+            corresponding to the parameter label and values corresponding to the 
+            parameter.
         
 
         Returns
         -------
         1d or 2d array, dict, or None
             Peak data. 
-            Each row is a peak, as [MN, HT, SD, SK] if attribute == "gaussian_params" and extract_param is False,
-            and ['latency', 'amplitude', 'width', 'skew', 'fwhm',  rise_time, decay_time, symmetry,sharpness, sharpness_rise, sharpness_decay] if attribute == "shape_params" and extract_param is False. 
+            Each row is a peak, as [MN, HT, SD, SK] if attribute == 
+            "gaussian_params" and extract_param is False,
+            and ['latency', 'amplitude', 'width', 'skew', 'relative_amplitude', 
+            'fwhm',  rise_time, decay_time, symmetry,sharpness, sharpness_rise, 
+            sharpness_decay] if attribute == "shape_params" and extract_param is 
+            False. 
             
-            Return parameters in a dictionary as {parameter label : peak data (as 1d or 2d array)} if dict_format is True.
+            Return parameters in a dictionary as {parameter label : peak data 
+            (as 1d or 2d array)} if dict_format is True.
             
-            Returns None if the ERPparam model doesn't have valid parameters, or if there are 
-            not peaks in the requested time range or matching the given criteria. 
+            Returns None if the ERPparam model doesn't have valid parameters, or 
+            if there are not peaks in the requested time range or matching the 
+            given criteria. 
         """
         if self.has_model:
             params = get_window_peak_ep(self, time_range, 
@@ -1085,6 +1101,8 @@ class ERPparam():
             * amplitdue: amplitude of the peak (estimated from the raw signal)
             * width: width of the peak
             * skew: the skew
+            * relative_amplitude: relative amplitude of the peak, estimated as 
+                the peak amplitude divided by the SD of the baseline signal
             * fwhm: full width at half magnitude
             * rise_time: rise time i.e. time between peak and rising half-magnitude point
             * decay_time: decay time i.e. time between peak and decaying half-magnitude point
@@ -1104,15 +1122,13 @@ class ERPparam():
         peak_indices = correct_overlapping_peaks(self.signal, peak_indices)
 
         # initialize lists
-        shape_params = np.empty((len(gaussian_params), 7))
-        peak_params = np.empty((len(gaussian_params), 4))
+        shape_params = np.empty((len(gaussian_params), len(PEAK_INDS)))
 
         # loop through each gaussian and compute the shape parameters
         for ii, gaus in enumerate(gaussian_params):
             # if the peak indices could not be determined, set all shape params to NaN
             if np.isnan(peak_indices[ii]).any():
-                shape_params[ii] = [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
-                peak_indices[ii] = [np.nan, np.nan, np.nan]
+                shape_params[ii] = np.zeros(len(PEAK_INDS)) * np.nan
                 continue
             else:
                 # convert indices to integers
@@ -1122,11 +1138,17 @@ class ERPparam():
 
             # compute peak params
             if self.peak_mode == "skewed_gaussian":
-                peak_params[ii] = [self.time[peak_index], self.signal[peak_index],
-                                   gaus[2] * 2, gaus[3]]
+                shape_params[ii, :4] = [self.time[peak_index], 
+                                        self.signal[peak_index],
+                                        gaus[2] * 2, gaus[3]]
             elif self.peak_mode == "gaussian":
-                peak_params[ii] = [self.time[peak_index], self.signal[peak_index],
-                                   gaus[2] * 2, np.nan]
+                shape_params[ii, :4] = [self.time[peak_index], 
+                                        self.signal[peak_index],
+                                        gaus[2] * 2, np.nan]
+
+
+            # compute relative amplitude
+            shape_params[ii, 4] = self.signal[peak_index] / np.std(self.baseline_signal)
 
             # compute fwhm, rise-, and decay-time
             fwhm = self.time[end_index] - self.time[start_index]
@@ -1144,15 +1166,14 @@ class ERPparam():
                 sharpness = np.mean([sharpness_rise, sharpness_decay])
 
             except ZeroDivisionError:
-                # if the rise or decay time is zero, set all shape params to NaN
-                shape_params[ii] = [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
+                # if the rise or decay time is zero, keep shape params as NaN
                 continue
 
             # collect results
-            shape_params[ii] = [fwhm, rise_time, decay_time, rise_decay_symmetry,
-                             sharpness, sharpness_rise, sharpness_decay]
+            shape_params[ii, 5:] = [fwhm, rise_time, decay_time, 
+                                    rise_decay_symmetry, sharpness, 
+                                    sharpness_rise, sharpness_decay]
 
-        shape_params = np.hstack([peak_params, shape_params])
         return shape_params, peak_indices
 
 

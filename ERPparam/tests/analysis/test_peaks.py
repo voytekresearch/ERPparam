@@ -215,7 +215,7 @@ def test_threshold_peaks():
 def test_infer_desired_params():
 
     gaus = np.asarray([0.25, 1.0, 0.1, 0])
-    shape = np.asarray([0.25, 1.0, 0.1, 0, 0.25, 1.0, 0.1, 0,0.25, 1.0, 0.1])
+    shape = np.asarray([0.25, 1.0, 0.1, 0, 10, 0.25, 1.0, 0.1, 0,0.25, 1.0, 0.1])
     non = np.asarray([0.25, 1.0, 0.1, 0, 0.25, 1.0])
 
     # check that the correct gaussian param was correctly detected

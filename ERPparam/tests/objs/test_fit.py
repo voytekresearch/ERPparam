@@ -11,9 +11,9 @@ from pytest import raises
 import matplotlib.pyplot as plt
 
 from ERPparam import ERPparam
-from ERPparam.core.items import OBJ_DESC
+from ERPparam.core.items import OBJ_DESC, PEAK_INDS
 from ERPparam.core.errors import FitError
-from ERPparam.core.utils import group_three, group_four
+from ERPparam.core.utils import group_three
 from ERPparam.core.modutils import safe_import
 from ERPparam.core.errors import DataError, NoDataError, InconsistentDataError
 from ERPparam.sim import gen_time_vector, simulate_erp
@@ -443,7 +443,7 @@ def test_ERPparam_to_df(tfm, tbands, skip_if_no_pandas):
 def test_ERPparam_get_filtered_results(tfm):
     
     res = tfm.get_filtered_results(tfm.time_range, select_highest=True, threshold=None, thresh_param='amplitude', attribute='shape_params', extract_param=False, dict_format = False)
-    assert res.shape == (1,11)
+    assert res.shape == (1, len(PEAK_INDS))
     res_dict = tfm.get_filtered_results(tfm.time_range, select_highest=True, threshold=None, thresh_param='amplitude', attribute='shape_params', extract_param=False, dict_format = True)
     assert type(res_dict) == dict
     assert np.isclose(res_dict['latency'], 0.097)

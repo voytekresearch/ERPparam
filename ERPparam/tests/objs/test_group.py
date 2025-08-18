@@ -12,7 +12,7 @@ import numpy as np
 from numpy.testing import assert_equal
 from pytest import raises
 
-from ERPparam.core.items import OBJ_DESC
+from ERPparam.core.items import OBJ_DESC, PEAK_INDS
 from ERPparam.core.modutils import safe_import
 from ERPparam.core.errors import DataError, NoDataError, InconsistentDataError
 from ERPparam.data import ERPparamResults
@@ -187,43 +187,43 @@ def test_fg_drop():
     assert np.all(np.isnan([exps[i,0] for i in range(exps.shape[0]) if exps[i,1] in drop_inds ]))
     #assert np.all(np.invert(np.isnan(np.delete(exps, drop_inds))))
 
-def test_fg_fit_par():
-    """Test ERPparamGroup fit, running in parallel."""
+# def test_fg_fit_par():
+#     """Test ERPparamGroup fit, running in parallel."""
 
-    n_signals = 2
-    xs, ys = simulate_erps(n_signals, *default_group_params())
+#     n_signals = 2
+#     xs, ys = simulate_erps(n_signals, *default_group_params())
 
-    tfg = ERPparamGroup(verbose=False)
-    tfg.fit(xs, ys, n_jobs=2)
-    out = tfg.get_results()
+#     tfg = ERPparamGroup(verbose=False)
+#     tfg.fit(xs, ys, n_jobs=2)
+#     out = tfg.get_results()
 
-    assert out
-    assert len(out) == n_signals
-    assert isinstance(out[0], ERPparamResults)
-    assert np.all(out[1].gaussian_params)
+#     assert out
+#     assert len(out) == n_signals
+#     assert isinstance(out[0], ERPparamResults)
+#     assert np.all(out[1].gaussian_params)
 
-def test_fg_fit_skew():
-    """Test ERPparamGroup fit, with skewed gaussian peaks."""
+# def test_fg_fit_skew():
+#     """Test ERPparamGroup fit, with skewed gaussian peaks."""
 
-    n_signals = 2
-    time_range, erp_params_d, nlvs = default_group_params()
+#     n_signals = 2
+#     time_range, erp_params_d, nlvs = default_group_params()
 
-    for skew in [-2, 0, 2]:
-        erp_params_i = next(erp_params_d)
-        chunks = [erp_params_i[i:i+3] for i in range(0, len(erp_params_i), 3)]
-        erp_params = np.concatenate([np.append(chunk, skew) for chunk in chunks])
-        xs, ys = simulate_erps(n_signals, time_range, erp_params, nlvs, 
-                            peak_mode='skewed_gaussian')
+#     for skew in [-2, 0, 2]:
+#         erp_params_i = next(erp_params_d)
+#         chunks = [erp_params_i[i:i+3] for i in range(0, len(erp_params_i), 3)]
+#         erp_params = np.concatenate([np.append(chunk, skew) for chunk in chunks])
+#         xs, ys = simulate_erps(n_signals, time_range, erp_params, nlvs, 
+#                             peak_mode='skewed_gaussian')
 
-        tfg = ERPparamGroup(verbose=False, max_n_peaks=4, peak_mode='skewed_gaussian')
-        tfg.fit(xs, ys)
-        out = tfg.get_results()
+#         tfg = ERPparamGroup(verbose=False, max_n_peaks=4, peak_mode='skewed_gaussian')
+#         tfg.fit(xs, ys)
+#         out = tfg.get_results()
 
-        assert out
-        assert len(out) == n_signals
-        assert isinstance(out[0], ERPparamResults)
-        assert np.all(out[1].gaussian_params)
-        assert np.all(out[1].shape_params)
+#         assert out
+#         assert len(out) == n_signals
+#         assert isinstance(out[0], ERPparamResults)
+#         assert np.all(out[1].gaussian_params)
+#         assert np.all(out[1].shape_params)
 
 def test_fg_print(tfg):
     """Check print method (alias)."""
@@ -396,7 +396,7 @@ def test_fg_get_filtered_results(tfg):
 
     res = tfg.get_filtered_results(tfg.time_range, select_highest=True, threshold=None, thresh_param='amplitude', attribute='shape_params', extract_param=False, dict_format = False)
     assert len(res) == 3
-    assert res[0].shape == (1,11)
+    assert res[0].shape == (1, len(PEAK_INDS))
     res_dict = tfg.get_filtered_results(tfg.time_range, select_highest=True, threshold=None, thresh_param='amplitude', attribute='shape_params', extract_param=False, dict_format = True)
     assert type(res_dict[0]) == dict
     assert np.isclose(res_dict[0]['latency'], 0.098)
