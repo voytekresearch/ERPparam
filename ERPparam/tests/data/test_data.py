@@ -23,7 +23,7 @@ def test_ERPparam_settings():
 
 def test_ERPparam_meta_data():
 
-    meta_data = ERPparamMetaData([1, 50], 0.5) #['time_range', 'fs']
+    meta_data = ERPparamMetaData([1, 50], 0.5, (-0.5,0), 1) #['time_range', 'fs', 'baseline','time_res']
     assert meta_data
 
     for field in OBJ_DESC['meta_data']:

@@ -88,7 +88,8 @@ def test_fg_fit_nk():
     """Test ERPparamGroup fit, no noise. Intialize empty Group obj, then feed data into fit func. """
 
     n_signals = 2
-    xs, ys = simulate_erps(n_signals, *default_group_params())
+    time_range, erp_params, _ = default_group_params()
+    xs, ys = simulate_erps(n_signals,time_range, erp_params, nlvs=0)
 
     tfg = ERPparamGroup(verbose=False, max_n_peaks=4)
     tfg.fit(xs, ys)
@@ -141,13 +142,13 @@ def test_fg_fail():
     # Test that get_params works with failed model fits
     outs1 = ntfg.get_params('gaussian_params')
     outs2 = ntfg.get_params('shape_params', 'sharpness')
-    outs3 = ntfg.get_params('shape_params', 'CT')
+    outs3 = ntfg.get_params('shape_params', 'latency')
     outs4 = ntfg.get_params('shape_params', 0)
     outs5 = ntfg.get_params('gaussian_params', 2)
 
     # Test shortcut labels
     outs6 = ntfg.get_params('gaussian')
-    outs6 = ntfg.get_params('shape', 'CT')
+    outs6 = ntfg.get_params('shape', 'latency')
 
     # Test the property attributes related to null model fits
     #   This checks that they do the right thing when there are null fits (failed fits)
@@ -254,7 +255,7 @@ def test_get_params(tfg):
                 assert np.any(tfg.get_params(dname, dtype))
 
         if dname == 'shape_params' or dname == 'shape':
-            for dtype in ['CT', 'PW', 'BW','FWHM', 'rise_time', 'decay_time', 'symmetry',
+            for dtype in ['latency', 'amplitude', 'width','fwhm', 'rise_time', 'decay_time', 'symmetry',
             'sharpness', 'sharpness_rise', 'sharpness_decay']:
                 assert np.any(tfg.get_params(dname, dtype))
 
@@ -390,3 +391,15 @@ def test_fg_to_df(tfg, tbands, skip_if_no_pandas):
     assert isinstance(df1, pd.DataFrame)
     df2 = tfg.to_df(tbands)
     assert isinstance(df2, pd.DataFrame)
+
+def test_fg_get_filtered_results(tfg):
+
+    res = tfg.get_filtered_results(tfg.time_range, select_highest=True, threshold=None, thresh_param='amplitude', attribute='shape_params', extract_param=False, dict_format = False)
+    assert len(res) == 3
+    assert res[0].shape == (1,11)
+    res_dict = tfg.get_filtered_results(tfg.time_range, select_highest=True, threshold=None, thresh_param='amplitude', attribute='shape_params', extract_param=False, dict_format = True)
+    assert type(res_dict[0]) == dict
+    assert np.isclose(res_dict[0]['latency'], 0.098)
+    res_high_threshold = tfg.get_filtered_results(tfg.time_range, select_highest=True, threshold=100, thresh_param='amplitude', attribute='shape_params', extract_param=False, dict_format = False)
+    assert len(res_high_threshold) == 3
+    assert (res_high_threshold[0] is None) and (res_high_threshold[1] is None) and (res_high_threshold[2] is None)

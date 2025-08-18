@@ -25,10 +25,17 @@ def get_description():
     """
 
     attributes = {'results' : ['gaussian_params_', 'shape_params_', 'peak_indices_', 'r_squared_', 'error_', 'adj_r_squared_'],
-                  'settings' : ['peak_width_limits', 'max_n_peaks', 'min_peak_height', 'peak_threshold', 'peak_mode', 'gauss_overlap_thresh', 'maxfev','amplitude_fraction'],
-                  'data' : ['signal', 'time'],
-                  'meta_data' : ['time_range', 'fs'],
-                  'arrays' : ['time', 'signal', 'gaussian_params_', 'shape_params_'],
+                  'settings' : ['peak_width_limits', 'max_n_peaks', 'min_peak_height', 
+                                'peak_threshold', 'peak_mode', 'gauss_overlap_thresh', 
+                                'maxfev','amplitude_fraction'], 
+                  'hidden_settings' : ['_bw_std_edge', '_cf_bound', 
+                                       '_error_metric', '_max_n_iters', 
+                                       '_debug', '_check_times', '_check_data'],
+                  'data' : ['signal', 'time', 'baseline_signal', 'uncropped_time', 'uncropped_signal'],
+                  'meta_data' : ['time_range', 'fs', 'baseline', 'time_res'],
+                  'arrays' : ['time', 'signal', 'gaussian_params_', 
+                              'shape_params_', 'baseline_signal', 
+                              'uncropped_time', 'uncropped_signal'],
                   'model_components' : ['_peak_fit'],
                   'descriptors' : ['has_data', 'has_model', 'n_peaks_']
                   }
@@ -66,11 +73,11 @@ def get_shape_indices():
     """
 
     indices = {
-        'CT' : 0,
-        'PW' : 1,
-        'BW' : 2,
-        'SK' : 3,
-        'FWHM' : 4,
+        'latency' : 0,
+        'amplitude' : 1,
+        'width' : 2,
+        'skew' : 3,
+        'fwhm' : 4,
         'rise_time' : 5,
         'decay_time' : 6,
         'symmetry' : 7,

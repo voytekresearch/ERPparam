@@ -381,10 +381,10 @@ def gen_results_fg_str(fg, concise=False):
     r2s = fg.get_params('r_squared')
     adjr2s = fg.get_params('adj_r_squared')
     errors = fg.get_params('error')
-    bws = fg.get_params('shape_params', 'BW')
-    pws = fg.get_params('shape_params', 'PW')
-    symmetry = fg.get_params('shape_params', 'symmetry')
-    sharpness = fg.get_params('shape_params', 'sharpness')
+    bws = fg.get_params('shape_params', 'width')[:,0]
+    pws = fg.get_params('shape_params', 'amplitude')[:,0]
+    symmetry = fg.get_params('shape_params', 'symmetry')[:,0]
+    sharpness = fg.get_params('shape_params', 'sharpness')[:,0]
 
     # Check if there are any power spectra that failed to fit
     n_failed = fg.n_null_#sum(np.isnan(bws))
@@ -398,14 +398,14 @@ def gen_results_fg_str(fg, concise=False):
         '',
 
         # Group information
-        'Number of Events in the Group: {}'.format(len(fg.group_results)),
+        'Number of events in the group: {}'.format(len(fg.group_results)),
         *[el for el in ['{} Events failed to fit'.format(n_failed)] if n_failed],
         '',
 
         # Frequency range and resolution
-        'The model was run on the time range {} - {} '.format( fg.time_range[0], fg.time_range[1]),
-        'The baseline variance was calculated on {} - {} '.format( fg.baseline[0], fg.baseline[1]),
-        'Time Resolution is {:1.2f}'.format(fg.time_res),
+        'The model was run on the time range {} \u2013 {} s'.format( np.round(fg.time_range[0], decimals=3), np.round(fg.time_range[1], decimals=3)),
+        'The baseline variance was calculated on {} \u2013 {} s'.format( np.round(fg.baseline[0], decimals=3), np.round(fg.baseline[1], decimals=3)),
+        'Time resolution is {0} s'.format('%.2E' % fg.time_res),
         '',
 
         # Aperiodic parameters - knee fit status, and quick exponent description
@@ -419,7 +419,7 @@ def gen_results_fg_str(fg, concise=False):
         .format(np.nanmin(bws), np.nanmax(bws), np.nanmean(bws)),
         '  Symmetry - Min: {:6.3f}, Max: {:6.3f}, Mean: {:5.3f}'
         .format(np.nanmin(symmetry), np.nanmax(symmetry), np.nanmean(symmetry)),
-        ' Sharpness - Min: {:6.3f}, Max: {:6.3f}, Mean: {:5.3f}'
+        '  Sharpness - Min: {:6.3f}, Max: {:6.3f}, Mean: {:5.3f}'
         .format(np.nanmin(sharpness), np.nanmax(sharpness), np.nanmean(sharpness)),
         '',
 
