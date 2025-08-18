@@ -323,7 +323,7 @@ def test_get_params(tfm):
                 assert np.any(tfm.get_params(dname, dtype))
 
         if dname == 'shape_params' or dname == 'shape':
-            for dtype in ['CT', 'PW', 'BW', 'FWHM', 'rise_time', 'decay_time', 'symmetry',
+            for dtype in ['latency', 'amplitude', 'width', 'fwhm', 'rise_time', 'decay_time', 'symmetry',
             'sharpness', 'sharpness_rise', 'sharpness_decay']:
                 assert np.any(tfm.get_params(dname, dtype))
 
@@ -439,3 +439,11 @@ def test_ERPparam_to_df(tfm, tbands, skip_if_no_pandas):
     assert isinstance(df1, pd.Series)
     df2 = tfm.to_df(tbands)
     assert isinstance(df2, pd.Series)
+
+def test_ERPparam_get_filtered_results(tfm):
+    
+    res = tfm.get_filtered_results(tfm.time_range, select_highest=True, threshold=None, thresh_param='amplitude', attribute='shape_params', extract_param=False, dict_format = False)
+    assert res.shape == (1,11)
+    res_dict = tfm.get_filtered_results(tfm.time_range, select_highest=True, threshold=None, thresh_param='amplitude', attribute='shape_params', extract_param=False, dict_format = True)
+    assert type(res_dict) == dict
+    assert np.isclose(res_dict['latency'], 0.097)
