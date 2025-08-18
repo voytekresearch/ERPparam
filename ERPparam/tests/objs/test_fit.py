@@ -274,7 +274,7 @@ def test_add_meta_data():
     tfm = get_tfm()
 
     # Test adding meta data
-    ERPparam_meta_data = ERPparamMetaData([3, 40], 0.5)
+    ERPparam_meta_data = ERPparamMetaData([3, 40], 0.5, (-0.5,0), 1)
     tfm.add_meta_data(ERPparam_meta_data)
     for meta_dat in OBJ_DESC['meta_data']:
         assert getattr(tfm, meta_dat) == getattr(ERPparam_meta_data, meta_dat)
