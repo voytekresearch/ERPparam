@@ -1073,6 +1073,27 @@ class ERPparam():
         return start_index, peak_index, end_index
 
 
+    def _refine_peak_index(self, peak_indices):
+        """
+        Find signal extrema between corrected half-magnitude points
+        """
+        refined_indices = []
+        for start, peak, end in peak_indices:
+            if np.isnan(start) or np.isnan(peak) or np.isnan(end):
+                refined_indices.append([np.nan, np.nan, np.nan])
+                continue
+
+            # Find local maxima/minima between the half-magnitude points
+            local_signal = self.signal[int(start):int(end)]
+            local_max = np.argmax(np.abs(local_signal))
+
+            # Refine the peak index
+            refined_peak = start + local_max
+            refined_indices.append([start, refined_peak, end])
+
+        return np.array(refined_indices)
+    
+
     def _compute_shape_params(self):
         """
         Compute the ERP shape parameters.
@@ -1102,6 +1123,7 @@ class ERPparam():
         for ii, gaus in enumerate(gaussian_params):
             peak_indices[ii] = self._get_peak_indices(gaus)
         peak_indices = correct_overlapping_peaks(self.signal, peak_indices)
+        peak_indices = self._refine_peak_index(peak_indices)
 
         # initialize lists
         shape_params = np.empty((len(gaussian_params), 7))
