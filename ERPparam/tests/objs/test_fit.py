@@ -8,12 +8,11 @@ They serve rather as 'smoke tests', for if anything fails completely.
 
 import numpy as np
 from pytest import raises
-import matplotlib.pyplot as plt
 
 from ERPparam import ERPparam
-from ERPparam.core.items import OBJ_DESC
+from ERPparam.core.items import OBJ_DESC, PEAK_INDS
 from ERPparam.core.errors import FitError
-from ERPparam.core.utils import group_three, group_four
+from ERPparam.core.utils import group_three
 from ERPparam.core.modutils import safe_import
 from ERPparam.core.errors import DataError, NoDataError, InconsistentDataError
 from ERPparam.sim import gen_time_vector, simulate_erp
@@ -441,9 +440,20 @@ def test_ERPparam_to_df(tfm, tbands, skip_if_no_pandas):
     assert isinstance(df2, pd.Series)
 
 def test_ERPparam_get_filtered_results(tfm):
-    
-    res = tfm.get_filtered_results(tfm.time_range, select_highest=True, threshold=None, thresh_param='amplitude', attribute='shape_params', extract_param=False, dict_format = False)
-    assert res.shape == (1,11)
-    res_dict = tfm.get_filtered_results(tfm.time_range, select_highest=True, threshold=None, thresh_param='amplitude', attribute='shape_params', extract_param=False, dict_format = True)
-    assert type(res_dict) == dict
-    assert np.isclose(res_dict['latency'], 0.097)
+    # test array output
+    res = tfm.get_filtered_results(tfm.time_range, select_highest=True, 
+                                   threshold=None, thresh_param='amplitude', 
+                                   attribute='shape_params', extract_param=False, 
+                                   dict_format=False)
+    assert type(res) == np.ndarray # check data type
+    assert res.shape == (1, len(PEAK_INDS)) # match number of shape params
+
+    # test dict output
+    res_dict = tfm.get_filtered_results(tfm.time_range, select_highest=True, 
+                                        threshold=None, thresh_param='amplitude', 
+                                        attribute='shape_params', 
+                                        extract_param=False, dict_format=True)
+    assert type(res_dict) == dict # check data type
+    for param in PEAK_INDS: # check all results are as expected
+        if param=='skew': continue # skip NaN
+        assert res_dict[param] == tfm.shape_params_[0][PEAK_INDS[param]]

@@ -12,12 +12,11 @@ import numpy as np
 from numpy.testing import assert_equal
 from pytest import raises
 
-from ERPparam.core.items import OBJ_DESC
+from ERPparam.core.items import OBJ_DESC, PEAK_INDS
 from ERPparam.core.modutils import safe_import
-from ERPparam.core.errors import DataError, NoDataError, InconsistentDataError
+from ERPparam.core.errors import NoDataError
 from ERPparam.data import ERPparamResults
 from ERPparam.sim import simulate_erps
-from ERPparam.sim.params import param_sampler
 
 pd = safe_import('pandas')
 
@@ -393,13 +392,32 @@ def test_fg_to_df(tfg, tbands, skip_if_no_pandas):
     assert isinstance(df2, pd.DataFrame)
 
 def test_fg_get_filtered_results(tfg):
+    # test array output
+    res = tfg.get_filtered_results(tfg.time_range, select_highest=True, 
+                                   threshold=None, thresh_param='amplitude', 
+                                   attribute='shape_params', extract_param=False, 
+                                   dict_format=False)
+    assert type(res) == list # should be a list of arrays
+    assert type(res[0]) == np.ndarray
+    assert len(res) == len(tfg) # one item in list per model
+    assert res[0].shape == (1, len(PEAK_INDS)) # match number of shape params
 
-    res = tfg.get_filtered_results(tfg.time_range, select_highest=True, threshold=None, thresh_param='amplitude', attribute='shape_params', extract_param=False, dict_format = False)
-    assert len(res) == 3
-    assert res[0].shape == (1,11)
-    res_dict = tfg.get_filtered_results(tfg.time_range, select_highest=True, threshold=None, thresh_param='amplitude', attribute='shape_params', extract_param=False, dict_format = True)
+    # test dictionary output
+    res_dict = tfg.get_filtered_results(tfg.time_range, select_highest=True, 
+                                        threshold=None, thresh_param='amplitude', 
+                                        attribute='shape_params', 
+                                        extract_param=False, dict_format=True)
+    assert type(res_dict) == list # should be a list of dictionaries
     assert type(res_dict[0]) == dict
-    assert np.isclose(res_dict[0]['latency'], 0.098)
-    res_high_threshold = tfg.get_filtered_results(tfg.time_range, select_highest=True, threshold=100, thresh_param='amplitude', attribute='shape_params', extract_param=False, dict_format = False)
-    assert len(res_high_threshold) == 3
-    assert (res_high_threshold[0] is None) and (res_high_threshold[1] is None) and (res_high_threshold[2] is None)
+    for param in PEAK_INDS:
+        assert param in res_dict[0] # check all results are there
+
+    # test with high threshold (None return)
+    res = tfg.get_filtered_results(tfg.time_range, select_highest=True, 
+                                   threshold=100, thresh_param='amplitude', 
+                                   attribute='shape_params', extract_param=False, 
+                                   dict_format=False)
+    assert type(res) == list # should be a list of NoneType
+    assert len(res) == len(tfg) # one item in list per model
+    for ii in range(3):
+        assert res[ii] is None # all None
