@@ -454,6 +454,7 @@ def test_ERPparam_get_filtered_results(tfm):
                                         attribute='shape_params', 
                                         extract_param=False, dict_format=True)
     assert type(res_dict) == dict # check data type
+    highest = np.argmax(np.abs(tfm.shape_params_[:, 1]))
     for param in PEAK_INDS: # check all results are as expected
         if param=='skew': continue # skip NaN
-        assert res_dict[param] == tfm.shape_params_[0][PEAK_INDS[param]]
+        assert res_dict[param] == tfm.shape_params_[highest][PEAK_INDS[param]]
