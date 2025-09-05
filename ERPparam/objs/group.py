@@ -23,6 +23,7 @@ from ERPparam.core.io import save_fg, load_jsonlines
 from ERPparam.core.modutils import copy_doc_func_to_method, safe_import
 from ERPparam.data.conversions import group_to_dataframe
 from ERPparam.data import ERPparamResults
+from ERPparam.analysis.peaks import get_window_peak_eg
 
 ###################################################################################################
 ###################################################################################################
@@ -54,8 +55,12 @@ class ERPparamGroup(ERPparam):
         Power values are stored internally in log10 scale.
     time_range : list of [float, float]
         Frequency range of the power spectra, as [lowest_freq, highest_freq].
-    freq_res : float
-        Frequency resolution of the power spectra.
+    uncropped_time : 1d array
+        The uncropped version of the time vector, before trimming based on
+        the time_range attribute.
+    uncropped_signals : 1d array
+        The uncropped version of the signal, before trimming based on
+        the time_range attribute.
     group_results : list of ERPparamResults
         Results of ERPparam model fit for each power spectrum.
     has_data : bool
@@ -71,8 +76,6 @@ class ERPparamGroup(ERPparam):
 
     Notes
     -----
-    - Commonly used abbreviations used in this module include:
-      CT: center time, PW: power, BW: Bandwidth, AP: aperiodic
     - Input power spectra must be provided in linear scale.
       Internally they are stored in log10 scale, as this is what the model operates upon.
     - Input power spectra should be smooth, as overly noisy power spectra may lead to bad fits.
@@ -80,12 +83,12 @@ class ERPparamGroup(ERPparam):
       longer time segments for power spectrum calculation to get smoother power spectra,
       as this will give better model fits.
     - The gaussian params are those that define the gaussian of the fit, where as the peak
-      params are a modified version, in which the CT of the peak is the mean of the gaussian,
-      the PW of the peak is the height of the gaussian over and above the aperiodic component,
-      and the BW of the peak, is 2*std of the gaussian (as 'two sided' bandwidth).
+      params are a modified version, in which the MN of the peak is the mean of the gaussian,
+      the HT of the peak is the height of the gaussian,
+      and the SD of the peak, is 2*std of the gaussian (as 'two sided' bandwidth).
     - The ERPparamGroup object inherits from the ERPparam object. As such it also has data
       attributes (`signal`), and parameter attributes
-      ( `shape_params_`, `gaussian_params_`, `r_squared_`, `error_`)
+      ( `shape_params_`, `gaussian_params_`, `peak_indices_`, `r_squared_`, `error_`, `adj_r_squared_`)
       which are defined in the context of individual model fits. These attributes are
       used during the fitting process, but in the group context do not store results
       post-fitting. Rather, all model fit results are collected and stored into the
@@ -196,9 +199,10 @@ class ERPparamGroup(ERPparam):
         """
         format_dict = { 'gaussian_params_' : np.ones([0,4])*np.nan,
                         'shape_params_' : np.ones([0,11])*np.nan,
+                        'peak_indices_' : np.full(3, np.nan),
                         'r_squared_': np.nan,
                         'error_' : np.nan,
-                        'peak_indices_' : np.full(3, np.nan)
+                        'adj_r_squared_' : np.nan
                     }
         empty_res = ERPparamResults(**{key.strip('_') : format_dict[key] \
             for key in OBJ_DESC['results']})
@@ -237,7 +241,7 @@ class ERPparamGroup(ERPparam):
             = self._prepare_data(time=time, signal=signals, time_range=time_range, baseline=baseline, signal_dim=2)
 
 
-    def report(self, time=None, signals=None, time_range=None, n_jobs=1, progress=None):
+    def report(self, time=None, signals=None, time_range=None, baseline=None, n_jobs=1, progress=None):
         """Fit a group of power spectra and display a report, with a plot and printed results.
 
         Parameters
@@ -260,7 +264,7 @@ class ERPparamGroup(ERPparam):
         """
 
         if time is not None and signals is not None:
-            self.fit(time, signals, time_range, n_jobs=n_jobs, progress=progress)
+            self.fit(time, signals, time_range, baseline=baseline, n_jobs=n_jobs, progress=progress)
         self.plot()
         self.print_results(False)
 
@@ -307,8 +311,8 @@ class ERPparamGroup(ERPparam):
         if n_jobs == 1:
             self._reset_group_results(len(self.signals))
             for ind, signal in \
-                _progress(enumerate(self.signals), progress, len(self)):
-                self._fit(time=None, signal=signal, time_range=self.time_range, baseline=self.baseline)
+                _progress(enumerate(self.uncropped_signals), progress, len(self)):
+                self._fit(time=self.uncropped_time, signal=signal, time_range=self.time_range, baseline=self.baseline)
                 self.group_results[ind] = self._get_results()
 
         # Run in parallel
@@ -317,7 +321,7 @@ class ERPparamGroup(ERPparam):
             n_jobs = cpu_count() if n_jobs == -1 else n_jobs
             with Pool(processes=n_jobs) as pool:
                 self.group_results = list(_progress(pool.imap(partial(_par_fit, fg=self),
-                                                              self.signals),
+                                                              self.uncropped_signals),
                                                     progress, len(self.signals)))
 
         # Clear the individual power spectrum and fit results of the current fit``
@@ -355,10 +359,10 @@ class ERPparamGroup(ERPparam):
 
         Parameters
         ----------
-        name : { 'gaussian_params','shape_params', 'error', 'r_squared'}
+        name : {'gaussian_params', 'shape_params', 'peak_indices', 'error', 'r_squared', 'adj_r_squared'}
             Name of the data field to extract across the group.
         col :   {'MN','HT','SD', 'SK'}, 
-                {'CT', 'PW', 'BW' 'SK', FWHM, rise_time, decay_time, symmetry, sharpness, sharpness_rise, 
+                {'latency', 'amplitude', 'width' 'skew', fwhm, rise_time, decay_time, symmetry, sharpness, sharpness_rise, 
                     sharpness_decay}, or
                 int, optional
                 Column name / index to extract from selected data, if requested.
@@ -433,6 +437,51 @@ class ERPparamGroup(ERPparam):
 
         return out
 
+    def get_filtered_results(self, time_range, select_highest=True, threshold=None, thresh_param='amplitude', attribute='shape_params', extract_param=False, dict_format = False):
+            """Extract peaks from a window of interest from a ERPparamGroup object.
+
+            Parameters
+            ----------
+            fg : ERPparamGroup
+                Object to extract peak data from.
+            time_range : tuple of (float, float)
+                Time range of interest.
+                Defined as: (lower_frequency_bound, upper_frequency_bound).
+            threshold : float, optional
+                A minimum threshold value to apply. 
+                If the peak doesn't meet the threshold, it is recorded as an array of NaNs
+            thresh_param : {'amplitude', 'width', 'HT', 'SD', or any other valid shape or gaussian parameter label}
+                Which parameter to threshold on. 'amplitude' is power and 'width' is bandwidth.
+            attribute : {'shape_params', 'gaussian_params'}
+                Which attribute of peak data to extract data from.
+            extract_param : False or {'MN', 'HT', 'SD','SK', 'latency', 'amplitude', 'width', 'skew', 
+                            'fwhm', 'rise_time', 'decay_time', 'symmetry','sharpness', 
+                            'sharpness_rise', 'sharpness_decay'}, optional, Default False
+                Which attribute of peak data to return.
+            dict_format : bool, Default False
+                Whether or not to format results as a dictionary with keys corresponding to 
+                the parameter label and values corresponding to the parameter.
+
+            Returns
+            -------
+            List of length N ERPs, or None
+                Peak data. Each entry is result of applying get_window_peak_fm() on a single ERP
+                Results can be formatted as [MN, HT, SD, SK] if attribute == "gaussian_params" and extract_param is False,
+                or [latency, amplitude, width, skew, fwhm, rise_time, decay_time, symmetry,sharpness, sharpness_rise, sharpness_decay] 
+                if attribute == "shape_params". The list entry for a peak will be None if the ERPparam model doesn't have 
+                valid parameters, or if there are not peaks in the requested time range or matching the given criteria. 
+
+                Returns None if the ERPparamGroup does not have any peaks fit.
+
+            """
+
+            params = get_window_peak_eg(self, time_range, 
+                                    select_highest=select_highest, threshold=threshold, 
+                                    thresh_param=thresh_param, 
+                                    attribute=attribute, extract_param=extract_param, 
+                                    dict_format = dict_format)
+        
+            return params
 
     @copy_doc_func_to_method(plot_fg)
     def plot(self, save_fig=False, file_name=None, file_path=None, **plot_kwargs):
@@ -676,7 +725,7 @@ class ERPparamGroup(ERPparam):
 def _par_fit(signal, fg):
     """Helper function for running in parallel."""
 
-    fg._fit(time=fg.time, signal=signal, time_range=fg.time_range, baseline=fg.baseline)
+    fg._fit(time=fg.uncropped_time, signal=signal, time_range=fg.time_range, baseline=fg.baseline)
 
     return fg._get_results()
 

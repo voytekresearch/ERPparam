@@ -6,7 +6,7 @@ from ERPparam import Bands
 from ERPparam.core.info import (get_shape_indices, 
                                 get_gauss_indices)
 from ERPparam.core.modutils import safe_import, check_dependency
-from ERPparam.analysis.periodic import get_band_peak_arr
+from ERPparam.analysis.peaks import get_window_peak_arr
 
 pd = safe_import('pandas')
 
@@ -55,16 +55,19 @@ def model_to_dict(fit_results, peak_org=None):
                 fr_dict[pe_label.lower() + '_' + str(ind)] = pe_param
 
     elif isinstance(peak_org, Bands):
-        for band, f_range in peak_org:
-            band_peak = get_band_peak_arr(peaks, f_range)
-            if band_peak[0] == np.nan:
-                band_peak = [np.nan] * peaks.shape[1]
-            for label, param in zip(indices, band_peak):
-                fr_dict[band + '_' + label.lower()] = param
+        for window, f_range in peak_org:
+            window_peak_shape = get_window_peak_arr(shape_params, f_range)
+            window_peak_gaus = get_window_peak_arr(gaussian_params, f_range)
+            window_peak = np.hstack([window_peak_shape, window_peak_gaus])
+            if window_peak[0] == np.nan:
+                window_peak = [np.nan] * peaks.shape[1]
+            for label, param in zip(indices, window_peak):
+                fr_dict[window + '_' + label.lower()] = param
 
     # goodness-of-fit metrics
     fr_dict['error'] = fit_results.error
     fr_dict['r_squared'] = fit_results.r_squared
+    fr_dict['adj_r_squared'] = fit_results.adj_r_squared
 
     return fr_dict
 

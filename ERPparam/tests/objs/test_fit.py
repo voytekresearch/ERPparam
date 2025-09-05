@@ -8,12 +8,11 @@ They serve rather as 'smoke tests', for if anything fails completely.
 
 import numpy as np
 from pytest import raises
-import matplotlib.pyplot as plt
 
 from ERPparam import ERPparam
-from ERPparam.core.items import OBJ_DESC
+from ERPparam.core.items import OBJ_DESC, PEAK_INDS
 from ERPparam.core.errors import FitError
-from ERPparam.core.utils import group_three, group_four
+from ERPparam.core.utils import group_three
 from ERPparam.core.modutils import safe_import
 from ERPparam.core.errors import DataError, NoDataError, InconsistentDataError
 from ERPparam.sim import gen_time_vector, simulate_erp
@@ -238,15 +237,13 @@ def test_add_data():
     # Test that prior data does not get cleared, when requesting not to clear
     tfm._reset_data_results(True, True, True)
     tfm.add_results(ERPparamResults(
-       r_squared=0.9973886245863048, error=0.01234299919871499, 
-       gaussian_params=np.asarray([[ 0.10157924,  1.8103013 ,  0.02937827],
-       [ 0.1980535 , -1.39908145,  0.04706476]]), 
-       shape_params=np.asarray([[0.064     , 0.04      , 0.024     , 0.625     , 0.97706828,
-        0.97134   , 0.98279656],
-       [0.103     , 0.041     , 0.062     , 0.39805825, 0.9560461 ,
-        0.96498029, 0.9471119 ]]), 
-        peak_indices=np.asarray([[562, 602, 626],
-       [657, 698, 760]])))
+        gaussian_params=np.asarray([[0.101,  1.810, 0.029],
+                                    [0.198, -1.399, 0.047]]), 
+        shape_params=np.asarray([[0.064, 0.04, 0.024, 0.625, 0.977, 0.971, 0.982],
+                                [0.103, 0.041, 0.062, 0.398, 0.956, 0.964, 0.947]]), 
+        peak_indices=np.asarray([[562, 602, 626], [657, 698, 760]]),
+        r_squared=0.97, error=0.01, adj_r_squared=0.95))
+
     tfm.add_data(time, signal, clear_results=False)
     assert tfm.has_data
     assert tfm.has_model
@@ -276,7 +273,7 @@ def test_add_meta_data():
     tfm = get_tfm()
 
     # Test adding meta data
-    ERPparam_meta_data = ERPparamMetaData([3, 40], 0.5)
+    ERPparam_meta_data = ERPparamMetaData([3, 40], 0.5, (-0.5,0), 1)
     tfm.add_meta_data(ERPparam_meta_data)
     for meta_dat in OBJ_DESC['meta_data']:
         assert getattr(tfm, meta_dat) == getattr(ERPparam_meta_data, meta_dat)
@@ -289,12 +286,12 @@ def test_add_results():
 
     # Test adding results
     ERPparam_results = ERPparamResults(
-        r_squared=0.99, error=0.01, 
-       gaussian_params=np.asarray([[ 0.10,  1.8 ,  0.02],
-                                    [ 0.19 , -1.39,  0.047]]), 
-       shape_params=np.asarray([[0.064 , 0.04 , 0.024, 0.625 , 0.97, 0.97   , 0.98],
-                                  [0.103 , 0.041 , 0.062 , 0.39, 0.951 , 0.964, 0.947 ]]), 
-        peak_indices=np.asarray([[562, 602, 626],  [657, 698, 760]]))
+        gaussian_params=np.asarray([[0.10, 1.8, 0.02], [0.19, -1.39, 0.047]]), 
+        shape_params=np.asarray([[0.064, 0.04, 0.024, 0.625, 0.97, 0.97, 0.98],
+                                  [0.103, 0.041, 0.062, 0.39, 0.951, 0.964, 0.947]]), 
+        peak_indices=np.asarray([[562, 602, 626],  [657, 698, 760]]),
+        r_squared=0.99, error=0.01, adj_r_squared=0.95)
+
     tfm.add_results(ERPparam_results)
     assert tfm.has_model
     for setting in OBJ_DESC['results']:
@@ -325,7 +322,7 @@ def test_get_params(tfm):
                 assert np.any(tfm.get_params(dname, dtype))
 
         if dname == 'shape_params' or dname == 'shape':
-            for dtype in ['CT', 'PW', 'BW', 'FWHM', 'rise_time', 'decay_time', 'symmetry',
+            for dtype in ['latency', 'amplitude', 'width', 'fwhm', 'rise_time', 'decay_time', 'symmetry',
             'sharpness', 'sharpness_rise', 'sharpness_decay']:
                 assert np.any(tfm.get_params(dname, dtype))
 
@@ -441,3 +438,22 @@ def test_ERPparam_to_df(tfm, tbands, skip_if_no_pandas):
     assert isinstance(df1, pd.Series)
     df2 = tfm.to_df(tbands)
     assert isinstance(df2, pd.Series)
+
+def test_ERPparam_get_filtered_results(tfm):
+    # test array output
+    res = tfm.get_filtered_results(tfm.time_range, select_highest=True, 
+                                   threshold=None, thresh_param='amplitude', 
+                                   attribute='shape_params', extract_param=False, 
+                                   dict_format=False)
+    assert type(res) == np.ndarray # check data type
+    assert res.shape == (1, len(PEAK_INDS)) # match number of shape params
+
+    # test dict output
+    res_dict = tfm.get_filtered_results(tfm.time_range, select_highest=True, 
+                                        threshold=None, thresh_param='amplitude', 
+                                        attribute='shape_params', 
+                                        extract_param=False, dict_format=True)
+    assert type(res_dict) == dict # check data type
+    for param in PEAK_INDS: # check all results are as expected
+        if param=='skew': continue # skip NaN
+        assert res_dict[param] == tfm.shape_params_[0][PEAK_INDS[param]]

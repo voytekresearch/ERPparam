@@ -12,12 +12,11 @@ import numpy as np
 from numpy.testing import assert_equal
 from pytest import raises
 
-from ERPparam.core.items import OBJ_DESC
+from ERPparam.core.items import OBJ_DESC, PEAK_INDS
 from ERPparam.core.modutils import safe_import
-from ERPparam.core.errors import DataError, NoDataError, InconsistentDataError
+from ERPparam.core.errors import NoDataError
 from ERPparam.data import ERPparamResults
 from ERPparam.sim import simulate_erps
-from ERPparam.sim.params import param_sampler
 
 pd = safe_import('pandas')
 
@@ -88,7 +87,8 @@ def test_fg_fit_nk():
     """Test ERPparamGroup fit, no noise. Intialize empty Group obj, then feed data into fit func. """
 
     n_signals = 2
-    xs, ys = simulate_erps(n_signals, *default_group_params())
+    time_range, erp_params, _ = default_group_params()
+    xs, ys = simulate_erps(n_signals,time_range, erp_params, nlvs=0)
 
     tfg = ERPparamGroup(verbose=False, max_n_peaks=4)
     tfg.fit(xs, ys)
@@ -141,13 +141,13 @@ def test_fg_fail():
     # Test that get_params works with failed model fits
     outs1 = ntfg.get_params('gaussian_params')
     outs2 = ntfg.get_params('shape_params', 'sharpness')
-    outs3 = ntfg.get_params('shape_params', 'CT')
+    outs3 = ntfg.get_params('shape_params', 'latency')
     outs4 = ntfg.get_params('shape_params', 0)
     outs5 = ntfg.get_params('gaussian_params', 2)
 
     # Test shortcut labels
     outs6 = ntfg.get_params('gaussian')
-    outs6 = ntfg.get_params('shape', 'CT')
+    outs6 = ntfg.get_params('shape', 'latency')
 
     # Test the property attributes related to null model fits
     #   This checks that they do the right thing when there are null fits (failed fits)
@@ -214,8 +214,8 @@ def test_fg_fit_skew():
         xs, ys = simulate_erps(n_signals, time_range, erp_params, nlvs, 
                             peak_mode='skewed_gaussian')
 
-        tfg = ERPparamGroup(verbose=False, max_n_peaks=4)
-        tfg.fit(xs, ys, n_jobs=2)
+        tfg = ERPparamGroup(verbose=False, max_n_peaks=4, peak_mode='skewed_gaussian')
+        tfg.fit(xs, ys)
         out = tfg.get_results()
 
         assert out
@@ -254,7 +254,7 @@ def test_get_params(tfg):
                 assert np.any(tfg.get_params(dname, dtype))
 
         if dname == 'shape_params' or dname == 'shape':
-            for dtype in ['CT', 'PW', 'BW','FWHM', 'rise_time', 'decay_time', 'symmetry',
+            for dtype in ['latency', 'amplitude', 'width','fwhm', 'rise_time', 'decay_time', 'symmetry',
             'sharpness', 'sharpness_rise', 'sharpness_decay']:
                 assert np.any(tfg.get_params(dname, dtype))
 
@@ -338,7 +338,7 @@ def test_fg_report(skip_if_no_mpl):
     assert tfm1
     # Check that regenerated model is created
     for result in OBJ_DESC['results']:
-        if (result == 'gaussian_params_') or (result == 'peak_params_'):
+        if (result == 'gaussian_params_') or (result == 'shape_params_'):
             assert np.all(getattr(tfm1, result)[:, :3])
         else:
             assert np.all(getattr(tfm1, result))
@@ -390,3 +390,34 @@ def test_fg_to_df(tfg, tbands, skip_if_no_pandas):
     assert isinstance(df1, pd.DataFrame)
     df2 = tfg.to_df(tbands)
     assert isinstance(df2, pd.DataFrame)
+
+def test_fg_get_filtered_results(tfg):
+    # test array output
+    res = tfg.get_filtered_results(tfg.time_range, select_highest=True, 
+                                   threshold=None, thresh_param='amplitude', 
+                                   attribute='shape_params', extract_param=False, 
+                                   dict_format=False)
+    assert type(res) == list # should be a list of arrays
+    assert type(res[0]) == np.ndarray
+    assert len(res) == len(tfg) # one item in list per model
+    assert res[0].shape == (1, len(PEAK_INDS)) # match number of shape params
+
+    # test dictionary output
+    res_dict = tfg.get_filtered_results(tfg.time_range, select_highest=True, 
+                                        threshold=None, thresh_param='amplitude', 
+                                        attribute='shape_params', 
+                                        extract_param=False, dict_format=True)
+    assert type(res_dict) == list # should be a list of dictionaries
+    assert type(res_dict[0]) == dict
+    for param in PEAK_INDS:
+        assert param in res_dict[0] # check all results are there
+
+    # test with high threshold (None return)
+    res = tfg.get_filtered_results(tfg.time_range, select_highest=True, 
+                                   threshold=100, thresh_param='amplitude', 
+                                   attribute='shape_params', extract_param=False, 
+                                   dict_format=False)
+    assert type(res) == list # should be a list of NoneType
+    assert len(res) == len(tfg) # one item in list per model
+    for ii in range(3):
+        assert res[ii] is None # all None
