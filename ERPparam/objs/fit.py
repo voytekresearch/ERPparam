@@ -1077,21 +1077,24 @@ class ERPparam():
         """
         Find signal extrema between corrected half-magnitude points
         """
-        refined_indices = []
-        for start, peak, end in peak_indices:
-            if np.isnan(start) or np.isnan(peak) or np.isnan(end):
-                refined_indices.append([np.nan, np.nan, np.nan])
-                continue
+        if np.size(peak_indices) == 0:
+            return peak_indices
+        else:
+            refined_indices = []
+            for start, peak, end in peak_indices:
+                if np.isnan(start) or np.isnan(peak) or np.isnan(end):
+                    refined_indices.append([np.nan, np.nan, np.nan])
+                    continue
 
-            # Find local maxima/minima between the half-magnitude points
-            local_signal = self.signal[int(start):int(end)]
-            local_max = np.argmax(np.abs(local_signal))
+                # Find local maxima/minima between the half-magnitude points
+                local_signal = self.signal[int(start):int(end)]
+                local_max = np.argmax(np.abs(local_signal))
 
-            # Refine the peak index
-            refined_peak = start + local_max
-            refined_indices.append([start, refined_peak, end])
+                # Refine the peak index
+                refined_peak = start + local_max
+                refined_indices.append([start, refined_peak, end])
 
-        return np.array(refined_indices)
+            return np.array(refined_indices)
     
 
     def _compute_shape_params(self):
