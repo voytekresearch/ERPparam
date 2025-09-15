@@ -30,7 +30,10 @@ def correct_overlapping_peaks(signal, time, peak_indices, gaussian_params):
             peak_indices[i_peak][0] = idx_trough[i_peak]
         if overlap_end[i_peak]:
             peak_indices[i_peak][2] = idx_trough[i_peak+1]
-            
+
+    if (peak_indices.ndim == 1) and (peak_indices.size == 0):
+        #reshape our array if it is empty
+        peak_indices = np.expand_dims(peak_indices, axis=1).reshape(0,4)
     return peak_indices, gaussian_params
 
 def _find_identical_peaks_and_remove(peak_indices, gaussian_params, signal, times):
