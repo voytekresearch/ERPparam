@@ -134,7 +134,7 @@ def test_find_identical_peaks_and_remove():# simulate ERP with overlapping peaks
     new_peak_idx, new_gauss = _find_identical_peaks_and_remove(peak_indices, gaussian_params, erp, time)
 
     # check that the last peak in the new gaussian params is the same as the 3rd peak of our original erp_params
-    assert np.all((new_gauss[:,:-1] == gaussian_params[1:3,:-1]), axis=0)
+    assert np.all(new_gauss[:,:-1].flatten() == gaussian_params[1:3,:-1].flatten(), axis=0)
     assert new_gauss.shape == (2,4)
     assert new_peak_idx.shape == (2,3)
 
@@ -151,6 +151,6 @@ def test_find_identical_peaks_and_remove():# simulate ERP with overlapping peaks
     new_peak_idx, new_gauss = _find_identical_peaks_and_remove(peak_indices, gaussian_params, erp, time)
 
     # check that the last peak in the new gaussian params is the same as the 3rd peak of our original erp_params
-    assert np.all((new_peak_idx == peak_indices))
+    assert np.all(new_peak_idx == peak_indices)
     assert new_gauss.shape == (4,4)
     assert new_peak_idx.shape == (4,3)
