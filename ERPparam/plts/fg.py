@@ -77,8 +77,8 @@ def plot_fg_pks(fg, ax=None, **plot_kwargs):
     """
 
     
-    plot_scatter_2(fg.get_params('shape_params', 'width'), 'Bandwidth',
-                   fg.get_params('shape_params', "amplitude"), 'Amplitude',
+    plot_scatter_2(fg.get_params('shape_params', 'width')[:,0], 'Bandwidth',
+                   fg.get_params('shape_params', "amplitude")[:,0], 'Amplitude',
                     'Peak Fits', ax=ax)
 
 
