@@ -460,7 +460,7 @@ class ERPparam():
             self.gaussian_params_ = self._fit_peaks(np.copy(self.signal))
 
             # compute rise-decay symmetry
-            self.shape_params_, self.peak_indices_ = \
+            self.gaussian_params_, self.shape_params_, self.peak_indices_ = \
                 self._compute_shape_params()
 
             # drop peaks based on edge proximity (if shape could not be fit)
@@ -1121,10 +1121,17 @@ class ERPparam():
         # get gaussian parameters
         gaussian_params = self.gaussian_params_
 
-        # get peak indices and correct overlapping peaks
+        # get peak indices
         peak_indices = np.empty((len(gaussian_params), 3))
         for ii, gaus in enumerate(gaussian_params):
             peak_indices[ii] = self._get_peak_indices(gaus)
+
+        # re-order peaks based on peak index, rather than Gaussian mean
+        peak_order = np.argsort(peak_indices[:, 1])
+        peak_indices = peak_indices[peak_order]
+        gaussian_params = gaussian_params[peak_order]
+
+        # correct overlapping peaks
         peak_indices = correct_overlapping_peaks(self.signal, peak_indices)
         peak_indices = self._refine_peak_index(peak_indices)
 
@@ -1178,7 +1185,8 @@ class ERPparam():
                              sharpness, sharpness_rise, sharpness_decay]
 
         shape_params = np.hstack([peak_params, shape_params])
-        return shape_params, peak_indices
+
+        return gaussian_params, shape_params, peak_indices
 
 
     def _drop_extra_peaks(self):
