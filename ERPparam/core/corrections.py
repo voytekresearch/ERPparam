@@ -8,15 +8,30 @@ Correction functions for ERPparam.
 
 # imports
 import numpy as np
+from ERPparam.core.funcs import gaussian_function, skewed_gaussian_function
 
-
-def correct_overlapping_peaks(signal, peak_indices):
+def correct_overlapping_peaks(signal, time, peak_indices, gaussian_params):
     """ 
     Correct the indices of overlapping peaks fit with ERPparam. If the
     start of a peak overlaps with the previous peak, the start of the peak is
     set to the trough between the peaks. If the end of a peak overlaps with the
     next peak, the end of the peak is set to the trough between the peaks.
+
+    Parameters
+    ----------
+    signal : 1d array
+        Signal containing the peaks.
+    time : 1d array
+        Time vector corresponding to the signal.
+    peak_indices : list of tuples
+        List of tuples, where each tuple contains the start, peak, and end
+        indices of a peak.
+    gaussian_params : 2d array
+        2d array where each row contains the parameters of a Gaussian peak.
     """
+
+    # find and remove duplicate peaks
+    peak_indices, gaussian_params = _find_identical_peaks_and_remove(signal, time, peak_indices, gaussian_params)
 
     # find overlapping peaks and the troughs between them
     overlap_start, overlap_end = _find_overlapping_peaks(peak_indices)
@@ -28,9 +43,93 @@ def correct_overlapping_peaks(signal, peak_indices):
             peak_indices[i_peak][0] = idx_trough[i_peak]
         if overlap_end[i_peak]:
             peak_indices[i_peak][2] = idx_trough[i_peak+1]
-            
-    return peak_indices
 
+    if (peak_indices.ndim == 1) and (peak_indices.size == 0):
+        #reshape our array if it is empty
+        peak_indices = np.expand_dims(peak_indices, axis=1).reshape(0,4)
+    return peak_indices, gaussian_params
+
+def _find_identical_peaks_and_remove(signal, time, peak_indices, gaussian_params):
+    """
+    Find and remove identical peaks from the peak_indices and gaussian_params
+    arrays. If two peaks have identical peak indices, the one with the lower
+    r-squared value is removed.
+
+    Parameters
+    ----------
+    signal : 1d array
+        Signal containing the peaks.
+    time : 1d array
+        Time vector corresponding to the signal.
+    peak_indices : list of tuples
+        List of tuples, where each tuple contains the start, peak, and end
+        indices of a peak.
+    gaussian_params : 2d array
+        2d array where each row contains the parameters of a Gaussian peak.
+
+    """
+
+    # get a reduced version of the peak_indices array, where only unique rows are shown
+    peak_indices_unique, counts = np.unique(peak_indices, axis=0, return_counts=True)
+    # detect which of these unique rows has more than one count, if any
+    duplicate_counts = np.where((counts>1))[0]
+    # if there are any duplicates, there could be multiple sets
+
+    if len(duplicate_counts) > 0:
+        discard = []
+        # so we have to loop through each set of duplicates
+        for dc in duplicate_counts:
+            # and find the array of peak_index values which was duplicated
+            duplicate_peak_indices_arr = peak_indices_unique[dc, :]
+            # and figure out which indices in the original peak_indices array that they correspond to (should be at least two)
+            duplicate_peak_indices_idx_bool = np.all((peak_indices==duplicate_peak_indices_arr) , axis=1)
+            duplicate_peak_idx_in_original_array = np.where(duplicate_peak_indices_idx_bool)[0]
+            # loop through each candidate peak and extract the gaussians, and get the r-squared
+            get_rsqs = []
+            for duplicate_gauss_idx in duplicate_peak_idx_in_original_array:
+                # get gaussian param of each idx, where this gaussian led to the same peak_index as some other
+                dup_gauss = gaussian_params[duplicate_gauss_idx, :]
+                # check if the last param (skew) is a nan, and get rid of it if so (and use correct gauss func)
+                if np.isnan( dup_gauss[-1] ): 
+                    # if the last element (skew param) is nan, then we want the gauss func to be the normal one and we drop the skew param
+                    gauss_fit = gaussian_function(time, *dup_gauss[:-1])
+                else:
+                    # otherwise we generate the skewed signal
+                    gauss_fit = skewed_gaussian_function(time, *dup_gauss)
+                # compute the r-sq of this signal
+                r_fit = _calc_r_squared(signal, gauss_fit)
+                get_rsqs.append(r_fit)
+            # get the index of the best fit gaussian, so that we know which one to keep and which to toss out
+            get_rsqs = np.asarray(get_rsqs)
+            worse_fits = np.where((get_rsqs != np.max(get_rsqs)))[0]
+            inds_to_toss = duplicate_peak_idx_in_original_array[worse_fits]
+            for i in inds_to_toss:
+                discard.append(i)
+        peak_indices = np.delete(peak_indices, np.asarray(discard), axis=0)  
+        gaussian_params = np.delete(gaussian_params, np.asarray(discard), axis=0)  
+                
+    return peak_indices, gaussian_params
+
+def _calc_r_squared(signal, gaussian_fit):
+    """
+    Calculate the r-squared goodness of fit of the model compared to the 
+    original data.
+
+    Parameters
+    ----------
+    signal : 1d array
+        Original signal.
+    gaussian_fit : 1d array
+        Fitted Gaussian signal.
+
+    Returns
+    -------
+        r_squared : float
+            R-squared value.
+    """
+
+    r_val = np.corrcoef(signal, gaussian_fit)
+    return (r_val[0][1] ** 2)
 
 def _find_overlapping_peaks(peak_indices):
     """
@@ -67,7 +166,6 @@ def _find_overlapping_peaks(peak_indices):
 
     return overlap_start, overlap_end
 
-
 def _find_troughs(signal, peak_indices, overlap_start, overlap_end):
     """
     Find the troughs between overlapping peaks in a signal.
@@ -79,6 +177,9 @@ def _find_troughs(signal, peak_indices, overlap_start, overlap_end):
     peak_indices : list of tuples
         List of tuples, where each tuple contains the start, peak, and end
         indices of a peak.
+    overlap_start : 1d array
+        Boolean array indicating if the start of a peak overlaps with the 
+        previous peak.
     overlap_end : 1d array
         Boolean array indicating which peaks have an ending index that overlaps
         with the following peak.

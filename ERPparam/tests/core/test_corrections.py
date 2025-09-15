@@ -5,7 +5,8 @@ import numpy as np
 from ERPparam import ERPparam
 from ERPparam.sim import simulate_erp
 from ERPparam.core.corrections import ( correct_overlapping_peaks, 
-                                       _find_overlapping_peaks, _find_troughs)
+                                       _find_overlapping_peaks, _find_troughs,
+                                       _find_identical_peaks_and_remove)
 
 ###################################################################################################
 ###################################################################################################
@@ -29,8 +30,10 @@ def test_correct_overlapping_peaks():
     # test with no peaks fit
     gaussian_params = np.ones([0,4])*np.nan
     peak_indices = np.empty((len(gaussian_params), 3))
-    peak_indices_corr = correct_overlapping_peaks(erp, peak_indices)
-    assert peak_indices_corr.shape == (0, 3)
+    pi_corr, gp_corr = correct_overlapping_peaks(erp, time, peak_indices,
+                                                 gaussian_params)
+    assert pi_corr.shape == (0, 3)
+    assert gp_corr.shape == (0, 4)
 
 def test_find_overlapping_peaks():
     # 2 overlapping peaks
@@ -72,3 +75,90 @@ def test_find_troughs():
     # test again with no overlap
     idx_trough = _find_troughs(erp, peak_indices, [False, False], [False, False])
     assert np.isnan(idx_trough).all()
+
+def test_find_identical_peaks_and_remove():# simulate ERP with overlapping peaks
+    time_range = [-0.25, 1.]
+    erp_params = np.asarray([0.1, 0.5, 0.03, 
+                             0.2, 0.4, 0.05, 
+                             0.25, 0.4, 0.05])
+    time, erp = simulate_erp(time_range, erp_params, nlv=0)
+    gaussian_params = erp_params.reshape(3,3)
+    gaussian_params = np.insert(gaussian_params, 3, [np.nan]*3, axis=1)
+
+    # define (uncorrected) peak indices and overlap (based on prior fitting)
+    peak_indices = np.asarray([[316., 350., 493.], 
+                               [308., 450., 509.],
+                               [308., 450., 509.]])
+
+    new_peak_idx, new_gauss = _find_identical_peaks_and_remove(erp, time, 
+                                                               peak_indices, 
+                                                               gaussian_params)
+
+    # check that the last peak in the new gaussian params is the same as the middle peak of our original erp_params
+    assert np.all((new_gauss[-1,:-1] == gaussian_params[1,:-1]), axis=0)
+    assert new_gauss.shape == (2,4)
+    assert new_peak_idx.shape == (2,3)
+
+    ###########################################################
+    ## try the same thing but now with more than 2 duplicates. the function should remove both of the repeat peaks
+    erp_params = np.asarray([0.1, 0.5, 0.03, 
+                             0.2, 0.4, 0.05, 
+                             0.25, 0.4, 0.05, 
+                             0.3, 0.4, 0.05])
+    _, erp = simulate_erp(time_range, erp_params, nlv=0)
+    gaussian_params = erp_params.reshape(4,3)
+    gaussian_params = np.insert(gaussian_params,3, [np.nan]*4, axis=1)
+
+    # define (uncorrected) peak indices and overlap (based on prior fitting)
+    peak_indices = np.asarray([[316., 350., 493.], 
+                               [308., 450., 509.],
+                               [308., 450., 509.],
+                               [308., 450., 509.]])
+
+    new_peak_idx, new_gauss = _find_identical_peaks_and_remove(erp, time, 
+                                                               peak_indices, 
+                                                               gaussian_params)
+
+    # check that the last peak in the new gaussian params is the same as the 3rd peak of our original erp_params
+    assert np.all((new_gauss[-1,:-1] == gaussian_params[2,:-1]), axis=0)
+    assert new_gauss.shape == (2,4)
+    assert new_peak_idx.shape == (2,3)
+
+    ###########################################################
+    ## try the same thing but now with more than one set of duplicates. the function should remove both of the repeat peaks
+    gaussian_params = erp_params.reshape(4,3)
+    gaussian_params = np.insert(gaussian_params,3, [np.nan]*4, axis=1)
+
+    # define (uncorrected) peak indices and overlap (based on prior fitting)
+    peak_indices = np.asarray([[316., 350., 493.], 
+                               [316., 350., 493.],
+                               [308., 450., 509.],
+                               [308., 450., 509.]])
+
+    new_peak_idx, new_gauss = _find_identical_peaks_and_remove(erp, time, 
+                                                               peak_indices, 
+                                                               gaussian_params)
+
+    # check that the last peak in the new gaussian params is the same as the 3rd peak of our original erp_params
+    assert (new_gauss[:,:-1].flatten() == gaussian_params[1:3,:-1].flatten()).all()
+    assert new_gauss.shape == (2,4)
+    assert new_peak_idx.shape == (2,3)
+
+    ###########################################################
+    ## try the same thing but now with no duplicates. the function should keep all peaks
+    gaussian_params = erp_params.reshape(4,3)
+    gaussian_params = np.insert(gaussian_params,3, [np.nan]*4, axis=1)
+
+    peak_indices = np.asarray([[316., 350., 493.], 
+                               [308., 450., 509.],
+                               [309., 450., 509.],
+                               [310., 450., 509.]])
+
+    new_peak_idx, new_gauss = _find_identical_peaks_and_remove(erp, time, 
+                                                               peak_indices, 
+                                                               gaussian_params)
+
+    # check that the last peak in the new gaussian params is the same as the 3rd peak of our original erp_params
+    assert np.all(new_peak_idx == peak_indices)
+    assert new_gauss.shape == (4,4)
+    assert new_peak_idx.shape == (4,3)
