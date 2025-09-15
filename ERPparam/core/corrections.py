@@ -31,7 +31,7 @@ def correct_overlapping_peaks(signal, time, peak_indices, gaussian_params):
     """
 
     # find and remove duplicate peaks
-    peak_indices, gaussian_params = _find_identical_peaks_and_remove(peak_indices, gaussian_params, signal, time)
+    peak_indices, gaussian_params = _find_identical_peaks_and_remove(signal, time, peak_indices, gaussian_params)
 
     # find overlapping peaks and the troughs between them
     overlap_start, overlap_end = _find_overlapping_peaks(peak_indices)
@@ -49,7 +49,7 @@ def correct_overlapping_peaks(signal, time, peak_indices, gaussian_params):
         peak_indices = np.expand_dims(peak_indices, axis=1).reshape(0,4)
     return peak_indices, gaussian_params
 
-def _find_identical_peaks_and_remove(peak_indices, gaussian_params, signal, time):
+def _find_identical_peaks_and_remove(signal, time, peak_indices, gaussian_params):
     """
     Find and remove identical peaks from the peak_indices and gaussian_params
     arrays. If two peaks have identical peak indices, the one with the lower
@@ -57,15 +57,15 @@ def _find_identical_peaks_and_remove(peak_indices, gaussian_params, signal, time
 
     Parameters
     ----------
+    signal : 1d array
+        Signal containing the peaks.
+    time : 1d array
+        Time vector corresponding to the signal.
     peak_indices : list of tuples
         List of tuples, where each tuple contains the start, peak, and end
         indices of a peak.
     gaussian_params : 2d array
         2d array where each row contains the parameters of a Gaussian peak.
-    signal : 1d array
-        Signal containing the peaks.
-    time : 1d array
-        Time vector corresponding to the signal.
 
     """
 

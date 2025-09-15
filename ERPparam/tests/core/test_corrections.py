@@ -90,7 +90,7 @@ def test_find_identical_peaks_and_remove():# simulate ERP with overlapping peaks
                                [308., 450., 509.],
                                [308., 450., 509.]])
 
-    new_peak_idx, new_gauss = _find_identical_peaks_and_remove(peak_indices, gaussian_params, erp, time)
+    new_peak_idx, new_gauss = _find_identical_peaks_and_remove(erp, time, peak_indices, gaussian_params)
 
     # check that the last peak in the new gaussian params is the same as the middle peak of our original erp_params
     assert np.all((new_gauss[-1,:-1] == gaussian_params[1,:-1]), axis=0)
@@ -113,7 +113,7 @@ def test_find_identical_peaks_and_remove():# simulate ERP with overlapping peaks
                                [308., 450., 509.],
                                [308., 450., 509.]])
 
-    new_peak_idx, new_gauss = _find_identical_peaks_and_remove(peak_indices, gaussian_params, erp, time)
+    new_peak_idx, new_gauss = _find_identical_peaks_and_remove(erp, time, peak_indices, gaussian_params)
 
     # check that the last peak in the new gaussian params is the same as the 3rd peak of our original erp_params
     assert np.all((new_gauss[-1,:-1] == gaussian_params[2,:-1]), axis=0)
@@ -131,7 +131,7 @@ def test_find_identical_peaks_and_remove():# simulate ERP with overlapping peaks
                                [308., 450., 509.],
                                [308., 450., 509.]])
 
-    new_peak_idx, new_gauss = _find_identical_peaks_and_remove(peak_indices, gaussian_params, erp, time)
+    new_peak_idx, new_gauss = _find_identical_peaks_and_remove(erp, time, peak_indices, gaussian_params)
 
     # check that the last peak in the new gaussian params is the same as the 3rd peak of our original erp_params
     assert np.all(new_gauss[:,:-1].flatten() == gaussian_params[1:3,:-1].flatten(), axis=0)
@@ -148,7 +148,7 @@ def test_find_identical_peaks_and_remove():# simulate ERP with overlapping peaks
                                [309., 450., 509.],
                                [310., 450., 509.]])
 
-    new_peak_idx, new_gauss = _find_identical_peaks_and_remove(peak_indices, gaussian_params, erp, time)
+    new_peak_idx, new_gauss = _find_identical_peaks_and_remove(erp, time, peak_indices, gaussian_params)
 
     # check that the last peak in the new gaussian params is the same as the 3rd peak of our original erp_params
     assert np.all(new_peak_idx == peak_indices)
