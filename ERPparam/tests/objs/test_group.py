@@ -207,7 +207,7 @@ def test_fg_fit_skew():
     n_signals = 2
     time_range, erp_params_d, nlvs = default_group_params()
 
-    for skew in [2]:#[-2, 0, 2]:
+    for skew in [-2, 0, 2]:
         erp_params_i = next(erp_params_d)
         chunks = [erp_params_i[i:i+3] for i in range(0, len(erp_params_i), 3)]
         erp_params = np.concatenate([np.append(chunk, skew) for chunk in chunks])
