@@ -175,6 +175,11 @@ class ERPparam():
         self._error_metric = 'MAE'
         # The maximum number of times that the iterative Gaussian fitting process will run (for each positive and negative peaks)
         self._max_n_iters = 10
+        # The minimum portion (%) of the signal amplitude between the bandwidth points and the peak
+        if amplitude_fraction >= 0.9:
+            self._min_rise_decay_height = 0.0
+        else:
+            self._min_rise_decay_height = 0.11
 
         ## RUN MODES
         # Set default debug mode - controls if an error is raised if model fitting is unsuccessful
@@ -1094,6 +1099,30 @@ class ERPparam():
 
             return np.array(refined_indices)
     
+    def _find_stumpy_peaks(self, peak_indices):
+        """
+        Drop peak indices in which the distance between the left or right bandwidth point and the signal peak is not a sufficiently large portion of the total amplitude
+        """
+        if np.size(peak_indices) == 0:
+            return  np.array([])
+        else:
+            short_peak_idx = []
+            for i_peak in range(len(peak_indices)):
+                start, peak, end = peak_indices[i_peak]
+                if np.isnan(start):
+                    continue
+                sig_height = self.signal[int(peak)]
+                left_height = self.signal[int(start)]
+                right_height = self.signal[int(end)]
+                
+                amp_ratio_rise = ((sig_height - left_height) / sig_height) # get the signal height between the left rise point as a percent of total amplitude
+                amp_ratio_decay = ((sig_height - right_height) / sig_height)
+
+                # check that these portions are not less than the designated threshold
+                if ((amp_ratio_rise <= self._min_rise_decay_height) or (amp_ratio_decay <= self._min_rise_decay_height)):
+                    short_peak_idx.append(i_peak)
+                
+            return np.array(short_peak_idx)
 
     def _compute_shape_params(self):
         """
@@ -1132,6 +1161,11 @@ class ERPparam():
         # correct overlapping peaks
         peak_indices = correct_overlapping_peaks(self.signal, peak_indices)
         peak_indices = self._refine_peak_index(peak_indices)
+        peak_indices_drop = self._find_stumpy_peaks(peak_indices)
+        if peak_indices_drop is not None:
+            if peak_indices_drop.size > 0:
+                peak_indices = np.delete(peak_indices, peak_indices_drop, axis=0)
+                gaussian_params = np.delete(gaussian_params, peak_indices_drop, axis=0)
 
         # initialize lists
         shape_params = np.empty((len(gaussian_params), 7))

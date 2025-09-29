@@ -18,11 +18,13 @@ def test_correct_overlapping_peaks():
 
     # fit peaks with positive polarity
     model = ERPparam(max_n_peaks=2, min_peak_height=0.1)
+    model._min_rise_decay_height = 0.0
     model.fit(time, erp)
     assert np.isclose(model.peak_indices_[0, 2], model.peak_indices_[1, 0]) # overlap set to trough
 
     # fit peaks with negative polarity
     model = ERPparam(max_n_peaks=2, min_peak_height=0.1)
+    model._min_rise_decay_height = 0.0
     model.fit(time, -erp)
     assert np.isclose(model.peak_indices_[0, 2], model.peak_indices_[1, 0]) # overlap set to trough
 
