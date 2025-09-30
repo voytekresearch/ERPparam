@@ -44,6 +44,7 @@ from copy import deepcopy
 import numpy as np
 from numpy.linalg import LinAlgError
 from scipy.optimize import curve_fit
+from neurodsp.filt import filter_signal
 
 from ERPparam.core.items import OBJ_DESC
 from ERPparam.core.info import get_indices
@@ -92,6 +93,9 @@ class ERPparam():
     amplitude_fraction : float, optional, default: 0.5
         Fraction of the peak amplitude to use as a threshold for computing
         the shape parameters of the ERP peak.
+    filter_signal : bool, optional, default: False
+        Whether or not to apply a lowpass filter to the data to estimate the first initial gaussian parameters.
+        The shape parameters are still estimated from the original input signal. 
     verbose : bool, optional, default: True
         Verbosity mode. If True, prints out warnings and general status updates.
 
@@ -113,6 +117,8 @@ class ERPparam():
     uncropped_signal : 1d array
         The uncropped version of the signal, before trimming based on
         the time_range attribute. This is useful for plotting.
+    filtered_signal : 1d array or None
+        The filtered version of the signal, if filtering was successfully applied in order to fit the inital gaussian parameters.
     fs : float
         Sampling frequency.
     gaussian_params_ : 2d array
@@ -153,7 +159,7 @@ class ERPparam():
     def __init__(self, peak_width_limits=(0.01, 10), max_n_peaks=10, 
                  min_peak_height=0.0, peak_threshold=2.0, peak_mode='gaussian',
                  gauss_overlap_thresh = 0.75, maxfev = 500,
-                 amplitude_fraction=0.5, verbose=True):
+                 amplitude_fraction=0.5, filter_signal = False, verbose=True):
         
         self.peak_width_limits = peak_width_limits
         self.max_n_peaks = max_n_peaks
@@ -163,6 +169,7 @@ class ERPparam():
         self.gauss_overlap_thresh = gauss_overlap_thresh
         self.maxfev = maxfev
         self.amplitude_fraction = amplitude_fraction
+        self.filter_signal = filter_signal
         self.verbose = verbose
 
         # Threshold for how far a peak has to be from edge to keep.
@@ -268,6 +275,7 @@ class ERPparam():
             self.signal = None
             self.baseline_signal = None
             self.uncropped_signal = None
+            self.filtered_signal = None
 
         if clear_results:
 
@@ -362,7 +370,7 @@ class ERPparam():
         self._check_loaded_results(ERPparam_result._asdict())
 
 
-    def report(self, time=None, signal=None, time_range=None, baseline=None, 
+    def report(self, time=None, signal=None, time_range=None, baseline=None, filter_kwargs=None,
                **plot_kwargs):
         """Run model fit, and display a report, which includes a plot, 
         and printed results.
@@ -389,18 +397,18 @@ class ERPparam():
         """
         if (not self.has_model): 
             if ((signal is not None) and (time is not None)):
-                self.fit(time, signal, time_range=time_range, baseline=baseline)
+                self.fit(time, signal, time_range=time_range, baseline=baseline, filter_kwargs=filter_kwargs)
             elif (not self.has_data) and ((signal is None) or (time is None)):
                 raise NoDataError("No data available to fit, can not proceed.")
             
-        elif self.has_model:
+        elif self.has_model and self.verbose:
             print(gen_model_exists_str(self))
 
         self.plot(**plot_kwargs)
         self.print_results(concise=False)
 
 
-    def fit(self, time=None, signal=None, time_range=None, baseline=None):
+    def fit(self, time=None, signal=None, time_range=None, baseline=None, filter_kwargs=None):
         """Fit the signal as a combination of periodic components (Gaussian peaks).
 
         Parameters
@@ -415,6 +423,13 @@ class ERPparam():
             Time range of the signal from which to estimate the noise threshold at which iterative peak fitting stops (typically a pre-stimulus window).
             Input as [earliest_time, latest_time].
             If unspecified, the whole time window before time 0 will be used. If that cannot be found, the whole length of signal will be used.
+        filter_kwargs: dictionary, optional, default: None
+            Keyword arguments to :func:`~neurodsp.filt.filter.filter_signal`,
+            such as 'n_cycles' or 'n_seconds' to control filter length.
+            Only valid if the filter_signal hyperparameter setting is True.
+            The filter defaults to a lowpass FIR filter at 15Hz, with n_cycles of 3 and no padding. 
+            The filtered signal used for fitting is stored in the filtered_signal attribute.
+            If the filter fails for whatever reason, the raw signal is used for fitting instead.
             
         Raises
         ------
@@ -456,8 +471,15 @@ class ERPparam():
                     raise FitError("Model fitting was skipped because there are NaN or Inf "
                                    "values in the data, which preclude model fitting.")
 
+            if self.filter_signal:
+                # apply a bandpass filter to the signal which we'll only use to derive gausssian initial fits
+                prelim_signal = self._bandpass_filt_signal(np.copy(self.signal), filter_kwargs)
+            else:
+                prelim_signal = np.copy(self.signal)
+                self.filtered_signal = None
+
             # Find peaks, and fit them with gaussians
-            self.gaussian_params_ = self._fit_peaks(np.copy(self.signal))
+            self.gaussian_params_ = self._fit_peaks(prelim_signal)
 
             # compute rise-decay symmetry
             self.gaussian_params_, self.shape_params_, self.peak_indices_ = \
@@ -827,6 +849,30 @@ class ERPparam():
         # Check peak width limits against time resolution and warn if too close
         if 1.5 * (1/self.fs) >= self.peak_width_limits[0]:
             print(gen_width_warning_str((1/self.fs), self.peak_width_limits[0]))
+
+
+    def _bandpass_filt_signal(self, sig2filt, filter_kwargs):
+
+        if filter_kwargs is None:
+            filter_kwargs = {}
+
+        if 'f_range' not in filter_kwargs.keys():
+            # default filter range
+            filter_kwargs['f_range']= 15
+        if ('n_cycles' not in filter_kwargs.keys()) and ('n_seconds' not in filter_kwargs.keys()):
+            # If not defined, set default filter length (ndsp defaults to n_cycles of 3)
+            filter_kwargs['n_cycles'] = 3
+
+        try:
+            sig_filt = filter_signal(sig2filt, self.fs, pass_type='lowpass', remove_edges=False, **filter_kwargs)
+            self.filtered_signal = sig_filt
+        except:
+            if self.verbose:
+                print('Filtering error occurred -- using unfiltered signal for gaussian fitting instead')
+            sig_filt = sig2filt
+            self.filtered_signal = None
+        
+        return sig_filt
 
 
     def _fit_peaks(self, iter_signal):

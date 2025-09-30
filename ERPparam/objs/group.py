@@ -241,7 +241,7 @@ class ERPparamGroup(ERPparam):
             = self._prepare_data(time=time, signal=signals, time_range=time_range, baseline=baseline, signal_dim=2)
 
 
-    def report(self, time=None, signals=None, time_range=None, baseline=None, n_jobs=1, progress=None):
+    def report(self, time=None, signals=None, time_range=None, baseline=None, filter_kwargs=None, n_jobs=1, progress=None):
         """Fit a group of power spectra and display a report, with a plot and printed results.
 
         Parameters
@@ -264,12 +264,12 @@ class ERPparamGroup(ERPparam):
         """
 
         if time is not None and signals is not None:
-            self.fit(time, signals, time_range, baseline=baseline, n_jobs=n_jobs, progress=progress)
+            self.fit(time, signals, time_range, baseline=baseline, filter_kwargs=filter_kwargs, n_jobs=n_jobs, progress=progress)
         self.plot()
         self.print_results(False)
 
 
-    def fit(self,  time=None, signals=None, time_range=None, baseline=None, n_jobs=1, progress=None):
+    def fit(self,  time=None, signals=None, time_range=None, baseline=None, filter_kwargs=None, n_jobs=1, progress=None):
         """Fit a group of power spectra.
 
         Parameters
@@ -294,7 +294,7 @@ class ERPparamGroup(ERPparam):
         # If times & power spectra provided together, add data to object
         if signals is not None:
             self._add_data(time, signals, time_range, baseline)
-
+            self.filter_kwargs = filter_kwargs
 
         # Check that data is available
         if not self.has_data:
@@ -312,7 +312,7 @@ class ERPparamGroup(ERPparam):
             self._reset_group_results(len(self.signals))
             for ind, signal in \
                 _progress(enumerate(self.uncropped_signals), progress, len(self)):
-                self._fit(time=self.uncropped_time, signal=signal, time_range=self.time_range, baseline=self.baseline)
+                self._fit(time=self.uncropped_time, signal=signal, time_range=self.time_range, baseline=self.baseline, filter_kwargs=self.filter_kwargs)
                 self.group_results[ind] = self._get_results()
 
         # Run in parallel
@@ -725,7 +725,7 @@ class ERPparamGroup(ERPparam):
 def _par_fit(signal, fg):
     """Helper function for running in parallel."""
 
-    fg._fit(time=fg.uncropped_time, signal=signal, time_range=fg.time_range, baseline=fg.baseline)
+    fg._fit(time=fg.uncropped_time, signal=signal, time_range=fg.time_range, baseline=fg.baseline, filter_kwargs=fg.filter_kwargs)
 
     return fg._get_results()
 
