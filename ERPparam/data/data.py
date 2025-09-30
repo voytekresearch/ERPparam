@@ -20,7 +20,8 @@ class ERPparamSettings(namedtuple('ERPparamSettings', ['peak_width_limits',
                                                        'peak_mode', 
                                                        'gauss_overlap_thresh', 
                                                        'maxfev', 
-                                                       'amplitude_fraction'])):
+                                                       'amplitude_fraction',
+                                                       'filter_signal'])):
     """User defined settings for the fitting algorithm.
     Parameters
     ----------
@@ -41,6 +42,8 @@ class ERPparamSettings(namedtuple('ERPparamSettings', ['peak_width_limits',
     amplitude_fraction : float, optional, default: 0.5
         Fraction of the peak amplitude to use as a threshold for computing
         the shape parameters of the ERP peak.
+    filter_signal : bool, optional, default False
+        Whether or not to filter the signal before fitting gaussian params
 
     Notes
     -----

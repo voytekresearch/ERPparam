@@ -13,9 +13,9 @@ from ERPparam.data.data import *
 
 def test_ERPparam_settings():
 
-    settings = ERPparamSettings([1, 8], 8, 0.25, 2, 'gaussian', 0.75, 500, 0.5) #['peak_width_limits', 'max_n_peaks','min_peak_height', 'peak_threshold',
+    settings = ERPparamSettings([1, 8], 8, 0.25, 2, 'gaussian', 0.75, 500, 0.5, True) #['peak_width_limits', 'max_n_peaks','min_peak_height', 'peak_threshold',
                                                                             #'peak_mode', 'gauss_overlap_thresh', 'maxfev', 
-                                                                            # 'amplitude_fraction']
+                                                                            # 'amplitude_fraction', 'filter_signal']
     assert settings
 
     for field in OBJ_DESC['settings']:
