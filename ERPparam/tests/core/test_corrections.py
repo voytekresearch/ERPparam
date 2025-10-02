@@ -31,8 +31,13 @@ def test_correct_overlapping_peaks():
     # test with no peaks fit
     gaussian_params = np.ones([0,4])*np.nan
     peak_indices = np.empty((len(gaussian_params), 3))
-    peak_indices_corr = correct_overlapping_peaks(erp, peak_indices)
+    peak_indices_corr, _ = correct_overlapping_peaks(erp, peak_indices, gaussian_params, 0.0)
     assert peak_indices_corr.shape == (0, 3)
+
+# def test_find_stumpy_peaks():
+
+#     # simulate ERP with overlapping peaks
+
 
 def test_find_overlapping_peaks():
     # 2 overlapping peaks
