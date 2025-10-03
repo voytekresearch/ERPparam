@@ -88,7 +88,7 @@ def _find_stumpy_peaks(signal, peak_indices, min_rise_decay_height):
             
             amp_ratio_rise = ((sig_height - left_height) / sig_height) # get the signal height between the left rise point as a percent of total amplitude
             amp_ratio_decay = ((sig_height - right_height) / sig_height)
-
+            
             # check that these portions are not less than the designated threshold
             if ((amp_ratio_rise <= min_rise_decay_height) or (amp_ratio_decay <= min_rise_decay_height)):
                 short_peak_idx.append(i_peak)

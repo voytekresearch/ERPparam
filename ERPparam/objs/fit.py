@@ -177,9 +177,9 @@ class ERPparam():
         self._max_n_iters = 10
         # The minimum portion (%) of the signal amplitude between the bandwidth points and the peak
         if amplitude_fraction >= 0.9:
-            self._min_rise_decay_height = 0.0
+            self._min_rise_decay_height = 0.00
         else:
-            self._min_rise_decay_height = 0.11
+            self._min_rise_decay_height = 0.05
 
         ## RUN MODES
         # Set default debug mode - controls if an error is raised if model fitting is unsuccessful
@@ -1160,12 +1160,6 @@ class ERPparam():
 
         # correct overlapping peaks
         peak_indices, gaussian_params = correct_overlapping_peaks(self.signal, peak_indices, gaussian_params, self._min_rise_decay_height)
-        # peak_indices = self._refine_peak_index(peak_indices)
-        # peak_indices_drop = self._find_stumpy_peaks(peak_indices)
-        # if peak_indices_drop is not None:
-        #     if peak_indices_drop.size > 0:
-        #         peak_indices = np.delete(peak_indices, peak_indices_drop, axis=0)
-        #         gaussian_params = np.delete(gaussian_params, peak_indices_drop, axis=0)
 
         # initialize lists
         shape_params = np.empty((len(gaussian_params), 7))
