@@ -14,10 +14,18 @@ import numpy as np
 
 def correct_overlapping_peaks(signal, peak_indices, gaussian_params, min_rise_decay_height):
     """ 
-    Correct the indices of overlapping peaks fit with ERPparam. If the
-    start of a peak overlaps with the previous peak, the start of the peak is
-    set to the trough between the peaks. If the end of a peak overlaps with the
-    next peak, the end of the peak is set to the trough between the peaks.
+    Correct the indices of overlapping peaks fit with ERPparam. The following
+    corrections are applied:
+    1) If the start of a peak overlaps with the previous peak, the start of the 
+    peak is set to the trough between the peaks. If the end of a peak overlaps 
+    with the next peak, the end of the peak is set to the trough between the 
+    peaks.
+    2) The peak index is updated to the signal extremum between the corrected
+    half-maximum points.
+    3) Peaks in which the distance between the left or right half-maximum point
+    and the signal peak is not a sufficiently large portion of the total 
+    amplitude are dropped.
+
     """
 
     # find overlapping peaks and the troughs between them
