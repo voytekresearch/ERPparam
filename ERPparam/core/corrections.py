@@ -40,12 +40,14 @@ def correct_overlapping_peaks(signal, peak_indices, gaussian_params, min_rise_de
         # if we've detected peaks to drop due to stumpiness, then we want to drop them and re-run this function as they never existed
         peak_indices_dropped = np.delete(peak_indices.copy(), peak_indices_drop, axis=0)
         gaussian_params_dropped = np.delete(gaussian_params.copy(), peak_indices_drop, axis=0)
-        peak_indices, gaussian_params = correct_overlapping_peaks(signal, peak_indices_dropped, gaussian_params_dropped, min_rise_decay_height)
+        peak_indices, gaussian_params = correct_overlapping_peaks(
+            signal, peak_indices_dropped, gaussian_params_dropped, min_rise_decay_height)
     else:
         # otherwise we assign our peak_indices to the modified array
         peak_indices = peak_indices_temp
 
     return peak_indices, gaussian_params
+
 
 def _refine_peak_index(signal, peak_indices):
     """
@@ -70,9 +72,12 @@ def _refine_peak_index(signal, peak_indices):
 
         return np.array(refined_indices)
 
+
 def _find_stumpy_peaks(signal, peak_indices, min_rise_decay_height):
     """
-    Drop peak indices in which the distance between the left or right bandwidth point and the signal peak is not a sufficiently large portion of the total amplitude
+    Drop peak indices in which the distance between the left or right bandwidth 
+    point and the signal peak is not a sufficiently large portion of the total 
+    amplitude
     """
     if np.size(peak_indices) == 0:
         return  np.array([])
@@ -86,7 +91,8 @@ def _find_stumpy_peaks(signal, peak_indices, min_rise_decay_height):
             left_height = signal[int(start)]
             right_height = signal[int(end)]
             
-            amp_ratio_rise = ((sig_height - left_height) / sig_height) # get the signal height between the left rise point as a percent of total amplitude
+            # get the signal height between the left rise point as a percent of total amplitude
+            amp_ratio_rise = ((sig_height - left_height) / sig_height) 
             amp_ratio_decay = ((sig_height - right_height) / sig_height)
             
             # check that these portions are not less than the designated threshold
@@ -94,6 +100,7 @@ def _find_stumpy_peaks(signal, peak_indices, min_rise_decay_height):
                 short_peak_idx.append(i_peak)
             
         return np.array(short_peak_idx)
+
 
 def _find_overlapping_peaks(peak_indices):
     """

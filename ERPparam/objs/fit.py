@@ -1159,7 +1159,8 @@ class ERPparam():
         gaussian_params = gaussian_params[peak_order]
 
         # correct overlapping peaks
-        peak_indices, gaussian_params = correct_overlapping_peaks(self.signal, peak_indices, gaussian_params, self._min_rise_decay_height)
+        peak_indices, gaussian_params = correct_overlapping_peaks(
+            self.signal, peak_indices, gaussian_params, self._min_rise_decay_height)
 
         # initialize lists
         shape_params = np.empty((len(gaussian_params), 7))
