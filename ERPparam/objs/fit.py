@@ -836,6 +836,8 @@ class ERPparam():
 
     def _fit_peaks(self, iter_signal):
         # generate guesses seperately for positive and negative peaks
+        print(np.min(iter_signal))
+        print(np.max(iter_signal))
         guess_pos = self._generate_guess(iter_signal)
         guess_neg = self._generate_guess(-iter_signal)
         guess_neg[:, 1] = -guess_neg[:, 1] # flip negative amplitudes
