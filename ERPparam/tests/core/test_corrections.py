@@ -4,8 +4,10 @@ import numpy as np
 
 from ERPparam import ERPparam
 from ERPparam.sim import simulate_erp
-from ERPparam.core.corrections import ( correct_overlapping_peaks, 
-                                       _find_overlapping_peaks, _find_troughs, _find_stumpy_peaks)
+from ERPparam.core.corrections import (correct_peaks_indices, 
+                                       _find_overlapping_peaks, 
+                                       _find_troughs, 
+                                       _find_stumpy_peaks)
 
 ###################################################################################################
 ###################################################################################################
@@ -31,7 +33,7 @@ def test_correct_overlapping_peaks():
     # test with no peaks fit
     gaussian_params = np.ones([0,4])*np.nan
     peak_indices = np.empty((len(gaussian_params), 3))
-    peak_indices_corr, _ = correct_overlapping_peaks(erp, peak_indices, gaussian_params, 0.0)
+    peak_indices_corr, _ = correct_peaks_indices(erp, peak_indices, gaussian_params, 0.0)
     assert peak_indices_corr.shape == (0, 3)
 
 def test_find_stumpy_peaks():

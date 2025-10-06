@@ -56,7 +56,7 @@ from ERPparam.core.errors import (FitError, NoModelError, DataError,
                                NoDataError, InconsistentDataError)
 from ERPparam.core.strings import (gen_settings_str, gen_results_fm_str,
                                 gen_issue_str, gen_width_warning_str, gen_model_exists_str)
-from ERPparam.core.corrections import correct_overlapping_peaks
+from ERPparam.core.corrections import correct_peaks_indices
 
 from ERPparam.plts.model import plot_ERPparam
 from ERPparam.utils.data import trim_signal
@@ -1159,7 +1159,7 @@ class ERPparam():
         gaussian_params = gaussian_params[peak_order]
 
         # correct overlapping peaks
-        peak_indices, gaussian_params = correct_overlapping_peaks(
+        peak_indices, gaussian_params = correct_peaks_indices(
             self.signal, peak_indices, gaussian_params, self._min_rise_decay_height)
 
         # initialize lists

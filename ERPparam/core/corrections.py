@@ -12,7 +12,7 @@ Correction functions for ERPparam.
 import numpy as np
 
 
-def correct_overlapping_peaks(signal, peak_indices, gaussian_params, min_rise_decay_height):
+def correct_peaks_indices(signal, peak_indices, gaussian_params, min_rise_decay_height):
     """ 
     Correct the indices of overlapping peaks fit with ERPparam. The following
     corrections are applied:
@@ -51,7 +51,7 @@ def correct_overlapping_peaks(signal, peak_indices, gaussian_params, min_rise_de
         # if we've detected peaks to drop due to stumpiness, then we want to drop them and re-run this function as they never existed
         peak_indices_dropped = np.delete(peak_indices.copy(), peak_indices_drop, axis=0)
         gaussian_params_dropped = np.delete(gaussian_params.copy(), peak_indices_drop, axis=0)
-        peak_indices, gaussian_params = correct_overlapping_peaks(
+        peak_indices, gaussian_params = correct_peaks_indices(
             signal, peak_indices_dropped, gaussian_params_dropped, min_rise_decay_height)
     else:
         # otherwise we assign our peak_indices to the modified array
