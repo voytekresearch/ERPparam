@@ -1084,54 +1084,6 @@ class ERPparam():
         return start_index, peak_index, end_index
 
 
-    def _refine_peak_index(self, peak_indices):
-        """
-        Find signal extrema between corrected half-magnitude points
-        """
-        if np.size(peak_indices) == 0:
-            return peak_indices
-        else:
-            refined_indices = []
-            for start, peak, end in peak_indices:
-                if np.isnan(start) or np.isnan(peak) or np.isnan(end):
-                    refined_indices.append([np.nan, np.nan, np.nan])
-                    continue
-
-                # Find local maxima/minima between the half-magnitude points
-                local_signal = self.signal[int(start):int(end)]
-                local_max = np.argmax(np.abs(local_signal))
-
-                # Refine the peak index
-                refined_peak = start + local_max
-                refined_indices.append([start, refined_peak, end])
-
-            return np.array(refined_indices)
-    
-    def _find_stumpy_peaks(self, peak_indices):
-        """
-        Drop peak indices in which the distance between the left or right bandwidth point and the signal peak is not a sufficiently large portion of the total amplitude
-        """
-        if np.size(peak_indices) == 0:
-            return  np.array([])
-        else:
-            short_peak_idx = []
-            for i_peak in range(len(peak_indices)):
-                start, peak, end = peak_indices[i_peak]
-                if np.isnan(start):
-                    continue
-                sig_height = self.signal[int(peak)]
-                left_height = self.signal[int(start)]
-                right_height = self.signal[int(end)]
-                
-                amp_ratio_rise = ((sig_height - left_height) / sig_height) # get the signal height between the left rise point as a percent of total amplitude
-                amp_ratio_decay = ((sig_height - right_height) / sig_height)
-
-                # check that these portions are not less than the designated threshold
-                if ((amp_ratio_rise <= self._min_rise_decay_height) or (amp_ratio_decay <= self._min_rise_decay_height)):
-                    short_peak_idx.append(i_peak)
-                
-            return np.array(short_peak_idx)
-
     def _compute_shape_params(self):
         """
         Compute the ERP shape parameters.
