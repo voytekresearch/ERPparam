@@ -175,7 +175,7 @@ class ERPparam():
         self._error_metric = 'MAE'
         # The maximum number of times that the iterative Gaussian fitting process will run (for each positive and negative peaks)
         self._max_n_iters = 10
-        # The minimum portion (%) of the signal amplitude between the bandwidth points and the peak
+        # The minimum portion (%) of the signal amplitude between the half-maximum points and the peak
         if amplitude_fraction >= 0.9:
             self._min_rise_decay_height = 0.00
         else:

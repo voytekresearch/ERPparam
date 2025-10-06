@@ -35,7 +35,8 @@ def correct_overlapping_peaks(signal, peak_indices, gaussian_params, min_rise_de
 
     # find the new max of the signals
     peak_indices_temp = _refine_peak_index(signal, peak_indices_temp)
-    # detect signals that don't have sufficiently height between the BW edges and the peak
+
+    # detect signals that don't have sufficient height between the half-maximum points and the peak
     peak_indices_drop = _find_stumpy_peaks(signal, peak_indices_temp, min_rise_decay_height)
 
     if (peak_indices_drop is not None) and (peak_indices_drop.size > 0):
@@ -53,7 +54,7 @@ def correct_overlapping_peaks(signal, peak_indices, gaussian_params, min_rise_de
 
 def _refine_peak_index(signal, peak_indices):
     """
-    Find signal extrema between corrected half-magnitude points
+    Find signal extrema between corrected half-maximum points
     """
     if np.size(peak_indices) == 0:
         return peak_indices
@@ -64,7 +65,7 @@ def _refine_peak_index(signal, peak_indices):
                 refined_indices.append([np.nan, np.nan, np.nan])
                 continue
 
-            # Find local maxima/minima between the half-magnitude points
+            # Find local maxima/minima between the half-maximum points
             local_signal = signal[int(start):int(end)]
             local_max = np.argmax(np.abs(local_signal))
 
@@ -77,9 +78,9 @@ def _refine_peak_index(signal, peak_indices):
 
 def _find_stumpy_peaks(signal, peak_indices, min_rise_decay_height):
     """
-    Drop peak indices in which the distance between the left or right bandwidth 
-    point and the signal peak is not a sufficiently large portion of the total 
-    amplitude
+    Drop peak indices in which the distance between the left or right
+    half-maximum point and the signal peak is not a sufficiently large portion 
+    of the total amplitude
     """
     if np.size(peak_indices) == 0:
         return  np.array([])
