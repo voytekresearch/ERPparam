@@ -836,8 +836,6 @@ class ERPparam():
 
     def _fit_peaks(self, iter_signal):
         # generate guesses seperately for positive and negative peaks
-        print(np.min(iter_signal))
-        print(np.max(iter_signal))
         guess_pos = self._generate_guess(iter_signal)
         guess_neg = self._generate_guess(-iter_signal)
         guess_neg[:, 1] = -guess_neg[:, 1] # flip negative amplitudes
@@ -1022,7 +1020,7 @@ class ERPparam():
                 guess[g_idx][1] = np.min(self.signal)
             if guess[g_idx][1] > np.max(self.signal):
                 guess[g_idx][1] = np.max(self.signal)
-                
+
         # Flatten guess, for use with curve fit
         guess = np.ndarray.flatten(guess)
 
