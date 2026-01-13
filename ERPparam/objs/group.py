@@ -129,7 +129,7 @@ class ERPparamGroup(ERPparam):
     def has_data(self):
         """Indicator for if the object contains data."""
 
-        return True if np.any(self.signals) else False
+        return True if (np.any(self.signals) and np.any(self.time)) else False
 
 
     @property
