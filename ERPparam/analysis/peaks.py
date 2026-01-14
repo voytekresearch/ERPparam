@@ -244,7 +244,6 @@ def get_window_peak_arr(peak_params, time_range, select_highest=True,
     len_params_arr = peak_params.shape[1]
 
     if peak_params.size != 0:
-        inds, thresh_param = infer_desired_params(peak_params, thresh_param, verbose=True)
 
         # Find indices of peaks in the specified range, and check the number found
         peak_inds = (peak_params[:, 0] >= time_range[0]) & \
@@ -255,6 +254,7 @@ def get_window_peak_arr(peak_params, time_range, select_highest=True,
 
         # Apply a minimum threshold, if one was provided
         if threshold:
+            inds, thresh_param = infer_desired_params(peak_params, thresh_param, verbose=True)
             window_peaks = threshold_peaks(window_peaks, threshold, inds, thresh_param)
 
         # If results > 1 and select_highest, then we return the highest peak
