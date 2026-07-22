@@ -20,7 +20,8 @@ class ERPparamSettings(namedtuple('ERPparamSettings', ['peak_width_limits',
                                                        'peak_mode', 
                                                        'gauss_overlap_thresh', 
                                                        'maxfev', 
-                                                       'amplitude_fraction'])):
+                                                       'amplitude_fraction',
+                                                       'min_rise_decay_height'])):
     """User defined settings for the fitting algorithm.
     Parameters
     ----------
@@ -41,6 +42,11 @@ class ERPparamSettings(namedtuple('ERPparamSettings', ['peak_width_limits',
     amplitude_fraction : float, optional, default: 0.5
         Fraction of the peak amplitude to use as a threshold for computing
         the shape parameters of the ERP peak.
+    min_rise_decay_height : float, default 0.05
+        % of the peak amplitude that the left and right peak indices must be lower than, or else the peak will be dropped.
+        This threshold can help remove short, nonsense peaks fit on noise.
+        The amplitude_fraction setting will override this input-- if (1 - amplitude_fraction) is lower than min_rise_decay_height, 
+        then min_rise_decay_height will be set to (1 - amplitude_fraction)
 
     Notes
     -----
