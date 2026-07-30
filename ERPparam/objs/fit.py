@@ -92,6 +92,11 @@ class ERPparam():
     amplitude_fraction : float, optional, default: 0.5
         Fraction of the peak amplitude to use as a threshold for computing
         the shape parameters of the ERP peak.
+    min_rise_decay_height : float, default 0.05
+        % of the peak amplitude that the left and right peak indices must be lower than, or else the peak will be dropped.
+        This threshold can help remove short, nonsense peaks fit on noise.
+        The amplitude_fraction setting will override this input-- if (1 - amplitude_fraction) is lower than min_rise_decay_height, 
+        then min_rise_decay_height will be set to (1 - amplitude_fraction)
     verbose : bool, optional, default: True
         Verbosity mode. If True, prints out warnings and general status updates.
 
@@ -153,7 +158,7 @@ class ERPparam():
     def __init__(self, peak_width_limits=(0.01, 10), max_n_peaks=10, 
                  min_peak_height=0.0, peak_threshold=2.0, peak_mode='gaussian',
                  gauss_overlap_thresh = 0.75, maxfev = 500,
-                 amplitude_fraction=0.5, verbose=True):
+                 amplitude_fraction=0.5, min_rise_decay_height=0.05, verbose=True):
         
         self.peak_width_limits = peak_width_limits
         self.max_n_peaks = max_n_peaks
@@ -164,6 +169,7 @@ class ERPparam():
         self.maxfev = maxfev
         self.amplitude_fraction = amplitude_fraction
         self.verbose = verbose
+        self.min_rise_decay_height = min_rise_decay_height
 
         # Threshold for how far a peak has to be from edge to keep.
         #   This is defined in units of gaussian standard deviation
@@ -176,10 +182,8 @@ class ERPparam():
         # The maximum number of times that the iterative Gaussian fitting process will run (for each positive and negative peaks)
         self._max_n_iters = 10
         # The minimum portion (%) of the signal amplitude between the half-maximum points and the peak
-        if amplitude_fraction >= 0.9:
-            self._min_rise_decay_height = 0.00
-        else:
-            self._min_rise_decay_height = 0.05
+        if (1 - amplitude_fraction) <= min_rise_decay_height:
+            self.min_rise_decay_height = (1 - amplitude_fraction)
 
         ## RUN MODES
         # Set default debug mode - controls if an error is raised if model fitting is unsuccessful
@@ -1119,7 +1123,7 @@ class ERPparam():
 
         # correct overlapping peaks
         peak_indices, gaussian_params = correct_peaks_indices(
-            self.signal, peak_indices, gaussian_params, self._min_rise_decay_height)
+            self.signal, peak_indices, gaussian_params, self.min_rise_decay_height)
 
         # initialize lists
         shape_params = np.empty((len(gaussian_params), 7))

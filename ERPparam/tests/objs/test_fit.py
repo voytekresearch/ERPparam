@@ -260,7 +260,7 @@ def test_add_settings():
     tfm = get_tfm()
 
     # Test adding settings
-    ERPparam_settings = ERPparamSettings([1, 4], 6, 0, 2, "gaussian", 0.75, 500, 0.5)
+    ERPparam_settings = ERPparamSettings([1, 4], 6, 0, 2, "gaussian", 0.75, 500, 0.5, 0.05)
     tfm.add_settings(ERPparam_settings)
     for setting in OBJ_DESC['settings']:
         assert getattr(tfm, setting) == getattr(ERPparam_settings, setting)
